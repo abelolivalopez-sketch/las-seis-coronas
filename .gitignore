@@ -4,3 +4,4 @@ app/android/
 app/www/
 *.apk
 dist/web/
+app/icon-preview.png
