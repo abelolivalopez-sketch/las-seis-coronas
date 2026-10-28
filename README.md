@@ -22,9 +22,19 @@ RPG medieval por turnos en pixel art, ambientado en 1415. Se juega en español o
 
 Para actualizar, se descarga el APK nuevo y se instala encima. La partida se conserva.
 
-## iPhone
+## Jugar en iPhone
 
-Por ahora, en iPhone se juega desde el navegador, sin contador de pasos. Para la app de iPhone hace falta un Mac, una cuenta de Apple Developer (99 $ al año) y repartirla con TestFlight.
+Los iPhone no pueden instalar archivos APK. Se juega desde la web:
+
+**https://abelolivalopez-sketch.github.io/las-seis-coronas/**
+
+1. Abre el enlace en **Safari**.
+2. Toca el botón **Compartir** (el cuadrado con la flecha) → **Añadir a pantalla de inicio** → **Añadir**.
+3. Abre siempre el juego desde ese icono: se ve a pantalla completa, como una app. La partida se guarda en el icono. Safari guarda otra distinta.
+
+En iPhone no se cuentan los pasos todavía. En CAMINATA hay un botón para simular 1 km. Para tener la app de verdad en iPhone hace falta un Mac, una cuenta de Apple Developer (99 $ al año) y repartirla con TestFlight.
+
+La web se actualiza sola cada vez que se sube un cambio a `main` (`.github/workflows/web.yml`, rama `gh-pages`).
 
 ## Cómo funciona el contador de pasos
 
@@ -82,6 +92,7 @@ Todo es JavaScript sin librerías y el arte se dibuja con código.
 | `src/js/99-main.js` | Arranque y bucle principal |
 | `src/page.html` | La consola: pantalla, botones y estilos |
 | `app/` | App de Android (Capacitor): configuración, plugin de pasos en Java e icono |
+| `web/` | Icono y manifiesto de la versión web (para añadirla a la pantalla de inicio) |
 | `tools/` | Construcción, preparación de la app y pruebas automáticas |
 
 Los textos bilingües se escriben así: `{ es: 'Hola', fr: 'Bonjour' }`.
@@ -92,4 +103,4 @@ Los textos bilingües se escriben así: `{ es: 'Hola', fr: 'Bonjour' }`.
 node tools/build.mjs
 ```
 
-Genera `dist/index.html`, que se puede abrir en cualquier navegador.
+Genera `dist/index.html`, que se puede abrir en cualquier navegador, y `dist/web/`, la versión que se publica para iPhone.

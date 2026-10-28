@@ -22,6 +22,8 @@ const Input = {
     });
     addEventListener('keyup', e => { const k = this.map[e.code]; if (k) this.release(k); });
     addEventListener('blur', () => { for (const k in this.held) this.held[k] = false; });
+    // Safari en iPhone solo deja activar el sonido al levantar el dedo o con un clic
+    for (const ev of ['touchend', 'click']) document.addEventListener(ev, () => Sfx.unlock(), { passive: true });
 
     document.querySelectorAll('[data-btn]').forEach(el => {
       const k = el.dataset.btn;

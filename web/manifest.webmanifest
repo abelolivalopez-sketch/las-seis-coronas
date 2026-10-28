@@ -1,0 +1,16 @@
+{
+  "name": "Las Seis Coronas",
+  "short_name": "Seis Coronas",
+  "description": "RPG medieval por turnos en pixel art, ambientado en 1415.",
+  "lang": "es",
+  "start_url": "./",
+  "scope": "./",
+  "display": "fullscreen",
+  "orientation": "any",
+  "background_color": "#16111f",
+  "theme_color": "#16111f",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

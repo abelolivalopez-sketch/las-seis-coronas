@@ -1,4 +1,4 @@
-// Genera el icono de la app (corona pixel art) en todos los tamaños de Android.
+// Genera el icono de la app (corona pixel art) en todos los tamaños de Android y para la web.
 import { chromium } from 'playwright';
 import { writeFileSync, mkdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
@@ -22,7 +22,10 @@ const out = await p.evaluate((dens) => {
   const make = (size, kind) => {
     const c = document.createElement('canvas'); c.width = c.height = size;
     const x = c.getContext('2d'); x.imageSmoothingEnabled = false;
-    if (kind !== 'fg') {
+    if (kind === 'full') {
+      // icono web (iPhone recorta las esquinas él solo)
+      x.fillStyle = '#2a2140'; x.fillRect(0, 0, size, size);
+    } else if (kind !== 'fg') {
       x.fillStyle = '#2a2140';
       if (kind === 'round') { x.beginPath(); x.arc(size / 2, size / 2, size / 2, 0, Math.PI * 2); x.fill(); }
       else { const r = size * 0.18; x.beginPath(); x.roundRect(0, 0, size, size, r); x.fill(); }
@@ -30,7 +33,7 @@ const out = await p.evaluate((dens) => {
       if (kind === 'round') { x.beginPath(); x.arc(size / 2, size / 2, size / 2 - x.lineWidth, 0, Math.PI * 2); x.stroke(); }
       else { const i = x.lineWidth; x.beginPath(); x.roundRect(i, i, size - 2 * i, size - 2 * i, size * 0.15); x.stroke(); }
     }
-    const area = kind === 'fg' ? size * 0.55 : size * 0.72;
+    const area = kind === 'fg' ? size * 0.55 : kind === 'full' ? size * 0.62 : size * 0.72;
     const s = Math.max(1, Math.floor(area / 17));
     crown(x, size / 2, size / 2, s);
     return c.toDataURL();
@@ -42,9 +45,11 @@ const out = await p.evaluate((dens) => {
     outp[`mipmap-${d}/ic_launcher_foreground.png`] = make(Math.round(108 * k), 'fg');
   }
   outp['preview.png'] = make(192, 'square');
+  for (const n of [180, 192, 512]) outp[`web/icon-${n}.png`] = make(n, 'full');
   return outp;
 }, dens);
 for (const [path, url] of Object.entries(out)) {
+  if (path.startsWith('web/')) { mkdirSync(join(root, 'web'), { recursive: true }); writeFileSync(join(root, path), Buffer.from(url.split(',')[1], 'base64')); continue; }
   if (path === 'preview.png') { writeFileSync(join(root, 'app', 'icon-preview.png'), Buffer.from(url.split(',')[1], 'base64')); continue; }
   const f = join(res, path);
   mkdirSync(dirname(f), { recursive: true });

@@ -76,8 +76,15 @@ function tween(o, to, d, ease = Ease.out) {
 const Sfx = {
   ctx: null, on: true,
   unlock() {
-    if (this.ctx) { if (this.ctx.state === 'suspended') this.ctx.resume(); return; }
-    try { this.ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { this.ctx = null; }
+    // iPhone: el audio solo arranca dentro de un toque y se queda "interrupted" al volver de otra app
+    if (this.ctx) { if (this.ctx.state !== 'running') this.ctx.resume().catch(() => {}); return; }
+    try {
+      this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const s = this.ctx.createBufferSource();
+      s.buffer = this.ctx.createBuffer(1, 1, 22050);
+      s.connect(this.ctx.destination);
+      s.start(0);
+    } catch (e) { this.ctx = null; }
   },
   tone(f, d, type = 'square', vol = 0.05, slide = 0, delay = 0) {
     const c = this.ctx;
