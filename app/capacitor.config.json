@@ -1,0 +1,9 @@
+{
+  "appId": "com.seiscoronas.juego",
+  "appName": "Las Seis Coronas",
+  "webDir": "www",
+  "backgroundColor": "#16111f",
+  "android": {
+    "adjustMarginsForEdgeToEdge": "auto"
+  }
+}

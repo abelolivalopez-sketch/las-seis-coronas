@@ -1,0 +1,285 @@
+<title>Las Seis Coronas</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Prototipo jugable de Las Seis Coronas: RPG medieval por turnos en pixel art.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&display=swap">
+<style>
+  /* Consola de mano: pantalla 3:2 arriba, cruceta y botones abajo (en horizontal, a los lados) */
+  :root {
+    --shell: #2a2140;
+    --shell-hi: #3a2f57;
+    --shell-lo: #16111f;
+    --bezel: #0d0a14;
+    --ink: #f1e6cd;
+    --muted: #9d90b4;
+    --gold: #e5b44f;
+    --btn: #43375e;
+    --btn-hi: #5b4d7c;
+    --btn-a: #b6463b;
+    --btn-b: #3d6aa1;
+    --paper: #fbf4e0;
+    --paper-ink: #3c3434;
+    --paper-edge: #7a4d26;
+    --ui: "Silkscreen", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+    color-scheme: dark;
+  }
+  [hidden] { display: none !important; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    background: var(--shell-lo);
+    color: var(--ink);
+    font-family: var(--ui);
+    overflow: hidden;
+    touch-action: manipulation;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .console {
+    box-sizing: border-box;
+    height: 100%;
+    max-width: 760px;
+    margin: 0 auto;
+    padding-top: max(12px, env(safe-area-inset-top, 0px));
+    padding-bottom: max(12px, env(safe-area-inset-bottom, 0px));
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    grid-template-rows: auto 1fr auto;
+    grid-template-areas: "screen screen screen" "dpad mid ab" "hint hint hint";
+    align-items: center;
+    column-gap: 12px;
+    row-gap: 10px;
+    background:
+      radial-gradient(120% 60% at 50% 0%, var(--shell-hi) 0%, var(--shell) 55%, var(--shell-lo) 100%);
+  }
+  .screen-wrap {
+    grid-area: screen;
+    justify-self: center;
+    width: 100%;
+    max-width: min(720px, calc((100dvh - 250px) * 1.5));
+    position: relative;
+    box-sizing: border-box;
+    background: var(--bezel);
+    border-radius: 14px 14px 34px 14px;
+    padding: 10px 10px 8px;
+    box-shadow: inset 0 0 0 2px #241c33, 0 6px 0 #0a0710;
+  }
+  #screen {
+    display: block;
+    width: 100%;
+    aspect-ratio: 3 / 2;
+    height: auto;
+    max-width: 100%;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+    background: #0a0810;
+    border-radius: 3px;
+  }
+  .brand {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 8px;
+    margin-top: 6px;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+  }
+  .brand b { color: var(--gold); font-weight: 700; }
+
+  /* cruceta */
+  .dpad {
+    grid-area: dpad;
+    justify-self: start;
+    position: relative;
+    width: 138px;
+    height: 138px;
+    touch-action: none;
+  }
+  .dpad::before, .dpad::after {
+    content: "";
+    position: absolute;
+    background: var(--btn);
+    border-radius: 8px;
+    box-shadow: 0 4px 0 #120d1b, inset 0 2px 0 var(--btn-hi);
+  }
+  .dpad::before { left: 46px; top: 4px; width: 46px; height: 130px; }
+  .dpad::after { top: 46px; left: 4px; width: 130px; height: 46px; }
+  .dpad i {
+    position: absolute;
+    z-index: 1;
+    width: 0; height: 0;
+    border: 8px solid transparent;
+    opacity: 0.55;
+  }
+  .dpad .u { left: 61px; top: 16px; border-bottom-color: var(--ink); }
+  .dpad .d { left: 61px; bottom: 16px; border-top-color: var(--ink); }
+  .dpad .l { top: 61px; left: 16px; border-right-color: var(--ink); }
+  .dpad .r { top: 61px; right: 16px; border-left-color: var(--ink); }
+  .dpad[data-dir="up"] .u, .dpad[data-dir="down"] .d, .dpad[data-dir="left"] .l, .dpad[data-dir="right"] .r { opacity: 1; }
+  .dpad .hub { position: absolute; z-index: 1; left: 59px; top: 59px; width: 20px; height: 20px; border-radius: 50%; background: #352a4c; }
+
+  .mid { grid-area: mid; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .pill {
+    font: 700 11px/1 var(--ui);
+    letter-spacing: 0.1em;
+    color: var(--ink);
+    background: var(--btn);
+    border: 0;
+    border-radius: 999px;
+    padding: 9px 16px;
+    box-shadow: 0 3px 0 #120d1b, inset 0 1px 0 var(--btn-hi);
+    touch-action: none;
+    cursor: pointer;
+  }
+  .ab {
+    grid-area: ab;
+    justify-self: end;
+    position: relative;
+    width: 148px;
+    height: 120px;
+  }
+  .btn {
+    position: absolute;
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    border: 0;
+    font: 700 20px/1 var(--ui);
+    color: #fff4e4;
+    touch-action: none;
+    cursor: pointer;
+    box-shadow: 0 5px 0 #120d1b, inset 0 3px 0 rgba(255, 255, 255, 0.22);
+  }
+  .btn.a { right: 0; top: 8px; background: var(--btn-a); }
+  .btn.b { left: 0; bottom: 4px; background: var(--btn-b); }
+  .btn small { display: block; margin-top: 4px; font-size: 8px; letter-spacing: 0.06em; opacity: 0.85; }
+  .btn.on, .pill.on { transform: translateY(3px); box-shadow: 0 2px 0 #120d1b, inset 0 3px 0 rgba(255, 255, 255, 0.12); }
+  .btn:focus-visible, .pill:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+
+  .hint {
+    grid-area: hint;
+    margin: 0;
+    text-align: center;
+    font-size: 10px;
+    line-height: 1.6;
+    letter-spacing: 0.04em;
+    color: var(--muted);
+    text-wrap: balance;
+  }
+  .hint kbd { font: inherit; color: var(--ink); background: var(--btn); padding: 1px 5px; border-radius: 4px; }
+  @media (hover: none) and (pointer: coarse) { .hint { display: none; } }
+
+  /* teléfono en horizontal: controles a los lados de la pantalla */
+  @media (orientation: landscape) and (max-height: 540px) {
+    .console {
+      max-width: none;
+      grid-template-columns: auto 1fr auto;
+      grid-template-rows: 1fr auto;
+      grid-template-areas: "dpad screen ab" "dpad mid ab";
+      padding-block: 8px;
+      row-gap: 6px;
+    }
+    .screen-wrap { max-width: calc((100dvh - 70px) * 1.5); padding: 6px 6px 4px; border-radius: 10px; }
+    .brand { display: none; }
+    .hint { display: none; }
+    .dpad { justify-self: center; }
+    .ab { justify-self: center; }
+  }
+  @media (max-width: 560px) and (orientation: portrait) {
+    .console {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      grid-template-rows: auto 1fr auto;
+      grid-template-areas: "screen screen" "dpad ab" "mid mid";
+      row-gap: 14px;
+    }
+    .screen-wrap { padding: 8px 8px 6px; border-radius: 12px 12px 28px 12px; }
+    .mid { padding-bottom: 8px; }
+  }
+  @media (max-width: 370px) {
+    .dpad { transform: scale(0.88); transform-origin: left center; }
+    .ab { transform: scale(0.88); transform-origin: right center; }
+  }
+
+  /* nombre del personaje */
+  .name-dlg {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    background: rgba(13, 10, 20, 0.62);
+    border-radius: inherit;
+    z-index: 5;
+  }
+  .name-dlg form {
+    display: grid;
+    gap: 10px;
+    width: min(300px, 86%);
+    box-sizing: border-box;
+    padding: 16px;
+    background: var(--paper);
+    color: var(--paper-ink);
+    border: 3px solid var(--paper-edge);
+    border-radius: 6px;
+    box-shadow: 0 0 0 2px var(--gold) inset;
+  }
+  .name-dlg label { font: 700 13px/1.3 var(--ui); }
+  .name-dlg input {
+    font: 16px/1.2 var(--ui);
+    padding: 8px 10px;
+    color: var(--paper-ink);
+    background: #fffaf0;
+    border: 2px solid var(--paper-edge);
+    border-radius: 4px;
+    user-select: text;
+    -webkit-user-select: text;
+  }
+  .name-dlg input:focus { outline: 2px solid var(--gold); outline-offset: 1px; }
+  .name-dlg button {
+    font: 700 13px/1 var(--ui);
+    padding: 10px;
+    color: #fff4e4;
+    background: var(--btn-a);
+    border: 0;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  .name-dlg small { font-size: 10px; color: #7a6a5a; }
+  @media (prefers-reduced-motion: reduce) { .btn.on, .pill.on { transform: none; } }
+</style>
+
+<main class="console">
+  <div class="screen-wrap">
+    <canvas id="screen" width="240" height="160" aria-label="Pantalla del juego Las Seis Coronas"></canvas>
+    <div class="brand"><b data-es="LAS SEIS CORONAS" data-fr="LES SIX COURONNES">LAS SEIS CORONAS</b><span data-es="prototipo v0.2" data-fr="prototype v0.2">prototipo v0.2</span></div>
+    <div class="name-dlg" id="nameDlg" hidden>
+      <form id="nameForm" autocomplete="off">
+        <label for="nameInput" data-es="¿Cómo te llamas?" data-fr="Comment t'appelles-tu ?">¿Cómo te llamas?</label>
+        <input id="nameInput" name="nameInput" maxlength="10" autocomplete="off" autocapitalize="words" spellcheck="false" enterkeyhint="done">
+        <small data-es="Máximo 10 letras." data-fr="10 lettres maximum.">Máximo 10 letras.</small>
+        <button type="submit" data-es="Aceptar" data-fr="Valider">Aceptar</button>
+      </form>
+    </div>
+  </div>
+  <div class="dpad" id="dpad" role="group" aria-label="Cruceta">
+    <i class="u"></i><i class="d"></i><i class="l"></i><i class="r"></i><span class="hub"></span>
+  </div>
+  <div class="mid">
+    <button class="pill" type="button" data-btn="start" aria-label="Menú" data-es="MENÚ" data-fr="MENU">MENÚ</button>
+  </div>
+  <div class="ab">
+    <button class="btn b" type="button" data-btn="b" aria-label="B">B<small data-es="volver" data-fr="retour">volver</small></button>
+    <button class="btn a" type="button" data-btn="a" aria-label="A">A<small data-es="aceptar" data-fr="valider">aceptar</small></button>
+  </div>
+  <p class="hint">
+    <kbd data-es="Flechas" data-fr="Flèches">Flechas</kbd> <span data-es="mover" data-fr="bouger">mover</span> · <kbd>Z</kbd> A · <kbd>X</kbd> B <span data-es="(mantén para correr)" data-fr="(maintiens pour courir)">(mantén para correr)</span> · <kbd>M</kbd> <span data-es="menú" data-fr="menu">menú</span>
+  </p>
+</main>
+
+<script>
+/*GAME*/
+</script>
