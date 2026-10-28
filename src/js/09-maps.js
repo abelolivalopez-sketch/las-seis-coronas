@@ -39,11 +39,11 @@ const MAPS = {
     },
     objects: [
       { type: 'house', x: 3, y: 13, w: 5, h: 4, o: { door: 2, windows: [0, 3.6], frame: '#3a70c0', chimney: 4 },
-        door: { es: 'Tu casa. Ahora no hay tiempo para descansar: ¡te esperan en la palestra!', fr: 'Ta maison. Pas le temps de te reposer : on t\'attend à la palestre !' } },
+        doorText: { es: 'Tu casa. Ahora no hay tiempo para descansar: ¡te esperan en la palestra!', fr: 'Ta maison. Pas le temps de te reposer : on t\'attend à la palestre !' } },
       { type: 'house', x: 3, y: 3, w: 5, h: 4, o: { door: 2, windows: [0, 3.6], frame: '#3d8c58', doorCol: ['#4f8a5a', '#3c6c46', '#244a2e'] },
-        door: { es: 'La casa de la vecina. La puerta está cerrada.', fr: 'La maison de la voisine. La porte est fermée.' } },
+        doorText: { es: 'La casa de la vecina. La puerta está cerrada.', fr: 'La maison de la voisine. La porte est fermée.' } },
       { type: 'house', x: 17, y: 3, w: 5, h: 4, o: { door: 2, windows: [0, 3.6], frame: '#a0402e', shield: true, roof: ['#dc7e58', '#b8583a', '#86381f'], plinth: '#3a70c0' },
-        door: { es: 'La casa de Maese Esteban. Ahora está en la palestra.', fr: 'La maison de Maître Esteban. Il est à la palestre.' } },
+        doorText: { es: 'La casa de Maese Esteban. Ahora está en la palestra.', fr: 'La maison de Maître Esteban. Il est à la palestre.' } },
       { type: 'well', x: 12, y: 10, text: { es: 'El pozo de la aldea. El agua sale fresquísima.', fr: 'Le puits du village. L\'eau y est bien fraîche.' } },
       { type: 'sign', x: 14, y: 4, text: { es: 'VILLAOLIVO\nAldea de olivares. Al norte: RUTA 1 y TOLEDO.', fr: 'VILLAOLIVO\nVillage d\'oliveraies. Au nord : ROUTE 1 et TOLÈDE.' } },
       { type: 'sign', x: 15, y: 13, text: { es: 'PALESTRA DE MAESE ESTEBAN\nMaestro de armas de Villaolivo.', fr: 'PALESTRE DE MAÎTRE ESTEBAN\nMaître d\'armes de Villaolivo.' } },
@@ -105,10 +105,9 @@ const MAPS = {
     },
     objects: [
       { type: 'sign', x: 10, y: 36, text: { es: 'RUTA 1\nVillaolivo – Toledo. Cuidado: en el matorral hay animales salvajes.', fr: 'ROUTE 1\nVillaolivo – Tolède. Attention : des bêtes sauvages rôdent dans les broussailles.' } },
-      { type: 'sign', x: 9, y: 3, text: { es: 'PUENTE DE LA RUTA 2\nCerrado por obras.', fr: 'PONT DE LA ROUTE 2\nFermé pour travaux.' } },
-      { type: 'barricade', x: 11, y: 1, text: { es: 'Una barrera de madera. Hay obras en el puente.', fr: 'Une barrière en bois. Le pont est en travaux.' } },
+      { type: 'sign', x: 9, y: 3, text: { es: 'Al norte: RUTA 2 · SIERRA MORENA y TOLEDO.', fr: 'Au nord : ROUTE 2 · SIERRA MORENA et TOLÈDE.' } },
     ],
-    conn: { down: { map: 'villaolivo', dx: 4 } },
+    conn: { down: { map: 'villaolivo', dx: 4 }, up: { map: 'ruta2', dx: 2 } },
     npcs: [
       { id: 'viajera', look: 'viajera', x: 7, y: 24, dir: 'left', text: { es: 'Si mantienes pulsado B mientras caminas, correrás. ¡Viene genial en los caminos largos!', fr: 'Si tu maintiens B en marchant, tu cours. Très pratique sur les longues routes !' } },
       { id: 'cazador', look: 'cazador', x: 14, y: 29, dir: 'left', talk: async W => {
@@ -118,12 +117,6 @@ const MAPS = {
       { id: 'martin', look: 'martin', x: 8, y: 16, dir: 'left', trainer: { range: 4, flag: 'beatMartin' }, talk: async W => {
         if (!W.flag('beatMartin')) return trainerMartin(W, W.npc('martin'));
         await W.say({ es: 'Sigue así y llegarás lejos. Yo me quedo entrenando aquí un tiempo más.', fr: 'Continue comme ça et tu iras loin. Moi, je reste m\'entraîner ici encore un peu.' });
-      } },
-      { id: 'guardia2', look: 'guard', x: 10, y: 1, dir: 'down', talk: async W => {
-        await W.say({ es: 'El puente hacia la Ruta 2 se está reparando. Hoy no pasa nadie.', fr: 'Le pont vers la Route 2 est en réparation. Personne ne passe aujourd\'hui.' });
-        await W.say({ es: 'Vuelve más adelante... en la próxima versión del juego.', fr: 'Reviens plus tard... dans la prochaine version du jeu.' });
-        Sfx.play('win');
-        await W.say({ es: '¡Gracias por jugar al prototipo de LAS SEIS CORONAS! Puedes seguir entrenando en el matorral.', fr: 'Merci d\'avoir joué au prototype des SIX COURONNES ! Tu peux continuer à t\'entraîner dans les broussailles.' });
       } },
     ],
     triggers: [],

@@ -1,16 +1,28 @@
-# Las Seis Coronas · prototipo v0.2
+# Las Seis Coronas · prototipo v0.3
 
 RPG medieval por turnos en pixel art, ambientado en 1415. Se juega en español o en francés.
 
 ## Qué incluye
 
 - Elección de idioma al empezar (español o francés), que se puede cambiar desde el menú.
-- Pantalla de título, elección de personaje (escudero o escudera, piel clara u oscura) y nombre.
-- Villaolivo y la Ruta 1, con personajes, carteles, objetos y la historia inicial.
-- Combate por turnos con técnicas, objetos, huida, golpes críticos y mejoras de atributos.
-- Experiencia y niveles hasta el 150.
+- Elección de personaje (escudero o escudera, piel clara u oscura) y nombre.
+- **El capítulo I completo, de Villaolivo a Venecia**: 8 ciudades, 15 rutas (por tierra, por mar y por islas), 4 coliseos y la guarida del Cuervo en el Arsenal.
+- Unos 70 entrenadores, 13 animales salvajes distintos y la historia de la Compañía del Cuervo, que roba los Sellos de la tregua.
+- Posadas para curarse (si caes en combate, despiertas en la última), tiendas de objetos y armerías con armas y armaduras.
+- Viajes en barco entre puertos y técnicas nuevas hasta el nivel 46 (eliges cuál olvidar).
+- Combate por turnos con técnicas, objetos, huida, golpes críticos y mejoras de atributos. Experiencia y niveles hasta el 150.
 - **Contador de kilómetros real** en la app de Android: los pasos del móvil se convierten en ducados y objetos.
 - Guardado automático y controles táctiles.
+
+## La aventura
+
+| Zona | Rutas | Coliseo · maestro (nivel) |
+| --- | --- | --- |
+| España | Ruta 1 y 2 (Sierra Morena), Toledo, Ruta 3 (La Mancha), Ruta 4 (costa de Cádiz), Tarifa | Toledo · Don Rodrigo (14) |
+| Marruecos | Ruta 5 (el Estrecho, en barco), Tánger, Ruta 6 (Rif), Ruta 7 (valle del Sebú), Fez | Fez · Zaynab (26) |
+| El mar | Ruta 9 (Alborán), Ruta 10 (Baleares), Ruta 11 (Cerdeña), Ruta 12 (mar de Liguria) | — |
+| Italia | Génova, Ruta 13 (Apeninos), Ruta 14 (Toscana), Florencia, Ruta 15 (Po), Ruta 16 (laguna), Venecia | Génova · Bianca (34) · Florencia · Guido (44) |
+| Final | El Arsenal de Venecia | Corvino, jefe del Cuervo (54) |
 
 ## Instalar en Android (para tus amigos)
 
@@ -79,13 +91,19 @@ Todo es JavaScript sin librerías y el arte se dibuja con código.
 | `src/js/02-font.js` | Fuente pixel propia con tildes, ñ, ç, ¿ y ¡ |
 | `src/js/02b-lang.js` | Idiomas y textos de la interfaz (español y francés) |
 | `src/js/03-art-chars.js` | Personajes |
-| `src/js/04-art-world.js` | Suelo, olivos, casas, objetos, animales e interfaz |
+| `src/js/04-art-world.js` | Suelo, olivos, casas, objetos e interfaz |
+| `src/js/04b-art-world2.js` | Terrenos por región, murallas, barcos, coliseos y edificios grandes |
+| `src/js/04c-art-beasts.js` | Animales de los combates |
 | `src/js/05-data.js` | Técnicas, enemigos, objetos, niveles y recompensas por caminar |
 | `src/js/06-state.js` | Partida, guardado y subida de nivel |
 | `src/js/07-ui.js` | Cuadros de texto y menús |
-| `src/js/08-game.js` | Escenas, fundidos y fondos |
-| `src/js/09-maps.js` | Mapas y guiones de la historia (textos en los dos idiomas) |
-| `src/js/10-world.js` | Movimiento, personajes y menú de pausa |
+| `src/js/08-game.js` | Escenas, fundidos y fondos de combate por región |
+| `src/js/08b-maptools.js` | Ayudas para los mapas: dibujos de texto, entrenadores, posadas y tiendas |
+| `src/js/09-maps.js` | Villaolivo y Ruta 1, con el prólogo |
+| `src/js/09b-espana.js` | España: Ruta 2 a Tarifa y el coliseo de Toledo |
+| `src/js/09c-marruecos.js` | Marruecos y el mar: el Estrecho, Tánger, Fez y las islas |
+| `src/js/09d-italia.js` | Italia: Génova, Florencia, Venecia y el Arsenal |
+| `src/js/10-world.js` | Movimiento, puertas, posadas, tiendas, barcos y menú de pausa |
 | `src/js/11-battle.js` | Combate |
 | `src/js/12-scenes.js` | Idioma, título, elección de personaje e introducción |
 | `src/js/13-pasos.js` | Contador de pasos y recompensas por km |
@@ -93,9 +111,20 @@ Todo es JavaScript sin librerías y el arte se dibuja con código.
 | `src/page.html` | La consola: pantalla, botones y estilos |
 | `app/` | App de Android (Capacitor): configuración, plugin de pasos en Java e icono |
 | `web/` | Icono y manifiesto de la versión web (para añadirla a la pantalla de inicio) |
-| `tools/` | Construcción, preparación de la app y pruebas automáticas |
+| `tools/` | Construcción, preparación de la app y pruebas automáticas (ver abajo) |
 
 Los textos bilingües se escriben así: `{ es: 'Hola', fr: 'Bonjour' }`.
+
+Los mapas se dibujan con letras (cada letra es una casilla): `.` hierba, `,` matorral, `=` camino, `#` empedrado, `s` arena, `~` agua, `B` puente, `T` olivo, `C` ciprés, `Y` abeto, `P` palmera, `V` viña, `M` roca, `W` muralla, `D` tablones, `K` borda de barco, `X` caja.
+
+## Pruebas
+
+```bash
+node tools/build.mjs
+node tools/validate.mjs          # revisa conexiones, puertas y que todo sea alcanzable
+node tools/balance.mjs 4         # simula la aventura: niveles, dinero y dificultad de cada maestro
+node tools/playthrough.mjs out es  # juega la historia entera con la interfaz real y guarda capturas
+```
 
 ## Construir la versión web
 

@@ -1,48 +1,93 @@
 // ─── Mundo: mapa, movimiento por casillas, personajes y menú ─────────────
-const BLOCK = 'TCFR~';
+const BLOCK = 'TCFR~WMPQrXYVK';
 const WALK_MS = 240;
 
+// Casillas: . hierba · , matorral · = camino · s arena · * flores · ~ agua · # empedrado
+//           T olivo (2×2) · C ciprés · P palmera · Q palmera en la arena · F valla · R roca · r roca en la arena
+//           W muralla · M roca de montaña · B puente · D tablones · X caja · Y abeto · V viña · K borda
 function renderMap(def, g) {
+  setTheme(def.theme);
   const mw = g[0].length, mh = g.length;
   const [c, x] = mkCanvas(mw * T, mh * T);
   const at = (i, j) => (i < 0 || j < 0 || i >= mw || j >= mh ? null : g[j][i]);
+  const n4 = (i, j, test) => ({ n: test(at(i, j - 1)), s: test(at(i, j + 1)), w: test(at(i - 1, j)), e: test(at(i + 1, j)) });
   for (let j = 0; j < mh; j++) for (let i = 0; i < mw; i++) {
     const ch = g[j][i], ox = i * T, oy = j * T;
-    if (DIRT(ch)) {
+    if (DIRT(ch) || ch === 'Q' || ch === 'r') {
       const nb = {};
       for (const [k, dx, dy] of [['n', 0, -1], ['s', 0, 1], ['w', -1, 0], ['e', 1, 0], ['nw', -1, -1], ['ne', 1, -1], ['sw', -1, 1], ['se', 1, 1]]) {
         const v = at(i + dx, j + dy);
-        nb[k] = v !== null && !DIRT(v);
+        nb[k] = v !== null && GRASSY(v);
       }
-      dirtTile(x, ox, oy, i, j, nb, ch === 's' ? PAL.sand : PAL.dirt);
+      dirtTile(x, ox, oy, i, j, nb, ch === '=' ? GP.dirt : GP.sand);
     } else if (ch === '~') {
       const nb = {};
-      for (const [k, dx, dy] of [['n', 0, -1], ['s', 0, 1], ['w', -1, 0], ['e', 1, 0]]) { const v = at(i + dx, j + dy); nb[k] = v !== null && v !== '~'; }
+      for (const [k, dx, dy] of [['n', 0, -1], ['s', 0, 1], ['w', -1, 0], ['e', 1, 0]]) {
+        const v = at(i + dx, j + dy);
+        nb[k] = v !== null && v !== '~' && v !== 'B' ? groundCol(v) : false;
+      }
       waterTile(x, ox, oy, i, j, nb);
     } else if (ch === ',') tallGrass(x, ox, oy);
     else if (ch === '*') flowers(x, ox, oy, i, j);
+    else if (ch === '#') cobbleTile(x, ox, oy, i, j);
+    else if (ch === 'W') wallTile(x, ox, oy, i, j, n4(i, j, v => v !== 'W'));
+    else if (ch === 'M') cliffTile(x, ox, oy, i, j, n4(i, j, v => v !== null && v !== 'M'));
+    else if (ch === 'D' || ch === 'X') deckTile(x, ox, oy, i, j);
+    else if (ch === 'K') hullTile(x, ox, oy, i, j, n4(i, j, v => v === '~' || v === null));
+    else if (ch === 'B') bridgeTile(x, ox, oy, i, j, n4(i, j, v => v === '~'));
+    else if (ch === 'V') { grassBase(x, ox, oy, i, j); drawVine(x, ox, oy, i, j); }
     else grassBase(x, ox, oy, i, j);
   }
   for (let j = 0; j < mh; j++) for (let i = 0; i < mw; i++) {
     const ch = g[j][i];
     if (ch === 'F') drawFence(x, i * T, j * T, { n: at(i, j - 1) === 'F', s: at(i, j + 1) === 'F', w: at(i - 1, j) === 'F', e: at(i + 1, j) === 'F' });
-    if (ch === 'R') drawRock(x, i * T, j * T);
+    if (ch === 'R' || ch === 'r') drawRock(x, i * T, j * T);
+    if (ch === 'X') drawCrate(x, i * T, j * T);
   }
   for (let j = 0; j < mh; j++) for (let i = 0; i < mw; i++) {
     const ch = g[j][i];
     if (ch === 'T' && i % 2 === 0 && j % 2 === 0) drawOlive(x, i * T, j * T, i * 7 + j * 13);
     if (ch === 'C' && at(i, j - 1) !== 'C') drawCypress(x, i * T, j * T);
+    if (ch === 'P' || ch === 'Q') drawPalm(x, i * T, j * T, i * 5 + j * 3);
+    if (ch === 'Y') drawFir(x, i * T, j * T, i * 3 + j);
   }
-  for (const o of def.objects || []) {
-    const ox = o.x * T, oy = o.y * T;
-    if (o.type === 'house') drawHouse(x, ox, oy, o.w, o.h, o.o);
-    else if (o.type === 'well') drawWell(x, ox, oy);
-    else if (o.type === 'sign') drawSign(x, ox, oy);
-    else if (o.type === 'dummy') drawDummy(x, ox, oy);
-    else if (o.type === 'barrel') drawBarrel(x, ox, oy);
-    else if (o.type === 'barricade') drawBarricade(x, ox, oy);
-  }
+  // los objetos que aparecen o desaparecen (cond) se dibujan aparte, en cada fotograma
+  for (const o of def.objects || []) if (!o.cond) drawObj(x, o, o.x * T, o.y * T);
   return c;
+}
+function drawObj(x, o, ox, oy) {
+  if (o.type === 'house') drawHouse(x, ox, oy, o.w, o.h, Object.assign({}, o.o, { door: doorCols(o)[0] ?? 2 }));
+  else if (o.type === 'well') drawWell(x, ox, oy);
+  else if (o.type === 'sign') drawSign(x, ox, oy);
+  else if (o.type === 'dummy') drawDummy(x, ox, oy);
+  else if (o.type === 'barrel') drawBarrel(x, ox, oy);
+  else if (o.type === 'barricade') drawBarricade(x, ox, oy);
+  else if (o.type === 'coliseo') drawColiseo(x, ox, oy, o.w, o.h, o.o || {});
+  else if (o.type === 'gate') drawGate(x, ox, oy, o.w, o.h, o.o || {});
+  else if (o.type === 'ship') drawShip(x, ox, oy, o.w, o.h, o.o || {});
+  else if (o.type === 'stall') drawStall(x, ox, oy, o.o || {});
+  else if (o.type === 'windmill') drawWindmill(x, ox, oy);
+  else if (o.type === 'fountain') drawFountain(x, ox, oy, o.o || {});
+  else if (o.type === 'tower') drawTower(x, ox, oy, o.w, o.h, o.o || {});
+  else if (o.type === 'dome') drawDome(x, ox, oy);
+  else if (o.type === 'banner') drawBanner(x, ox, oy, o.o || {});
+  else if (o.type === 'tent') drawTent(x, ox, oy, o.o || {});
+  else if (o.type === 'gondola') drawGondola(x, ox, oy);
+  else if (o.type === 'mast') drawMast(x, ox, oy, o.o || {});
+  else if (o.type === 'stand') drawStand(x, ox, oy, o.w, o.o || {});
+  else if (o.type === 'throne') drawThrone(x, ox, oy, o.o || {});
+  else if (o.type === 'chest') drawChest(x, ox, oy, o.o || {});
+  else if (o.type === 'boat') drawBoat(x, ox, oy);
+}
+// Puerta de un edificio: columna(s) de la puerta en su fila de abajo
+function doorCols(o) {
+  const d = o.door !== undefined ? o.door : o.o && o.o.door;
+  return d === undefined ? [] : Array.isArray(d) ? d : [d];
+}
+function doorAt(o, x, y) {
+  if (!o || y !== o.y + (o.h || 1) - 1) return false;
+  const cols = doorCols(o);
+  return cols.some(c => x === o.x + c);
 }
 
 class Ent {
@@ -71,13 +116,17 @@ class WorldScene {
   load(mapId, x, y, dir) {
     const def = MAPS[mapId];
     this.def = def; this.mapId = mapId;
+    setTheme(def.theme);
     if (!this.cache[mapId]) { const g = def.build(); this.cache[mapId] = { g, canvas: renderMap(def, g) }; }
     this.grid = this.cache[mapId].g; this.canvas = this.cache[mapId].canvas;
     this.mw = this.grid[0].length; this.mh = this.grid.length;
     this.objs = {};
     for (const o of def.objects || []) {
+      if (o.cond && !o.cond()) continue;
       const w = o.w || 1, h = o.h || 1;
-      for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) this.objs[(o.x + i) + ',' + (o.y + j)] = o;
+      // o.walk: casillas del objeto por las que se puede pasar (el arco de una puerta de la muralla)
+      const free = new Set((o.walk || []).map(([a, b]) => a + ',' + b));
+      for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) if (!free.has(i + ',' + j)) this.objs[(o.x + i) + ',' + (o.y + j)] = o;
     }
     this.player = new Ent({ id: 'player', look: () => playerLook(), x, y, dir });
     this.ents = [this.player];
@@ -164,13 +213,19 @@ class WorldScene {
     if (this.turnT > 0) { this.turnT -= dt; return; }
     const [dx, dy] = DV[d];
     const nx = p.x + dx, ny = p.y + dy;
+    const ex = (this.def.exits || []).find(e => e.x === p.x && e.y === p.y && e.dir === d);
+    if (ex) { this.runScript(W => W.warp(ex.to)); return; }
     if (nx < 0 || ny < 0 || nx >= this.mw || ny >= this.mh) {
       const c = this.def.conn && this.def.conn[d];
       if (c) this.runScript(W => W.changeMap(c, d));
       else this.bump();
       return;
     }
-    if (this.blocked(nx, ny, p)) { this.bump(); return; }
+    if (this.blocked(nx, ny, p)) {
+      const o = this.objAt(nx, ny);
+      if (d === 'up' && doorAt(o, nx, ny) && (o.enter || o.run)) { this.runScript(W => W.useDoor(o)); return; }
+      this.bump(); return;
+    }
     this.move(p, d, Input.down('b') ? 2 : 1);
   }
   bump() { if (this.bumpT <= 0) { Sfx.play('bump'); this.bumpT = 320; } }
@@ -195,7 +250,8 @@ class WorldScene {
       if (tr.x === p.x && tr.y === p.y && (!tr.cond || tr.cond())) { this.runScript(tr.run); return; }
     }
     if (this.checkTrainers()) return;
-    if (this.tile(p.x, p.y) === ',' && this.def.wild && Math.random() < 0.1) this.runScript(W => W.wildBattle());
+    const on = this.def.wildOn || ',';
+    if (this.def.wild && on.includes(this.tile(p.x, p.y)) && Math.random() < (this.def.wildRate || 0.1)) this.runScript(W => W.wildBattle());
   }
 
   checkTrainers() {
@@ -248,8 +304,10 @@ class WorldScene {
     }
     const o = this.objAt(x, y);
     if (o) {
+      if (doorAt(o, x, y) && (o.enter || o.run)) { this.runScript(W => W.useDoor(o)); return; }
+      if (o.run && !doorCols(o).length) { this.runScript(W => o.run(W)); return; }
       let text = null;
-      if (o.type === 'house') { if (x === o.x + o.o.door && y === o.y + o.h - 1) text = o.door; }
+      if (o.type === 'house') { if (doorAt(o, x, y)) text = o.doorText || o.door_; }
       else text = typeof o.text === 'function' ? o.text() : o.text;
       if (text) this.runScript(async W => { await W.say(text); });
     }
@@ -319,6 +377,124 @@ class WorldScene {
     if (best) for (const d of best) await this.move(e, d, 1);
   }
   async fadeNpc(e) { await tween(e, { alpha: 0 }, 300, Ease.lin); e.gone = true; }
+  spawn(def) { const e = new Ent(def); this.ents.push(e); return e; }
+  async face(e, dir) { e.dir = dir; await wait(120); }
+
+  // Entrar por una puerta, o pasar de un mapa a otro sin cruzar el borde
+  async useDoor(o) {
+    if (o.locked && o.locked()) { Sfx.play('bump'); await this.say(typeof o.lockedText === 'function' ? o.lockedText() : o.lockedText); return; }
+    if (o.run) { await o.run(this, o); return; }
+    if (o.enter) await this.warp(o.enter);
+  }
+  async warp(to, silent) {
+    if (!silent) Sfx.play('door');
+    await Game.fadeOut(220);
+    this.load(to.map, to.x, to.y, to.dir || 'down');
+    Game.save();
+    await Game.fadeIn(220);
+    await this.runEnter();
+  }
+  async runEnter() {
+    const f = this.def.onEnter;
+    if (f) await f(this);
+  }
+
+  // Posada: cura y guarda el sitio donde despertarás si caes en combate
+  async inn(name) {
+    await this.say(name ? { es: name.es + ': ¡Bienvenid{o} a la posada! ¿Quieres descansar? Es gratis para quien lucha en los coliseos.', fr: name.fr + ' : Bienvenue à l\'auberge ! Tu veux te reposer ? C\'est gratuit pour qui combat dans les colisées.' } : t('inn_q'));
+    const r = await this.ask(t('inn_ask'), [t('yes'), t('no')]);
+    if (r !== 0) { await this.say(t('inn_bye')); return; }
+    await Game.fadeOut(300);
+    healPlayer();
+    Sfx.play('heal');
+    await wait(700);
+    S0().respawn = { map: this.mapId, x: this.player.x, y: this.player.y, dir: 'down' };
+    await Game.fadeIn(300);
+    await this.say(t('w_recoverAll'));
+    await this.say(t('inn_saved'), { color: 'blue' });
+    Game.save();
+  }
+
+  // Tienda: objetos de curación y equipo
+  async shop(stock, who) {
+    if (who) await this.say(who);
+    for (;;) {
+      const s = S0(), e = s.equip || {};
+      const opts = stock.map(id => {
+        if (ITEMS[id]) return `${tr(ITEMS[id].name)}  ${ITEMS[id].price}`;
+        const q = EQUIP[id], have = e[q.slot] === id;
+        return `${tr(q.name)}  ${have ? t('shop_have') : q.price}`;
+      }).concat([t('shop_exit')]);
+      const r = await this.ui.choose(opts, { y: 4, x: 4, cancel: opts.length - 1 });
+      if (r === opts.length - 1) { await this.say(t('shop_bye')); return; }
+      const id = stock[r];
+      if (ITEMS[id]) {
+        const it = ITEMS[id];
+        const max = Math.floor(s.ducados / it.price);
+        if (max < 1) { Sfx.play('bump'); await this.say(t('shop_poor')); continue; }
+        const qs = [1, 5, 10].filter(n => n <= max);
+        const k = await this.ask(t('shop_howMany', { i: tr(it.name), d: s.ducados }), qs.map(n => '×' + n + '  ' + n * it.price).concat([t('no')]));
+        if (k >= qs.length) continue;
+        const n = qs[k];
+        s.ducados -= n * it.price;
+        s.items[id] = (s.items[id] || 0) + n;
+        Sfx.play('coin');
+        await this.say(t('shop_bought', { q: itemQty(id, n) }));
+      } else {
+        const q = EQUIP[id], cur = e[q.slot];
+        if (cur === id) { await this.say(t('shop_already')); continue; }
+        const stat = q.slot === 'arma' ? 'atk' : 'def';
+        const now = equipBonus(cur, stat);
+        if (now >= q[stat]) { await this.say(t('shop_worse', { i: tr(EQUIP[cur].name) })); continue; }
+        const desc = q.slot === 'arma' ? t('shop_atk', { v: q.atk }) : t('shop_def', { v: q.def });
+        const k = await this.ask(t('shop_equipQ', { i: tr(q.name), x: desc, p: q.price }), [t('yes'), t('no')]);
+        if (k !== 0) continue;
+        if (s.ducados < q.price) { Sfx.play('bump'); await this.say(t('shop_poor')); continue; }
+        s.ducados -= q.price;
+        s.equip = Object.assign({}, e, { [q.slot]: id });
+        Sfx.play('item');
+        await this.say(t('shop_equipped', { i: tr(q.name) }), { color: 'blue' });
+      }
+      Game.save();
+    }
+  }
+  giveEquip(id) {
+    const s = S0(), q = EQUIP[id], e = s.equip || {};
+    const stat = q.slot === 'arma' ? 'atk' : 'def';
+    if (equipBonus(e[q.slot], stat) < q[stat]) s.equip = Object.assign({}, e, { [q.slot]: id });
+  }
+  async receive(item, n = 1) {
+    this.give(item, n);
+    Sfx.play('item');
+    await this.say(t('w_receive', { q: itemQty(item, n) }), { color: 'blue' });
+  }
+  async gold(v) {
+    S0().ducados += v;
+    Sfx.play('coin');
+    await this.say(t('w_gold', { v }), { color: 'blue' });
+  }
+  async blason(key, name) {
+    if (this.flag('blason_' + key)) return;
+    this.flag('blason_' + key, true);
+    S0().blasones = (S0().blasones || 0) + 1;
+    Sfx.play('win');
+    await this.say(t('w_crest', { b: tr(name) }), { color: 'blue' });
+  }
+
+  // Viaje en barco: pantalla del trayecto y llegada a puerto
+  async sail(to, label) {
+    Sfx.play('select');
+    await Game.fadeOut(300);
+    const st = { t: 0 };
+    const voyage = this.ui.panel(ctx => drawVoyage(ctx, st, label), dt => { st.t += dt; return st.t > 2600 ? true : undefined; });
+    Game.fadeA = 0;
+    await voyage;
+    await Game.fadeOut(200);
+    this.load(to.map, to.x, to.y, to.dir || 'down');
+    Game.save();
+    await Game.fadeIn(300);
+    await this.runEnter();
+  }
   async changeMap(c, d) {
     await Game.fadeOut(220);
     const p = this.player;
@@ -333,6 +509,7 @@ class WorldScene {
     this.load(c.map, nx, ny, d);
     Game.save();
     await Game.fadeIn(220);
+    await this.runEnter();
   }
   async battle(spec) {
     const res = await Game.battle(spec);
@@ -352,12 +529,20 @@ class WorldScene {
     const s = S0();
     s.ducados = Math.floor(s.ducados / 2);
     healPlayer();
-    this.load('villaolivo', 5, 17, 'down');
-    Game.fadeA = 1;
-    await Game.fadeIn(500);
-    const m = this.npc('madre');
-    if (m) { m.dir = 'right'; this.player.dir = 'left'; }
-    await this.say(t('w_wake'));
+    const rp = s.respawn;
+    if (rp && MAPS[rp.map] && rp.map !== 'villaolivo') {
+      this.load(rp.map, rp.x, rp.y, rp.dir || 'down');
+      Game.fadeA = 1;
+      await Game.fadeIn(500);
+      await this.say(t('w_wakeInn'));
+    } else {
+      this.load('villaolivo', 5, 17, 'down');
+      Game.fadeA = 1;
+      await Game.fadeIn(500);
+      const m = this.npc('madre');
+      if (m) { m.dir = 'right'; this.player.dir = 'left'; }
+      await this.say(t('w_wake'));
+    }
     await this.say(t('w_lostGold'));
     Game.save();
   }
@@ -367,6 +552,7 @@ class WorldScene {
     rect(ctx, 0, 0, W, H, '#0a0810');
     const cx = Math.round(this.cam.x), cy = Math.round(this.cam.y);
     ctx.drawImage(this.canvas, -cx, -cy);
+    for (const o of this.def.objects || []) if (o.cond && o.cond()) drawObj(ctx, o, o.x * T - cx, o.y * T - cy);
     for (const it of this.items) drawSack(ctx, it.x * T - cx, it.y * T - cy);
     const list = this.ents.filter(e => !e.gone).sort((a, b) => a.py - b.py || (a === this.player ? 1 : -1));
     for (const e of list) {
@@ -408,7 +594,12 @@ class WorldScene {
   }
 
   statusScreen() {
-    return this.ui.panel(ctx => drawStatus(ctx));
+    const st = { page: 0 };
+    return this.ui.panel(ctx => (st.page ? drawGear(ctx) : drawStatus(ctx)), () => {
+      if (Input.hit('a') || Input.hit('right') || Input.hit('left')) { st.page ^= 1; Sfx.play('blip'); }
+      if (Input.hit('b')) { Sfx.play('back'); return true; }
+      return undefined;
+    });
   }
 
   async itemsScreen() {
@@ -506,8 +697,13 @@ function drawStatus(ctx) {
   Font.draw(ctx, 'PV', 90, 34, 'dark');
   drawHpBar(ctx, 108, 39, 82, p.hp / p.maxHp);
   Font.drawRight(ctx, `${p.hp}/${p.maxHp}`, 230, 34, 'dark');
-  const rows = [[tr(STATNAME.atk), p.atk], [tr(STATNAME.def), p.def], [tr(STATNAME.spd), p.spd]];
-  rows.forEach(([n, v], i) => { Font.draw(ctx, n, 90, 47 + i * 12, 'dark'); Font.drawRight(ctx, String(v), 230, 47 + i * 12, 'dark'); });
+  const ef = effStats();
+  const rows = [[tr(STATNAME.atk), ef.atk, ef.atk - p.atk], [tr(STATNAME.def), ef.def, ef.def - p.def], [tr(STATNAME.spd), ef.spd, 0]];
+  rows.forEach(([n, v, b], i) => {
+    Font.draw(ctx, n, 90, 47 + i * 12, 'dark');
+    Font.drawRight(ctx, String(v), 230, 47 + i * 12, 'dark');
+    if (b) Font.drawRight(ctx, `+${b}`, 206, 47 + i * 12, 'blue');
+  });
   const next = p.level >= MAX_LV ? 0 : xpFor(p.level + 1) - p.xp;
   Font.draw(ctx, 'EXP', 90, 84, 'dark'); Font.drawRight(ctx, String(p.xp), 230, 84, 'dark');
   Font.draw(ctx, t('s_next'), 90, 96, 'grey'); Font.drawRight(ctx, String(next), 230, 96, 'grey');
@@ -519,7 +715,63 @@ function drawStatus(ctx) {
     Font.drawRight(ctx, `${m.pp}/${mv.pp}`, x + 106, y, 'grey');
   });
   Font.draw(ctx, t('s_gold', { v: s.ducados }), 10, 140, 'dark');
-  Font.drawRight(ctx, t('s_crests', { v: s.blasones }), 230, 140, 'dark');
+  Font.drawRight(ctx, t('s_more'), 230, 140, 'grey');
+}
+
+// Segunda página del estado: equipo y blasones
+const CRESTS = [
+  ['toledo', '#c23a3a', '#f2ca52', { es: 'TOLEDO', fr: 'TOLÈDE' }],
+  ['fez', '#2e8a5a', '#f2ca52', { es: 'FEZ', fr: 'FÈS' }],
+  ['genova', '#f4ece0', '#c23a3a', { es: 'GÉNOVA', fr: 'GÊNES' }],
+  ['florencia', '#8a2a3a', '#f4ece0', { es: 'FLORENCIA', fr: 'FLORENCE' }],
+  ['nuremberg', '#2a2a30', '#f2ca52', '?'],
+  ['londres', '#2a4aa0', '#f2ca52', '?'],
+  ['montsaintmichel', '#4a6a9a', '#f4ece0', '?'],
+  ['paris', '#2a3a8a', '#f2ca52', '?'],
+];
+function drawShield(ctx, x, y, c1, c2, on) {
+  const pal = on ? { k: '#3a2414', a: c1, b: c2 } : { k: '#a8987c', a: '#e2d6b8', b: '#e2d6b8' };
+  paintRows(ctx, ['kkkkkkkkkkkk', 'kaaaaabaaaak', 'kaaaaabaaaak', 'kaaaaabaaaak', 'kbbbbbbbbbbk', 'kaaaaabaaaak', 'kaaaaabaaaak', '.kaaaabaaak.', '..kaaabaak..', '...kaabak...', '....kkkk....'], pal, x, y);
+}
+function drawGear(ctx) {
+  const s = S0(), e = s.equip || {};
+  drawBox(ctx, 0, 0, W, H);
+  Font.draw(ctx, t('s_gear'), 12, 7, 'dark');
+  rect(ctx, 10, 21, 220, 1, '#c99a46');
+  const wpn = EQUIP[e.arma || 'espada_corta'], arm = e.armadura ? EQUIP[e.armadura] : null;
+  Font.draw(ctx, t('s_weapon'), 12, 26, 'grey');
+  Font.draw(ctx, tr(wpn.name), 12, 38, 'dark');
+  if (wpn.atk) Font.drawRight(ctx, t('shop_atk', { v: wpn.atk }), 228, 38, 'blue');
+  Font.draw(ctx, t('s_armor'), 12, 52, 'grey');
+  Font.draw(ctx, arm ? tr(arm.name) : t('s_none'), 12, 64, arm ? 'dark' : 'grey');
+  if (arm) Font.drawRight(ctx, t('shop_def', { v: arm.def }), 228, 64, 'blue');
+  rect(ctx, 10, 80, 220, 1, '#c99a46');
+  Font.draw(ctx, t('s_crests', { v: s.blasones || 0 }), 12, 84, 'dark');
+  CRESTS.forEach(([k, c1, c2], i) => {
+    const x = 16 + i * 27, on = !!s.flags['blason_' + k];
+    drawShield(ctx, x, 102, c1, c2, on);
+  });
+  const named = CRESTS.filter(([k]) => s.flags['blason_' + k]).map(c => tr(c[3]));
+  if (named.length) Font.draw(ctx, named.join(' · '), 12, 120, 'grey');
+  Font.drawRight(ctx, t('k_back'), 228, 140, 'dark');
+}
+
+// Travesía en barco
+function drawVoyage(ctx, st, label) {
+  const k = clamp(st.t / 2400, 0, 1);
+  const sky = ['#8cc8f0', '#a8d6f4', '#c4e4f6', '#dceff8'];
+  sky.forEach((c, i) => rect(ctx, 0, i * 14, W, 14, c));
+  rect(ctx, 0, 56, W, H - 56, '#3a7cc0');
+  for (let y = 60; y < H; y += 7) for (let x = 0; x < W; x += 16) {
+    const ox = (x + Math.floor(st.t / 40) + y * 3) % (W + 16) - 8;
+    rect(ctx, ox, y, 6, 1, y % 14 ? '#5c9ad8' : '#8ac0f0');
+  }
+  rect(ctx, 0, 54, W, 2, '#6aa4dc');
+  const bob = Math.round(Math.sin(st.t / 220) * 2);
+  const sx = Math.round(-60 + k * (W + 40));
+  drawShip(ctx, sx, 76 + bob, 4, 2, { color: '#f4ecd8', mark: '#c23a3a' });
+  drawBox(ctx, 30, 120, 180, 30);
+  Font.drawCenter(ctx, tr(label), 120, 128, 'dark');
 }
 
 function drawWalk(ctx, st) {

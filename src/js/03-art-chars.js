@@ -179,6 +179,24 @@ const OVER = {
     u: { 5: '.kHHHHHHHHHHHHk.' },
     s: { 5: 'kHHHHHHHHHHHHk..' },
   },
+  // yelmo de acero con nasal
+  helm: {
+    d: { 0: '......kkkk......', 1: '....kkiiiikk....', 2: '...kiiijiiiik...', 3: '..kiiijjiiiiik..', 4: '..kIiiiiiiiiIk..', 5: '..kkIIIIIIIIkk..', 6: '.......i........', 7: '.......i........' },
+    u: { 0: '......kkkk......', 1: '....kkiiiikk....', 2: '...kiiiiiiiik...', 3: '..kiiiiiiiiiik..', 4: '..kIiiiiiiiiIk..', 5: '..kkIIIIIIIIkk..' },
+    s: { 0: '.....kkkkk......', 1: '...kkiiiiikk....', 2: '..kiiiijiiiik...', 3: '..kiiijjiiiiik..', 4: '..kIiiiiiiiiIk..', 5: '.kkIIIIIIIIIkk..' },
+  },
+  // turbante
+  turban: {
+    d: { 0: '.....kkkkkk.....', 1: '...kkwwwwwwkk...', 2: '..kwwxwwwxwwwk..', 3: '..kwxwwwxwwwxk..', 4: '..kwwwwwwwwwwk..', 5: '..kxxxxxxxxxxk..' },
+    u: { 0: '.....kkkkkk.....', 1: '...kkwwwwwwkk...', 2: '..kwwxwwwxwwwk..', 3: '..kwxwwwxwwwxk..', 4: '..kwwwwwwwwwwk..', 5: '..kxxxxxxxxxxk..', 6: '..kwwwwwwwwwwk..' },
+    s: { 0: '....kkkkkk......', 1: '..kkwwwwwwkk....', 2: '..kwwxwwwxwwk...', 3: '..kwxwwwxwwwxk..', 4: '..kwwwwwwwwwwk..', 5: '.kxxxxxxxxxxk...' },
+  },
+  // boina o gorro
+  cap: {
+    d: { 0: '....kkkkkkk.....', 1: '...kcccccccck...', 2: '..kccccccccccck.', 3: '..kCCCCCCCCCCk..' },
+    u: { 0: '....kkkkkkk.....', 1: '...kcccccccck...', 2: '..kccccccccccck.', 3: '..kCCCCCCCCCCk..' },
+    s: { 0: '...kkkkkkk......', 1: '..kcccccccck....', 2: '.kcccccccccck...', 3: '..kCCCCCCCCCk...' },
+  },
 };
 
 const OUTLINE = '#2a2131';
@@ -196,6 +214,7 @@ const HAIR = {
   steel: ['#a9b2bc', '#6e7784', '#e4ecf4'],
   straw: ['#e6c676', '#b49448', '#f8e8b4'],
   hood: ['#5c4c3c', '#3a3026', '#7c6c5a'],
+  raven: ['#2e2a34', '#1a161e', '#4a4452'],
 };
 const CLOTH = {
   blue: ['#4a7ccc', '#305a9c', '#84abea'],
@@ -206,6 +225,15 @@ const CLOTH = {
   ochre: ['#d29c3a', '#9a6b22', '#f0ca72'],
   grey: ['#6c6662', '#4b4542', '#928c86'],
   teal: ['#3a8c9c', '#25606c', '#70bccc'],
+  raven: ['#3a3440', '#221e28', '#c23a3a'],
+  white: ['#ece8e0', '#c0b8ac', '#ffffff'],
+  navy: ['#34407a', '#222a54', '#5a6ab0'],
+  crimson: ['#a82848', '#721a30', '#d2506e'],
+  sand: ['#e0c89a', '#b8a070', '#f4e2bc'],
+  gold: ['#e8b838', '#b08420', '#f8dc78'],
+  olive: ['#7a8a3a', '#56622a', '#a0b25a'],
+  sky: ['#6aa8e0', '#3e78b4', '#a2ccf0'],
+  black: ['#3a3440', '#221e28', '#5a5262'],
 };
 const HOSE = { light: ['#8c7c60', '#665840'], dark: ['#4c4652', '#302b36'] };
 
@@ -227,17 +255,66 @@ const LOOKS = {
   martin: { base: 'm', skin: 'light', hair: 'brown', cloth: 'ochre' },
   cazador: { base: 'm', skin: 'light', hair: 'blond', cloth: 'green', over: 'beard' },
   bandit: { base: 'm', skin: 'mid', hair: 'hood', cloth: 'grey', over: 'mask', hose: 'dark' },
+  // gente de los caminos
+  peregrino: { base: 'm', skin: 'light', hair: 'grey', cloth: 'brown', over: 'hat' },
+  peregrina: { base: 'f', skin: 'mid', hair: 'brown', cloth: 'sand' },
+  herrero: { base: 'm', skin: 'mid', hair: 'black', cloth: 'grey', over: 'beard', hose: 'dark' },
+  cuervo: { base: 'm', skin: 'light', hair: 'raven', cloth: 'raven', over: 'mask', hose: 'dark' },
+  cuerva: { base: 'f', skin: 'mid', hair: 'raven', cloth: 'raven', hose: 'dark' },
+  marinero: { base: 'm', skin: 'dark', hair: 'black', cloth: 'navy', over: 'cap', capc: 'red' },
+  marinera: { base: 'f', skin: 'light', hair: 'blond', cloth: 'navy' },
+  corsario: { base: 'm', skin: 'mid', hair: 'black', cloth: 'crimson', over: ['hat', 'beard'], hose: 'dark' },
+  jinete: { base: 'm', skin: 'dark', hair: 'black', cloth: 'white', over: 'turban', wrap: 'sand' },
+  jineta: { base: 'f', skin: 'dark', hair: 'black', cloth: 'sky', over: 'turban', wrap: 'white' },
+  mercader: { base: 'm', skin: 'mid', hair: 'black', cloth: 'gold', over: ['turban', 'beard'], wrap: 'crimson' },
+  ballestero: { base: 'm', skin: 'light', hair: 'brown', cloth: 'crimson', over: 'helm', hose: 'dark' },
+  ballestera: { base: 'f', skin: 'light', hair: 'auburn', cloth: 'white', over: 'helm' },
+  espadachin: { base: 'm', skin: 'light', hair: 'black', cloth: 'purple', over: 'cap', capc: 'black' },
+  espadachina: { base: 'f', skin: 'mid', hair: 'brown', cloth: 'crimson', over: 'cap', capc: 'black' },
+  condotiero: { base: 'm', skin: 'light', hair: 'brown', cloth: 'grey', over: ['helm', 'beard'], hose: 'dark' },
+  fraile: { base: 'm', skin: 'light', hair: 'hood', cloth: 'brown', hose: 'dark' },
+  gondolero: { base: 'm', skin: 'light', hair: 'black', cloth: 'white', over: 'cap', capc: 'black' },
+  guardia_moro: { base: 'm', skin: 'dark', hair: 'black', cloth: 'white', over: 'turban', wrap: 'red', hose: 'dark' },
+  guardia_it: { base: 'm', skin: 'light', hair: 'brown', cloth: 'crimson', over: 'helm', hose: 'dark' },
+  // maestros, jefes y personajes de la historia
+  rodrigo: { base: 'm', skin: 'mid', hair: 'grey', cloth: 'crimson', over: 'beard', hose: 'dark' },
+  zaynab: { base: 'f', skin: 'dark', hair: 'black', cloth: 'sky', over: 'turban', wrap: 'gold' },
+  bianca: { base: 'f', skin: 'light', hair: 'blond', cloth: 'white', over: 'cap', capc: 'red' },
+  guido: { base: 'm', skin: 'light', hair: 'black', cloth: 'purple', over: ['cap', 'beard'], capc: 'black' },
+  capitan: { base: 'm', skin: 'light', hair: 'auburn', cloth: 'black', over: ['hat', 'beard'], hose: 'dark' },
+  corvino: { base: 'm', skin: 'light', hair: 'raven', cloth: 'raven', over: 'beard', hose: 'dark' },
+  capitana: { base: 'f', skin: 'mid', hair: 'brown', cloth: 'navy', over: 'cap', capc: 'navy' },
+  dux: { base: 'm', skin: 'light', hair: 'grey', cloth: 'gold', over: ['cap', 'beard'], capc: 'gold' },
+  // gente de las ciudades
+  toledano: { base: 'm', skin: 'mid', hair: 'brown', cloth: 'ochre', over: 'hat' },
+  toledana: { base: 'f', skin: 'light', hair: 'black', cloth: 'crimson' },
+  pescador: { base: 'm', skin: 'dark', hair: 'grey', cloth: 'teal', over: 'hat' },
+  costena: { base: 'f', skin: 'mid', hair: 'brown', cloth: 'sky' },
+  tangerino: { base: 'm', skin: 'mid', hair: 'black', cloth: 'sand', over: 'turban', wrap: 'white' },
+  tangerina: { base: 'f', skin: 'dark', hair: 'black', cloth: 'crimson', over: 'turban', wrap: 'gold' },
+  genoves: { base: 'm', skin: 'light', hair: 'blond', cloth: 'navy', over: 'cap', capc: 'red' },
+  genovesa: { base: 'f', skin: 'light', hair: 'brown', cloth: 'olive' },
+  florentino: { base: 'm', skin: 'light', hair: 'brown', cloth: 'crimson', over: 'cap', capc: 'crimson' },
+  florentina: { base: 'f', skin: 'light', hair: 'blond', cloth: 'purple' },
+  veneciano: { base: 'm', skin: 'light', hair: 'black', cloth: 'teal', over: 'cap', capc: 'teal' },
+  veneciana: { base: 'f', skin: 'light', hair: 'auburn', cloth: 'gold' },
+  nina: { base: 'f', skin: 'dark', hair: 'black', cloth: 'ochre' },
+  anciano: { base: 'm', skin: 'light', hair: 'grey', cloth: 'grey', over: 'beard' },
+  anciana: { base: 'f', skin: 'mid', hair: 'grey', cloth: 'brown' },
 };
 
 function lookPalette(L) {
   const sk = SKIN[L.skin], hr = HAIR[L.hair], cl = CLOTH[L.cloth], hs = HOSE[L.hose || 'light'];
   const bd = HAIR[L.beard || L.hair];
+  const wr = CLOTH[L.wrap || 'white'], cp = CLOTH[L.capc || L.cloth];
   return {
     k: OUTLINE, s: sk[0], S: sk[1], r: sk[2],
     h: hr[0], H: hr[1], l: hr[2],
     t: cl[0], T: cl[1], L: cl[2],
     b: '#6b4426', y: '#f2ca52', p: hs[0], P: hs[1], f: '#4c3426',
     g: bd[0], G: bd[1], m: '#4a4038',
+    i: '#c8ccd4', I: '#8a909c', j: '#f4f6fa',
+    w: wr[0], x: wr[1], c: cp[0], C: cp[1],
   };
 }
 
@@ -247,8 +324,9 @@ function composeRows(base, view, legIdx, overKey) {
   let legs = legSet[legIdx === 0 ? 0 : 1];
   if (legIdx === 2 && view !== 'side') legs = legs.map(r => r.split('').reverse().join(''));
   const rows = body.concat(legs);
-  if (overKey) {
-    const ov = OVER[overKey][view === 'side' ? 's' : view] || {};
+  const keys = Array.isArray(overKey) ? overKey : overKey ? [overKey] : [];
+  for (const key of keys) {
+    const ov = OVER[key][view === 'side' ? 's' : view] || {};
     for (const ri in ov) {
       const o = ov[ri], r = rows[ri].split('');
       for (let i = 0; i < o.length; i++) if (o[i] !== '.') r[i] = o[i];

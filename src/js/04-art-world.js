@@ -6,29 +6,32 @@ const PAL = {
   sand: { b: '#f2e0b2', d: '#dbc390', l: '#fcf2d4', e: '#c8aa72' },
   water: '#5b9be2', waterD: '#2f5f9a', waterL: '#93c4f6', foam: '#cfe5fb',
 };
+// Paleta del suelo del mapa actual (cambia por región: ver THEMES en 04b)
+let GP = PAL;
 const DIRT = c => c === '=' || c === 's';
+const GRASSY = c => '.,*TCFRPHYV'.includes(c);
 
 function grassBase(ctx, ox, oy, tx, ty) {
-  rect(ctx, ox, oy, 16, 16, PAL.grass);
+  rect(ctx, ox, oy, 16, 16, GP.grass);
   for (let k = 0; k < 3; k++) {
     if (hash2(tx, ty, k) > 0.62) continue;
     const x = ox + 2 + Math.floor(hash2(tx, ty, k + 11) * 11);
     const y = oy + 3 + Math.floor(hash2(tx, ty, k + 21) * 10);
-    px(ctx, x, y, PAL.grassD); px(ctx, x + 1, y + 1, PAL.grassD); px(ctx, x + 2, y, PAL.grassD);
-    px(ctx, x + 1, y - 1, PAL.grassL);
+    px(ctx, x, y, GP.grassD); px(ctx, x + 1, y + 1, GP.grassD); px(ctx, x + 2, y, GP.grassD);
+    px(ctx, x + 1, y - 1, GP.grassL);
   }
-  if (hash2(tx, ty, 40) < 0.5) px(ctx, ox + Math.floor(hash2(tx, ty, 41) * 16), oy + Math.floor(hash2(tx, ty, 42) * 16), PAL.grassL);
+  if (hash2(tx, ty, 40) < 0.5) px(ctx, ox + Math.floor(hash2(tx, ty, 41) * 16), oy + Math.floor(hash2(tx, ty, 42) * 16), GP.grassL);
 }
 
 function tallGrass(ctx, ox, oy, onlyFront = false) {
-  if (!onlyFront) rect(ctx, ox, oy, 16, 16, PAL.tall);
+  if (!onlyFront) rect(ctx, ox, oy, 16, 16, GP.tall);
   const rows = onlyFront ? [15] : [7, 15];
   rows.forEach((base, ri) => {
     for (let x = 0; x < 16; x++) {
       const hgt = [2, 5, 7, 5][(x + ri * 2) % 4];
       for (let i = 0; i < hgt; i++) {
         const y = base - i;
-        const c = i === hgt - 1 ? PAL.tallL : i === hgt - 2 ? PAL.tallM : (x % 4 === 3 ? PAL.tallD : PAL.tall);
+        const c = i === hgt - 1 ? GP.tallL : i === hgt - 2 ? GP.tallM : (x % 4 === 3 ? GP.tallD : GP.tall);
         px(ctx, ox + x, oy + y, c);
       }
     }
@@ -41,7 +44,7 @@ function dirtTile(ctx, ox, oy, tx, ty, nb, col) {
     if (hash2(tx, ty, k + 50) > 0.55) continue;
     px(ctx, ox + Math.floor(hash2(tx, ty, k + 60) * 16), oy + Math.floor(hash2(tx, ty, k + 70) * 16), k % 2 ? col.d : col.l);
   }
-  const G = PAL.grass;
+  const G = GP.grass;
   const tooth = (i, s) => (hash2(tx * 17 + i, ty * 13 + s, 9) < 0.35 ? 2 : 1);
   if (nb.n) for (let x = 0; x < 16; x++) { const d = tooth(x, 1); rect(ctx, ox + x, oy, 1, d, G); px(ctx, ox + x, oy + d, col.e); }
   if (nb.s) for (let x = 0; x < 16; x++) { const d = tooth(x, 2); rect(ctx, ox + x, oy + 16 - d, 1, d, G); px(ctx, ox + x, oy + 15 - d, col.e); }
@@ -58,21 +61,22 @@ function dirtTile(ctx, ox, oy, tx, ty, nb, col) {
 }
 
 function waterTile(ctx, ox, oy, tx, ty, nb, t = 0) {
-  rect(ctx, ox, oy, 16, 16, PAL.water);
+  // nb.n/s/w/e: color de la orilla en ese lado (o false si sigue el agua)
+  rect(ctx, ox, oy, 16, 16, GP.water);
   for (let k = 0; k < 3; k++) {
     const x = Math.floor(hash2(tx, ty, k + 80) * 11), y = 3 + Math.floor(hash2(tx, ty, k + 90) * 10);
     const sh = (Math.floor(t / 500) + k) % 2;
-    rect(ctx, ox + x + sh, oy + y, 4, 1, PAL.waterL);
+    rect(ctx, ox + x + sh, oy + y, 4, 1, GP.waterL);
   }
-  const G = PAL.grass;
-  if (nb.n) { rect(ctx, ox, oy, 16, 2, G); rect(ctx, ox, oy + 2, 16, 1, PAL.waterD); rect(ctx, ox, oy + 3, 16, 1, PAL.foam); }
-  if (nb.s) { rect(ctx, ox, oy + 14, 16, 2, G); rect(ctx, ox, oy + 13, 16, 1, PAL.waterD); }
-  if (nb.w) { rect(ctx, ox, oy, 2, 16, G); rect(ctx, ox + 2, oy, 1, 16, PAL.waterD); }
-  if (nb.e) { rect(ctx, ox + 14, oy, 2, 16, G); rect(ctx, ox + 13, oy, 1, 16, PAL.waterD); }
-  if (nb.n && nb.w) { rect(ctx, ox, oy, 4, 4, G); px(ctx, ox + 3, oy + 3, PAL.waterD); }
-  if (nb.n && nb.e) { rect(ctx, ox + 12, oy, 4, 4, G); px(ctx, ox + 12, oy + 3, PAL.waterD); }
-  if (nb.s && nb.w) { rect(ctx, ox, oy + 12, 4, 4, G); px(ctx, ox + 3, oy + 12, PAL.waterD); }
-  if (nb.s && nb.e) { rect(ctx, ox + 12, oy + 12, 4, 4, G); px(ctx, ox + 12, oy + 12, PAL.waterD); }
+  const col = v => (typeof v === 'string' ? v : GP.grass);
+  if (nb.n) { rect(ctx, ox, oy, 16, 2, col(nb.n)); rect(ctx, ox, oy + 2, 16, 1, GP.waterD); rect(ctx, ox, oy + 3, 16, 1, GP.foam); }
+  if (nb.s) { rect(ctx, ox, oy + 14, 16, 2, col(nb.s)); rect(ctx, ox, oy + 13, 16, 1, GP.waterD); }
+  if (nb.w) { rect(ctx, ox, oy, 2, 16, col(nb.w)); rect(ctx, ox + 2, oy, 1, 16, GP.waterD); }
+  if (nb.e) { rect(ctx, ox + 14, oy, 2, 16, col(nb.e)); rect(ctx, ox + 13, oy, 1, 16, GP.waterD); }
+  if (nb.n && nb.w) { rect(ctx, ox, oy, 4, 4, col(nb.n)); px(ctx, ox + 3, oy + 3, GP.waterD); }
+  if (nb.n && nb.e) { rect(ctx, ox + 12, oy, 4, 4, col(nb.n)); px(ctx, ox + 12, oy + 3, GP.waterD); }
+  if (nb.s && nb.w) { rect(ctx, ox, oy + 12, 4, 4, col(nb.s)); px(ctx, ox + 3, oy + 12, GP.waterD); }
+  if (nb.s && nb.e) { rect(ctx, ox + 12, oy + 12, 4, 4, col(nb.s)); px(ctx, ox + 12, oy + 12, GP.waterD); }
 }
 
 function flowers(ctx, ox, oy, tx, ty) {
@@ -84,7 +88,7 @@ function flowers(ctx, ox, oy, tx, ty) {
     const [pet, mid] = sets[Math.floor(hash2(tx, ty, 100 + i) * sets.length)];
     const X = ox + x, Y = oy + y;
     px(ctx, X, Y - 1, pet); px(ctx, X - 1, Y, pet); px(ctx, X + 1, Y, pet); px(ctx, X, Y + 1, pet);
-    px(ctx, X, Y, mid); px(ctx, X + 1, Y + 2, PAL.grassD);
+    px(ctx, X, Y, mid); px(ctx, X + 1, Y + 2, GP.grassD);
   });
 }
 
@@ -131,7 +135,7 @@ function shapeArt(w, h, regions, outline, detail) {
 function drawOlive(ctx, ox, oy, seed = 0) {
   // sombra
   for (let y = 26; y < 32; y++) for (let x = 3; x < 30; x++) {
-    if (((x - 16) / 13) ** 2 + ((y - 29) / 3.2) ** 2 <= 1) px(ctx, ox + x, oy + y, PAL.grassS);
+    if (((x - 16) / 13) ** 2 + ((y - 29) / 3.2) ** 2 <= 1) px(ctx, ox + x, oy + y, GP.grassS);
   }
   const s = (k) => hash2(seed, k, 5);
   const canopy = [
@@ -154,7 +158,7 @@ function drawOlive(ctx, ox, oy, seed = 0) {
 }
 
 function drawCypress(ctx, ox, oy) {
-  for (let y = 27; y < 32; y++) for (let x = 2; x < 14; x++) if (((x - 8) / 6) ** 2 + ((y - 29.5) / 2) ** 2 <= 1) px(ctx, ox + x, oy + y, PAL.grassS);
+  for (let y = 27; y < 32; y++) for (let x = 2; x < 14; x++) if (((x - 8) / 6) ** 2 + ((y - 29.5) / 2) ** 2 <= 1) px(ctx, ox + x, oy + y, GP.grassS);
   rect(ctx, ox + 7, oy + 25, 2, 5, '#6e5440'); px(ctx, ox + 6, oy + 29, '#3a2e26');
   const reg = [{ p: [[8, 0], [12.5, 9], [13.5, 18], [11.5, 26.5], [4.5, 26.5], [2.5, 18], [3.5, 9]], c: ['#5f924f', '#3f6d3c', '#2b4f2d'], noise: 13, lt: 0.2, dk: -0.25 }];
   ctx.drawImage(shapeArt(16, 28, reg, '#1c3220'), ox, oy);
@@ -169,32 +173,43 @@ function drawHouse(ctx, ox, oy, wc, hc, o) {
   const roofH = 26, wallY = 29;
   const R = o.roof || ['#e98c62', '#c9623e', '#94422a'];
   const OL = '#3e2a22';
-  // tejado
-  rect(ctx, ox, oy, Wd, roofH, R[1]);
-  for (let y = 3; y < roofH; y++) {
-    const course = Math.floor((y - 3) / 5), r = (y - 3) % 5;
-    for (let x = 1; x < Wd - 1; x++) {
-      let c = R[1];
-      if (r === 4) c = R[2];
-      else { const ph = (x + (course % 2) * 2) % 4; c = ph === 0 ? R[2] : ph === 1 ? R[0] : R[1]; }
-      px(ctx, ox + x, oy + y, c);
+  // tejado (de tejas o plano con almenas, al estilo de Marruecos)
+  if (o.flat) {
+    const F = o.flat === true ? ['#f2cfa0', '#ddb07c', '#b8885a'] : o.flat;
+    rect(ctx, ox, oy, Wd, roofH, F[1]);
+    for (let k = 0; k < Wd; k += 3) px(ctx, ox + k + (k % 2), oy + 6 + Math.floor(hash2(k, oy, 9) * 16), F[0]);
+    rect(ctx, ox, oy + 3, Wd, 2, F[2]);
+    for (let x = 1; x < Wd - 3; x += 6) { rect(ctx, ox + x, oy, 4, 3, F[0]); rect(ctx, ox + x, oy - 1, 4, 1, OL); }
+    rect(ctx, ox, oy, 1, roofH, OL); rect(ctx, ox + Wd - 1, oy, 1, roofH, OL);
+    rect(ctx, ox, oy + roofH, Wd, 2, F[2]); rect(ctx, ox, oy + roofH + 2, Wd, 1, OL);
+  } else {
+    rect(ctx, ox, oy, Wd, roofH, R[1]);
+    for (let y = 3; y < roofH; y++) {
+      const course = Math.floor((y - 3) / 5), r = (y - 3) % 5;
+      for (let x = 1; x < Wd - 1; x++) {
+        let c = R[1];
+        if (r === 4) c = R[2];
+        else { const ph = (x + (course % 2) * 2) % 4; c = ph === 0 ? R[2] : ph === 1 ? R[0] : R[1]; }
+        px(ctx, ox + x, oy + y, c);
+      }
     }
+    rect(ctx, ox, oy, Wd, 3, R[2]);
+    rect(ctx, ox + 1, oy + 1, Wd - 2, 1, R[3] || '#7a3422');
+    rect(ctx, ox, oy, Wd, 1, OL); rect(ctx, ox, oy, 1, roofH, OL); rect(ctx, ox + Wd - 1, oy, 1, roofH, OL);
+    rect(ctx, ox, oy + roofH, Wd, 2, R[3] || '#6a2c1c'); rect(ctx, ox, oy + roofH + 2, Wd, 1, OL);
   }
-  rect(ctx, ox, oy, Wd, 3, R[2]);
-  rect(ctx, ox + 1, oy + 1, Wd - 2, 1, '#7a3422');
-  rect(ctx, ox, oy, Wd, 1, OL); rect(ctx, ox, oy, 1, roofH, OL); rect(ctx, ox + Wd - 1, oy, 1, roofH, OL);
-  rect(ctx, ox, oy + roofH, Wd, 2, '#6a2c1c'); rect(ctx, ox, oy + roofH + 2, Wd, 1, OL);
   if (o.chimney) {
     const cx = ox + o.chimney * 16 + 4;
     rect(ctx, cx, oy - 2, 7, 9, '#efe8dc'); rect(ctx, cx, oy - 2, 7, 1, OL); rect(ctx, cx, oy - 2, 1, 9, OL); rect(ctx, cx + 6, oy - 2, 1, 9, OL);
     rect(ctx, cx + 1, oy - 1, 5, 1, '#b8ac9c');
   }
-  // fachada encalada
-  rect(ctx, ox, oy + wallY, Wd, Ht - wallY, '#f6f2ea');
-  rect(ctx, ox, oy + wallY, Wd, 2, '#d6cdbf');
-  for (let k = 0; k < Wd; k++) if (hash2(k, oy, 3) < 0.25) px(ctx, ox + k, oy + wallY + 3 + Math.floor(hash2(k, ox, 4) * 22), '#e8e1d4');
+  // fachada (encalada por defecto)
+  const WL = o.wall || ['#f6f2ea', '#d6cdbf', '#e8e1d4'];
+  rect(ctx, ox, oy + wallY, Wd, Ht - wallY, WL[0]);
+  rect(ctx, ox, oy + wallY, Wd, 2, WL[1]);
+  for (let k = 0; k < Wd; k++) if (hash2(k, oy, 3) < 0.25) px(ctx, ox + k, oy + wallY + 3 + Math.floor(hash2(k, ox, 4) * 22), WL[2]);
   rect(ctx, ox, oy + wallY, 1, Ht - wallY, OL); rect(ctx, ox + Wd - 1, oy + wallY, 1, Ht - wallY, OL);
-  rect(ctx, ox + Wd - 2, oy + wallY, 1, Ht - wallY, '#d8d0c4');
+  rect(ctx, ox + Wd - 2, oy + wallY, 1, Ht - wallY, WL[1]);
   // zócalo
   const zy = oy + Ht - 8;
   rect(ctx, ox + 1, zy, Wd - 2, 8, o.plinth || '#d9a94a');
@@ -234,6 +249,7 @@ function drawHouse(ctx, ox, oy, wc, hc, o) {
     const rows = ['kyyyyyyyyk', 'kyrrrryyyk', 'kyrrryyrrk', 'kyryyrrrrk', 'kyyrrrrryk', '.kyrrrryk.', '..kyrryk..', '...kyyk...', '....kk....'];
     paintRows(ctx, rows, { k: OL, y: '#f2ca52', r: '#c23a3a' }, sx, sy + 1);
   }
+  if (o.sign) drawHangSign(ctx, dx + 13, oy + wallY + 2, o.sign);
 }
 
 function drawFence(ctx, ox, oy, nb) {
@@ -318,23 +334,24 @@ function drawBoar() {
     px(x, 29, 8, '#43291a'); px(x, 29, 9, '#24160e');
   });
 }
-function drawWolf() {
-  const g = ['#c6cad6', '#8e94a4', '#5e6474'];
+function drawWolf() { return drawCanid({ g: ['#c6cad6', '#8e94a4', '#5e6474'], leg: ['#7a8090', '#5e6474', '#454a58'], legL: ['#a0a6b4', '#7a8090', '#5e6474'], ear: ['#9aa0ae', '#6e7484', '#4c5262'], belly: ['#eef0f4', '#d2d6de', '#aab0bc'], snout: ['#dcdfe6', '#b4b9c4', '#8a909e'], ol: '#22242c' }); }
+function drawCanid(c) {
+  const g = c.g;
   return shapeArt(31, 23, [
     { e: [27, 9, 3.5, 2.4], c: g, noise: 9 },
-    { r: [21, 14, 23.4, 22], c: ['#7a8090', '#5e6474', '#454a58'] },
-    { r: [7, 15, 9.5, 22], c: ['#7a8090', '#5e6474', '#454a58'] },
+    { r: [21, 14, 23.4, 22], c: c.leg },
+    { r: [7, 15, 9.5, 22], c: c.leg },
     { e: [18, 11.5, 9, 5], c: g, noise: 10 },
-    { e: [15, 15, 6, 1.8], c: ['#eef0f4', '#d2d6de', '#aab0bc'] },
-    { r: [24.5, 14.5, 26.5, 22], c: ['#a0a6b4', '#7a8090', '#5e6474'] },
-    { r: [11, 15.5, 13, 22], c: ['#a0a6b4', '#7a8090', '#5e6474'] },
+    { e: [15, 15, 6, 1.8], c: c.belly },
+    { r: [24.5, 14.5, 26.5, 22], c: c.legL },
+    { r: [11, 15.5, 13, 22], c: c.legL },
     { e: [9.5, 11, 5, 6], c: g, noise: 11 },
-    { p: [[3.5, 0.5], [7.5, 3], [3.5, 4]], c: ['#9aa0ae', '#6e7484', '#4c5262'] },
-    { p: [[8, 0.5], [11, 4], [7, 3.5]], c: ['#9aa0ae', '#6e7484', '#4c5262'] },
+    { p: [[3.5, c.bigEars ? -1 : 0.5], [7.5, 3], [3.5, 4]], c: c.ear },
+    { p: [[8, c.bigEars ? -1 : 0.5], [11, 4], [7, 3.5]], c: c.ear },
     { e: [7, 6.5, 5, 4.2], c: g, noise: 12 },
-    { r: [0.5, 6.5, 4, 9.5], c: ['#dcdfe6', '#b4b9c4', '#8a909e'] },
-    { e: [9, 12.5, 2.6, 3.4], c: ['#eef0f4', '#d2d6de', '#aab0bc'] },
-  ], '#22242c', x => {
+    { r: [0.5, 6.5, 4, 9.5], c: c.snout },
+    { e: [9, 12.5, 2.6, 3.4], c: c.belly },
+  ], c.ol, x => {
     px(x, 5, 5, '#f4c838'); px(x, 6, 5, '#1a1a1e');
     px(x, 0, 6, '#16161a'); px(x, 1, 6, '#16161a');
     rect(x, 1, 9, 3, 1, '#3a3c46'); px(x, 2, 10, '#f4f0ea');

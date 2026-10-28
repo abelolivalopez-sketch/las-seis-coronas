@@ -3,11 +3,31 @@ const FOE_AT = { x: 176, y: 58 }, ME_AT = { x: 70, y: 124 };
 const ART_ST = { es: { atk: 'el', def: 'la', spd: 'la' }, fr: { atk: "L'", def: 'La ', spd: 'La ' } };
 const xpFrac = p => (p.level >= MAX_LV ? 1 : (p.xp - xpFor(p.level)) / (xpFor(p.level + 1) - xpFor(p.level)));
 const moveLabel = id => { const n = moveName(id); return n.charAt(0) + n.slice(1).toLowerCase(); };
+// Experiencia: más si el rival es de nivel más alto que tú, menos si es más bajo
+const battleXp = (foe, trainer) => {
+  const L = foe.level, Lp = P().level;
+  const scale = Math.pow((2 * L + 10) / (L + Lp + 10), 2.5);
+  return Math.max(1, Math.floor(foe.exp * L / 7 * (trainer ? 1.5 : 1) * XP_MULT * scale));
+};
+
+// Ya sabe 4 técnicas: el jugador elige cuál olvidar (o no aprender la nueva)
+async function learnWithChoice(ui, m, say) {
+  const p = P();
+  await say(t('b_wantLearn', { n: p.name, m: moveName(m) }));
+  const opts = p.moves.map(x => moveLabel(x.id)).concat([t('b_dontLearn')]);
+  const r = await ui.ask(t('b_forgetQ', { n: p.name, m: moveName(m) }), opts);
+  if (r < 0 || r >= p.moves.length) { await say(t('b_notLearned', { n: p.name, m: moveName(m) })); return; }
+  const old = p.moves[r].id;
+  p.moves[r] = { id: m, pp: MOVES[m].pp };
+  await say(t('b_forget', { n: p.name, m: moveName(old) }));
+  Sfx.play('item');
+  await say(t('b_learn', { n: p.name, m: moveName(m) }));
+}
 
 function calcDamage(att, def, mv) {
   const A = att.atk * stageMul(att.st.atk), D = Math.max(1, def.def * stageMul(def.st.def));
   let base = Math.floor(Math.floor(Math.floor(2 * att.level / 5 + 2) * mv.pow * A / D) / 50) + 2;
-  const crit = Math.random() < 1 / 16;
+  const crit = Math.random() < (mv.crit ? 1 / 4 : 1 / 16);
   if (crit) base = Math.floor(base * 1.5);
   return { dmg: Math.max(1, Math.floor(base * randInt(85, 100) / 100)), crit };
 }
@@ -26,14 +46,14 @@ class BattleScene {
       st: { atk: 0, def: 0, spd: 0 },
       get name() { return P().name; }, get level() { return P().level; },
       get hp() { return P().hp; }, set hp(v) { P().hp = v; },
-      get maxHp() { return P().maxHp; }, get atk() { return P().atk; }, get def() { return P().def; }, get spd() { return P().spd; },
+      get maxHp() { return P().maxHp; }, get atk() { return effStats().atk; }, get def() { return effStats().def; }, get spd() { return P().spd; },
     };
     this.disp = { me: P().hp, foe: this.foe.hp, xp: xpFrac(P()) };
     this.dispLevel = P().level;
     this.pos = { foeX: -170, meX: 170, foeBox: -130, meBox: 130, foeSink: 0, meSink: 0, foeL: 0, meL: 0, foeA: 1 };
     this.fx = [];
     this.blink = null;
-    this.bg = battleBg(Game.scene && Game.scene.def ? Game.scene.def.bg : 'campo');
+    this.bg = battleBg(spec.bg || (Game.scene && Game.scene.def ? Game.scene.def.bg : 'campo'));
     this.done = new Promise(r => (this.finish = r));
     this.lastCmd = 0;
     this.fleeTries = 0;
@@ -165,6 +185,13 @@ class BattleScene {
       if (crit) await this.msg(t('b_crit'));
       return;
     }
+    if (mv.heal) {
+      const before = att.hp;
+      att.hp = Math.min(att.maxHp, att.hp + Math.ceil(att.maxHp * mv.heal));
+      Sfx.play('heal'); this.sparkle(side, 'up');
+      await tween(this.disp, { [side]: att.hp }, 450, Ease.lin);
+      await this.msg(att.hp > before ? t('b_healed', { a: this.ref(side, true), v: att.hp - before }) : t('b_noHeal'));
+    }
     if (mv.self) {
       for (const k in mv.self) {
         if (att.st[k] >= 6) { await this.msg(this.statMsg(k, this.deRef(side), true, true)); continue; }
@@ -201,13 +228,13 @@ class BattleScene {
       if (this.spec.defeatText) await this.msg(`${this.foe.name}${Lang.cur === 'fr' ? ' :' : ':'} ${fmt(this.spec.defeatText)}`, 0);
     } else if (this.spec.foe === 'salteador') await this.msg(t('b_banditFlees'), 0);
     else await this.msg(t('b_defeated', { f: this.ref('foe', true) }), 0);
-    const xp = Math.max(1, Math.floor(this.foe.exp * this.foe.level / 7 * (tr_ ? 1.5 : 1)));
+    const xp = battleXp(this.foe, tr_);
     if (P().level < MAX_LV) {
       await this.msg(t('b_xp', { n: P().name, v: xp }), 0);
       await this.animateXp(xp);
     }
-    const g = this.fdef.gold;
-    const gold = g ? randInt(g[0], g[1]) : 0;
+    const g = this.spec.gold !== undefined ? this.spec.gold : this.fdef.gold;
+    const gold = !g ? 0 : Array.isArray(g) ? randInt(g[0], g[1]) * Math.max(1, Math.ceil(this.foe.level / 4)) : g * this.foe.level;
     if (gold > 0) {
       S0().ducados += gold;
       Sfx.play('coin');
@@ -237,9 +264,12 @@ class BattleScene {
       await this.msg(t('b_levelUp', { n: p.name, v: ev.level }), 0);
       await this.levelPanel(ev);
       for (const l of ev.learned) {
-        if (l.old) await this.msg(t('b_forget', { n: p.name, m: moveName(l.old) }), 0);
-        Sfx.play('item');
-        await this.msg(t('b_learn', { n: p.name, m: moveName(l.m) }), 0);
+        if (!l.full) {
+          Sfx.play('item');
+          await this.msg(t('b_learn', { n: p.name, m: moveName(l.m) }), 0);
+          continue;
+        }
+        await learnWithChoice(this.ui, l.m, text => this.msg(text, 0));
       }
     }
     await tween(this.disp, { xp: xpFrac(p) }, 450, Ease.lin);

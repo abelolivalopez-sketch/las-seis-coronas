@@ -52,7 +52,7 @@ function boot(data) {
   requestAnimationFrame(frame);
   document.documentElement.classList.add('ready');
   if (/debug/.test(location.search)) {
-    window.__SC = { Game, Input, Art, Font, MAPS, P, S0, WorldScene, BattleScene, startWorld, newState, renderMap, drawChar, LOOKS, Clock, gainXp, calcStats, PLAYER_BASE, xpFor, Lang, Pasos, LangScene, TitleScene };
+    window.__SC = { Game, Input, Art, Font, MAPS, P, S0, WorldScene, BattleScene, startWorld, newState, renderMap, drawChar, LOOKS, Clock, gainXp, calcStats, PLAYER_BASE, xpFor, Lang, Pasos, LangScene, TitleScene, FOES, MOVES, ITEMS, EQUIP, BLOCK, doorCols, makeFoe, calcDamage, battleXp, effStats, healPlayer, battleBg, migrateState, XP_MULT, LEARN, KNIGHT_MOVES };
   }
 }
 

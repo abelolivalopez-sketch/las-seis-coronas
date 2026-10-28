@@ -195,8 +195,7 @@ class IntroScene {
 }
 
 function startWorld(state, isNew) {
-  Game.state = state;
-  if (!state.walk) state.walk = { boot: 0, last: -1, total: 0, day: '', dayKm: 0 };
+  Game.state = migrateState(state);
   const w = new WorldScene();
   w.load(state.map, state.x, state.y, state.dir);
   Game.set(w);
