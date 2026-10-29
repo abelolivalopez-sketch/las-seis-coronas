@@ -596,15 +596,16 @@ class WorldScene {
     Sfx.play('select');
     let idx = 0;
     for (;;) {
-      const opts = [t('m_status'), t('m_items'), t('m_walk'), t('m_save'), Sfx.on ? t('m_soundOn') : t('m_soundOff'), t('m_lang'), t('m_close')];
-      const r = await this.ui.choose(opts, { y: 4, idx, cancel: 6 });
+      const opts = [t('m_status'), t('m_items'), t('m_walk'), t('m_save'), t('m_code'), Sfx.on ? t('m_soundOn') : t('m_soundOff'), t('m_lang'), t('m_close')];
+      const r = await this.ui.choose(opts, { y: 4, idx, cancel: 7 });
       idx = r;
       if (r === 0) await this.statusScreen();
       else if (r === 1) await this.itemsScreen();
       else if (r === 2) await this.walkScreen();
       else if (r === 3) { if (await this.saveGame()) break; }
-      else if (r === 4) { Sfx.on = !Sfx.on; Sfx.play('select'); }
-      else if (r === 5) {
+      else if (r === 4) { Game.save(); Sfx.play('select'); await codeDialog('export', SaveCode.make(S0())); }
+      else if (r === 5) { Sfx.on = !Sfx.on; Sfx.play('select'); }
+      else if (r === 6) {
         const l = await this.ui.choose(['ESPAÑOL', 'FRANÇAIS'], { y: 4, idx: Lang.cur === 'fr' ? 1 : 0, cancel: null });
         Lang.set(l === 1 ? 'fr' : 'es');
         this.showBanner(this.def.name);

@@ -249,19 +249,37 @@
     cursor: pointer;
   }
   .name-dlg small { font-size: 10px; color: #7a6a5a; }
+  .name-dlg textarea {
+    font: 11px/1.35 ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+    padding: 8px; color: var(--paper-ink); background: #fffaf0;
+    border: 2px solid var(--paper-edge); border-radius: 4px;
+    resize: none; height: 96px; word-break: break-all;
+    user-select: text; -webkit-user-select: text;
+  }
+  .name-dlg .row { display: flex; gap: 8px; }
+  .name-dlg .row button { flex: 1; }
+  .name-dlg button.sec { background: var(--btn-b); }
   @media (prefers-reduced-motion: reduce) { .btn.on, .pill.on { transform: none; } }
 </style>
 
 <main class="console">
   <div class="screen-wrap">
     <canvas id="screen" width="240" height="160" aria-label="Pantalla del juego Las Seis Coronas"></canvas>
-    <div class="brand"><b data-es="LAS SEIS CORONAS" data-fr="LES SIX COURONNES">LAS SEIS CORONAS</b><span data-es="prototipo v0.4" data-fr="prototype v0.4">prototipo v0.4</span></div>
+    <div class="brand"><b data-es="LAS SEIS CORONAS" data-fr="LES SIX COURONNES">LAS SEIS CORONAS</b><span data-es="prototipo v0.4.1" data-fr="prototype v0.4.1">prototipo v0.4.1</span></div>
     <div class="name-dlg" id="nameDlg" hidden>
       <form id="nameForm" autocomplete="off">
         <label for="nameInput" data-es="¿Cómo te llamas?" data-fr="Comment t'appelles-tu ?">¿Cómo te llamas?</label>
         <input id="nameInput" name="nameInput" maxlength="10" autocomplete="off" autocapitalize="words" spellcheck="false" enterkeyhint="done">
         <small data-es="Máximo 10 letras." data-fr="10 lettres maximum.">Máximo 10 letras.</small>
         <button type="submit" data-es="Aceptar" data-fr="Valider">Aceptar</button>
+      </form>
+    </div>
+    <div class="name-dlg" id="codeDlg" hidden>
+      <form id="codeForm" autocomplete="off">
+        <label for="codeText" id="codeLabel"></label>
+        <textarea id="codeText" spellcheck="false" autocapitalize="off" autocomplete="off"></textarea>
+        <small id="codeHelp"></small>
+        <div class="row"><button type="button" id="codeCopy"></button><button type="submit" id="codeOk"></button><button type="button" class="sec" id="codeCancel"></button></div>
       </form>
     </div>
   </div>
@@ -781,7 +799,7 @@ const TXT = {
   title1: { es: 'LAS SEIS', fr: 'LES SIX' },
   title2: { es: 'CORONAS', fr: 'COURONNES' },
   pressA: { es: 'Pulsa A para empezar', fr: 'Appuie sur A pour commencer' },
-  proto: { es: 'Prototipo v0.4', fr: 'Prototype v0.4' },
+  proto: { es: 'Prototipo v0.4.1', fr: 'Prototype v0.4.1' },
   year: { es: 'Año 1415', fr: 'An 1415' },
   cont: { es: 'CONTINUAR', fr: 'CONTINUER' },
   newGame: { es: 'NUEVA PARTIDA', fr: 'NOUVELLE PARTIE' },
@@ -896,6 +914,21 @@ const TXT = {
   b_cost: { es: '¡{a} pierde {v} PV por el esfuerzo!', fr: '{a} perd {v} PV dans l\'effort !' },
   b_special: { es: 'Especial', fr: 'Spécial' },
   s_titles: { es: 'Títulos: {v}', fr: 'Titres : {v}' },
+  m_code: { es: 'CÓDIGO', fr: 'CODE' },
+  importGame: { es: 'IMPORTAR PARTIDA', fr: 'IMPORTER UNE PARTIE' },
+  c_exportTitle: { es: 'Código de tu partida', fr: 'Code de ta partie' },
+  c_exportHelp: { es: 'Cópialo y guárdalo (por ejemplo, envíatelo por WhatsApp). Con él puedes recuperar la partida en otro móvil o en otra versión.', fr: 'Copie-le et garde-le (par exemple, envoie-le-toi par WhatsApp). Il te permet de récupérer ta partie sur un autre téléphone ou une autre version.' },
+  c_importTitle: { es: 'Pega el código de tu partida', fr: 'Colle le code de ta partie' },
+  c_importHelp: { es: 'Empieza por SC1-. Lo encuentras en MENÚ → CÓDIGO.', fr: 'Il commence par SC1-. Tu le trouves dans MENU → CODE.' },
+  c_copy: { es: 'Copiar', fr: 'Copier' },
+  c_copied: { es: '¡Copiado! Ya puedes pegarlo donde quieras.', fr: 'Copié ! Tu peux le coller où tu veux.' },
+  c_copyFail: { es: 'No se ha podido copiar. Mantén pulsado el texto y elige Copiar.', fr: 'Impossible de copier. Appuie longuement sur le texte et choisis Copier.' },
+  c_close: { es: 'Cerrar', fr: 'Fermer' },
+  c_load: { es: 'Cargar', fr: 'Charger' },
+  c_cancel: { es: 'Cancelar', fr: 'Annuler' },
+  c_bad: { es: 'Ese código no es válido. Comprueba que lo has copiado entero.', fr: 'Ce code n\'est pas valide. Vérifie que tu l\'as copié en entier.' },
+  c_replaceQ: { es: 'Se cambiará la partida guardada por la del código. ¿Seguro?', fr: 'La partie sauvegardée sera remplacée par celle du code. Tu es sûr ?' },
+  c_loaded: { es: '¡Partida recuperada! {n}, nivel {l}.', fr: 'Partie récupérée ! {n}, niveau {l}.' },
   w_levelTo: { es: '¡{name} sube al nivel {v}!', fr: '{name} passe au niveau {v} !' },
   b_notLearned: { es: '{n} no aprende {m}.', fr: '{n} n\'apprend pas {m}.' },
   // posadas, tiendas, premios
@@ -2715,6 +2748,54 @@ function gainXp(amount) {
   }
   if (p.level >= MAX_LV) p.xp = xpFor(MAX_LV);
   return events;
+}
+
+// ─── Código de partida: para pasar la partida a otro móvil o a otra versión ───
+const SaveCode = {
+  make(st) { return 'SC1-' + btoa(unescape(encodeURIComponent(JSON.stringify(st)))); },
+  parse(code) {
+    const c = String(code || '').replace(/\s+/g, '');
+    if (!c.startsWith('SC1-')) return null;
+    try {
+      const st = JSON.parse(decodeURIComponent(escape(atob(c.slice(4)))));
+      return st && st.player && st.player.name && st.player.level ? st : null;
+    } catch (e) { return null; }
+  },
+};
+// Ventana para copiar (export) o pegar (import) el código. Devuelve el texto pegado o null.
+function codeDialog(mode, code) {
+  return new Promise(res => {
+    const $ = id => document.getElementById(id);
+    const dlg = $('codeDlg'), txt = $('codeText'), form = $('codeForm');
+    if (!dlg) { res(null); return; }
+    const exp = mode === 'export';
+    $('codeLabel').textContent = t(exp ? 'c_exportTitle' : 'c_importTitle');
+    $('codeHelp').textContent = t(exp ? 'c_exportHelp' : 'c_importHelp');
+    $('codeCopy').textContent = t('c_copy');
+    $('codeOk').textContent = t(exp ? 'c_close' : 'c_load');
+    $('codeCancel').textContent = t('c_cancel');
+    $('codeCopy').hidden = !exp; $('codeCancel').hidden = exp;
+    txt.value = exp ? code : ''; txt.readOnly = exp;
+    dlg.hidden = false;
+    Input.locked = true;
+    setTimeout(() => { try { if (exp) { txt.focus(); txt.select(); } else txt.focus(); } catch (e) { /* ok */ } }, 60);
+    const close = v => {
+      dlg.hidden = true; Input.locked = false; Input.clear();
+      form.removeEventListener('submit', onOk); $('codeCancel').removeEventListener('click', onCancel); $('codeCopy').removeEventListener('click', onCopy);
+      try { txt.blur(); } catch (e) { /* ok */ }
+      res(v);
+    };
+    const onOk = e => { e.preventDefault(); close(exp ? null : txt.value); };
+    const onCancel = () => close(null);
+    const onCopy = async () => {
+      let ok = false;
+      try { await navigator.clipboard.writeText(txt.value); ok = true; } catch (e) {
+        try { txt.focus(); txt.select(); ok = document.execCommand('copy'); } catch (e2) { ok = false; }
+      }
+      $('codeHelp').textContent = t(ok ? 'c_copied' : 'c_copyFail');
+    };
+    form.addEventListener('submit', onOk); $('codeCancel').addEventListener('click', onCancel); $('codeCopy').addEventListener('click', onCopy);
+  });
 }
 
 // ── 07-ui.js ──
@@ -6029,15 +6110,16 @@ class WorldScene {
     Sfx.play('select');
     let idx = 0;
     for (;;) {
-      const opts = [t('m_status'), t('m_items'), t('m_walk'), t('m_save'), Sfx.on ? t('m_soundOn') : t('m_soundOff'), t('m_lang'), t('m_close')];
-      const r = await this.ui.choose(opts, { y: 4, idx, cancel: 6 });
+      const opts = [t('m_status'), t('m_items'), t('m_walk'), t('m_save'), t('m_code'), Sfx.on ? t('m_soundOn') : t('m_soundOff'), t('m_lang'), t('m_close')];
+      const r = await this.ui.choose(opts, { y: 4, idx, cancel: 7 });
       idx = r;
       if (r === 0) await this.statusScreen();
       else if (r === 1) await this.itemsScreen();
       else if (r === 2) await this.walkScreen();
       else if (r === 3) { if (await this.saveGame()) break; }
-      else if (r === 4) { Sfx.on = !Sfx.on; Sfx.play('select'); }
-      else if (r === 5) {
+      else if (r === 4) { Game.save(); Sfx.play('select'); await codeDialog('export', SaveCode.make(S0())); }
+      else if (r === 5) { Sfx.on = !Sfx.on; Sfx.play('select'); }
+      else if (r === 6) {
         const l = await this.ui.choose(['ESPAÑOL', 'FRANÇAIS'], { y: 4, idx: Lang.cur === 'fr' ? 1 : 0, cancel: null });
         Lang.set(l === 1 ? 'fr' : 'es');
         this.showBanner(this.def.name);
@@ -6810,9 +6892,22 @@ class TitleScene {
   async menu() {
     const opts = [];
     if (this.hasSave) opts.push(['cont', t('cont')]);
-    opts.push(['new', t('newGame')], ['lang', t('m_lang')]);
-    const r = await this.ui.choose(opts.map(o => o[1]), { x: 70, y: 96, cancel: null });
+    opts.push(['new', t('newGame')], ['import', t('importGame')], ['lang', t('m_lang')]);
+    const h = opts.length * 14 + 12;
+    const r = await this.ui.choose(opts.map(o => o[1]), { x: 62, y: Math.min(96, H - h - 2), cancel: null });
     const pickK = opts[r][0];
+    if (pickK === 'import') {
+      const txt = await codeDialog('import');
+      const st = txt ? SaveCode.parse(txt) : null;
+      if (txt && !st) { Sfx.play('bump'); await this.ui.say(t('c_bad')); }
+      if (st && (!this.hasSave || (await this.ui.ask(t('c_replaceQ'), [t('yes'), t('no')])) === 0)) {
+        Save.write(migrateState(st));
+        Sfx.play('item');
+        await this.ui.say(t('c_loaded', { n: st.player.name, l: st.player.level }));
+        await Game.fadeOut(300); startWorld(Save.read(), false); return;
+      }
+      this.phase = 'press'; return;
+    }
     if (pickK === 'lang') {
       await Game.fadeOut(250);
       Game.set(new LangScene());

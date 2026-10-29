@@ -38,4 +38,29 @@ if (existsSync(resSrc)) {
     for (const f of readdirSync(join(resSrc, dir))) copyFileSync(join(resSrc, dir, f), join(to, f));
   }
 }
+// 4) Firma fija: todas las versiones se firman con app/debug.keystore,
+//    así cada APK nuevo se instala encima del anterior y se conserva la partida.
+const gradlePath = join(app, 'android', 'app', 'build.gradle');
+let gradle = readFileSync(gradlePath, 'utf8');
+if (!gradle.includes('// firma fija de Las Seis Coronas')) {
+  gradle += `
+// firma fija de Las Seis Coronas
+android {
+    signingConfigs {
+        debug {
+            storeFile file('../../debug.keystore')
+            storePassword 'android'
+            keyAlias 'androiddebugkey'
+            keyPassword 'android'
+        }
+    }
+    buildTypes {
+        debug {
+            signingConfig signingConfigs.debug
+        }
+    }
+}
+`;
+  writeFileSync(gradlePath, gradle);
+}
 console.log('OK · proyecto Android ajustado (' + pkg + ')');

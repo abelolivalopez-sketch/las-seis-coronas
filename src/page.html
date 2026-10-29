@@ -249,19 +249,37 @@
     cursor: pointer;
   }
   .name-dlg small { font-size: 10px; color: #7a6a5a; }
+  .name-dlg textarea {
+    font: 11px/1.35 ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+    padding: 8px; color: var(--paper-ink); background: #fffaf0;
+    border: 2px solid var(--paper-edge); border-radius: 4px;
+    resize: none; height: 96px; word-break: break-all;
+    user-select: text; -webkit-user-select: text;
+  }
+  .name-dlg .row { display: flex; gap: 8px; }
+  .name-dlg .row button { flex: 1; }
+  .name-dlg button.sec { background: var(--btn-b); }
   @media (prefers-reduced-motion: reduce) { .btn.on, .pill.on { transform: none; } }
 </style>
 
 <main class="console">
   <div class="screen-wrap">
     <canvas id="screen" width="240" height="160" aria-label="Pantalla del juego Las Seis Coronas"></canvas>
-    <div class="brand"><b data-es="LAS SEIS CORONAS" data-fr="LES SIX COURONNES">LAS SEIS CORONAS</b><span data-es="prototipo v0.4" data-fr="prototype v0.4">prototipo v0.4</span></div>
+    <div class="brand"><b data-es="LAS SEIS CORONAS" data-fr="LES SIX COURONNES">LAS SEIS CORONAS</b><span data-es="prototipo v0.4.1" data-fr="prototype v0.4.1">prototipo v0.4.1</span></div>
     <div class="name-dlg" id="nameDlg" hidden>
       <form id="nameForm" autocomplete="off">
         <label for="nameInput" data-es="¿Cómo te llamas?" data-fr="Comment t'appelles-tu ?">¿Cómo te llamas?</label>
         <input id="nameInput" name="nameInput" maxlength="10" autocomplete="off" autocapitalize="words" spellcheck="false" enterkeyhint="done">
         <small data-es="Máximo 10 letras." data-fr="10 lettres maximum.">Máximo 10 letras.</small>
         <button type="submit" data-es="Aceptar" data-fr="Valider">Aceptar</button>
+      </form>
+    </div>
+    <div class="name-dlg" id="codeDlg" hidden>
+      <form id="codeForm" autocomplete="off">
+        <label for="codeText" id="codeLabel"></label>
+        <textarea id="codeText" spellcheck="false" autocapitalize="off" autocomplete="off"></textarea>
+        <small id="codeHelp"></small>
+        <div class="row"><button type="button" id="codeCopy"></button><button type="submit" id="codeOk"></button><button type="button" class="sec" id="codeCancel"></button></div>
       </form>
     </div>
   </div>

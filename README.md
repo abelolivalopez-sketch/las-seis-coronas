@@ -1,4 +1,4 @@
-# Las Seis Coronas · prototipo v0.4
+# Las Seis Coronas · prototipo v0.4.1
 
 RPG medieval por turnos en pixel art, ambientado en 1415. Se juega en español o en francés.
 
@@ -33,7 +33,9 @@ RPG medieval por turnos en pixel art, ambientado en 1415. Se juega en español o
 4. Si aparece Google Play Protect, toca **Más detalles** → **Instalar de todos modos**. Sale porque la app no viene de la tienda.
 5. Abre el juego. Cuando Maese Esteban hable de caminar, acepta el permiso de **actividad física**: sin él no se cuentan los pasos.
 
-Para actualizar, se descarga el APK nuevo y se instala encima. La partida se conserva.
+Para actualizar, se descarga el APK nuevo y se instala encima: la partida se conserva. Desde la versión 0.4.1 todos los APK se firman con la misma clave (`app/debug.keystore`, solo para pruebas; para Google Play se usará otra).
+
+Por si acaso, en **MENÚ → CÓDIGO** puedes copiar un código con tu partida. En la pantalla de título, **IMPORTAR PARTIDA** la recupera en otro móvil, en la web o tras reinstalar.
 
 ## Jugar en iPhone
 
@@ -126,6 +128,7 @@ node tools/validate.mjs          # revisa conexiones, puertas y que todo sea alc
 node tools/balance.mjs 4         # simula la aventura: niveles, dinero y dificultad de cada maestro
 node tools/playthrough.mjs out es  # juega la historia entera con la interfaz real y guarda capturas
 node tools/quests.mjs out es       # prueba las misiones secretas (¡contiene las respuestas!)
+node tools/savecode.mjs out        # prueba exportar e importar el código de partida
 ```
 
 ## Construir la versión web

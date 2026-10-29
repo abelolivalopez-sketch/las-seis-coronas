@@ -85,3 +85,51 @@ function gainXp(amount) {
   if (p.level >= MAX_LV) p.xp = xpFor(MAX_LV);
   return events;
 }
+
+// ─── Código de partida: para pasar la partida a otro móvil o a otra versión ───
+const SaveCode = {
+  make(st) { return 'SC1-' + btoa(unescape(encodeURIComponent(JSON.stringify(st)))); },
+  parse(code) {
+    const c = String(code || '').replace(/\s+/g, '');
+    if (!c.startsWith('SC1-')) return null;
+    try {
+      const st = JSON.parse(decodeURIComponent(escape(atob(c.slice(4)))));
+      return st && st.player && st.player.name && st.player.level ? st : null;
+    } catch (e) { return null; }
+  },
+};
+// Ventana para copiar (export) o pegar (import) el código. Devuelve el texto pegado o null.
+function codeDialog(mode, code) {
+  return new Promise(res => {
+    const $ = id => document.getElementById(id);
+    const dlg = $('codeDlg'), txt = $('codeText'), form = $('codeForm');
+    if (!dlg) { res(null); return; }
+    const exp = mode === 'export';
+    $('codeLabel').textContent = t(exp ? 'c_exportTitle' : 'c_importTitle');
+    $('codeHelp').textContent = t(exp ? 'c_exportHelp' : 'c_importHelp');
+    $('codeCopy').textContent = t('c_copy');
+    $('codeOk').textContent = t(exp ? 'c_close' : 'c_load');
+    $('codeCancel').textContent = t('c_cancel');
+    $('codeCopy').hidden = !exp; $('codeCancel').hidden = exp;
+    txt.value = exp ? code : ''; txt.readOnly = exp;
+    dlg.hidden = false;
+    Input.locked = true;
+    setTimeout(() => { try { if (exp) { txt.focus(); txt.select(); } else txt.focus(); } catch (e) { /* ok */ } }, 60);
+    const close = v => {
+      dlg.hidden = true; Input.locked = false; Input.clear();
+      form.removeEventListener('submit', onOk); $('codeCancel').removeEventListener('click', onCancel); $('codeCopy').removeEventListener('click', onCopy);
+      try { txt.blur(); } catch (e) { /* ok */ }
+      res(v);
+    };
+    const onOk = e => { e.preventDefault(); close(exp ? null : txt.value); };
+    const onCancel = () => close(null);
+    const onCopy = async () => {
+      let ok = false;
+      try { await navigator.clipboard.writeText(txt.value); ok = true; } catch (e) {
+        try { txt.focus(); txt.select(); ok = document.execCommand('copy'); } catch (e2) { ok = false; }
+      }
+      $('codeHelp').textContent = t(ok ? 'c_copied' : 'c_copyFail');
+    };
+    form.addEventListener('submit', onOk); $('codeCancel').addEventListener('click', onCancel); $('codeCopy').addEventListener('click', onCopy);
+  });
+}

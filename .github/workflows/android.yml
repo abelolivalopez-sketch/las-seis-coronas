@@ -41,11 +41,14 @@ jobs:
       - name: Compilar el APK
         working-directory: app/android
         run: |
+          mkdir -p ~/.android && cp ../debug.keystore ~/.android/debug.keystore
           chmod +x gradlew
           ./gradlew assembleDebug --no-daemon --stacktrace
 
       - name: Renombrar el APK
-        run: cp app/android/app/build/outputs/apk/debug/app-debug.apk las-seis-coronas.apk
+        run: |
+          cp app/android/app/build/outputs/apk/debug/app-debug.apk las-seis-coronas.apk
+          keytool -printcert -jarfile las-seis-coronas.apk | grep SHA256
 
       - uses: actions/upload-artifact@v4
         with:

@@ -47,9 +47,22 @@ class TitleScene {
   async menu() {
     const opts = [];
     if (this.hasSave) opts.push(['cont', t('cont')]);
-    opts.push(['new', t('newGame')], ['lang', t('m_lang')]);
-    const r = await this.ui.choose(opts.map(o => o[1]), { x: 70, y: 96, cancel: null });
+    opts.push(['new', t('newGame')], ['import', t('importGame')], ['lang', t('m_lang')]);
+    const h = opts.length * 14 + 12;
+    const r = await this.ui.choose(opts.map(o => o[1]), { x: 62, y: Math.min(96, H - h - 2), cancel: null });
     const pickK = opts[r][0];
+    if (pickK === 'import') {
+      const txt = await codeDialog('import');
+      const st = txt ? SaveCode.parse(txt) : null;
+      if (txt && !st) { Sfx.play('bump'); await this.ui.say(t('c_bad')); }
+      if (st && (!this.hasSave || (await this.ui.ask(t('c_replaceQ'), [t('yes'), t('no')])) === 0)) {
+        Save.write(migrateState(st));
+        Sfx.play('item');
+        await this.ui.say(t('c_loaded', { n: st.player.name, l: st.player.level }));
+        await Game.fadeOut(300); startWorld(Save.read(), false); return;
+      }
+      this.phase = 'press'; return;
+    }
     if (pickK === 'lang') {
       await Game.fadeOut(250);
       Game.set(new LangScene());
