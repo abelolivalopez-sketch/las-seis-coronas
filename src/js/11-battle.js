@@ -174,8 +174,26 @@ class BattleScene {
     const mv = MOVES[id];
     if (side === 'me') { const m = P().moves.find(x => x.id === id); if (m) m.pp = Math.max(0, m.pp - 1); }
     await this.msg(t('b_uses', { a: this.ref(side, true), m: moveName(id) }), 650);
+    if (mv.ohko) {
+      // vence al rival de un golpe, pero cuesta la mitad de tus PV
+      await this.lunge(side);
+      Game.flashA = 0.9; tween(Game, { flashA: 0 }, 400, Ease.lin);
+      def.hp = 0;
+      Sfx.play('crit');
+      await this.hitAnim(other);
+      await tween(this.disp, { [other]: 0 }, 500, Ease.lin);
+      const lost = Math.floor(att.hp * (mv.cost || 0.5));
+      if (lost > 0) {
+        att.hp = Math.max(1, att.hp - lost);
+        Sfx.play('hit');
+        await tween(this.disp, { [side]: att.hp }, 450, Ease.lin);
+        await this.msg(t('b_cost', { a: this.ref(side, true), v: lost }));
+      }
+      return;
+    }
     if (mv.pow > 0) {
       if (mv.acc && Math.random() * 100 >= mv.acc) { Sfx.play('miss'); await this.msg(t('b_miss')); return; }
+      if (mv.big) { Game.flashA = 0.8; tween(Game, { flashA: 0 }, 350, Ease.lin); }
       await this.lunge(side);
       const { dmg, crit } = calcDamage(att, def, mv);
       def.hp = Math.max(0, def.hp - dmg);
@@ -327,7 +345,7 @@ class BattleScene {
       const m = moves[st.idx], mv = MOVES[m.id];
       Font.draw(ctx, t('b_pp'), 173, 119, 'dark');
       Font.drawRight(ctx, `${m.pp}/${mv.pp}`, 230, 119, m.pp > 0 ? 'dark' : 'red');
-      Font.draw(ctx, mv.pow > 0 ? t('b_dmg') : t('b_buff'), 173, 133, 'grey');
+      Font.draw(ctx, mv.pow > 0 ? t('b_dmg') : mv.ohko ? t('b_special') : t('b_buff'), 173, 133, 'grey');
       if (mv.pow > 0) Font.drawRight(ctx, String(mv.pow), 230, 133, 'dark');
     }, () => {
       const n = moves.length;

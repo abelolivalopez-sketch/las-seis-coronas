@@ -262,7 +262,7 @@
 <main class="console">
   <div class="screen-wrap">
     <canvas id="screen" width="240" height="160" aria-label="Pantalla del juego Las Seis Coronas"></canvas>
-    <div class="brand"><b data-es="LAS SEIS CORONAS" data-fr="LES SIX COURONNES">LAS SEIS CORONAS</b><span data-es="prototipo v0.3" data-fr="prototype v0.3">prototipo v0.3</span></div>
+    <div class="brand"><b data-es="LAS SEIS CORONAS" data-fr="LES SIX COURONNES">LAS SEIS CORONAS</b><span data-es="prototipo v0.4" data-fr="prototype v0.4">prototipo v0.4</span></div>
     <div class="name-dlg" id="nameDlg" hidden>
       <form id="nameForm" autocomplete="off">
         <label for="nameInput" data-es="¿Cómo te llamas?" data-fr="Comment t'appelles-tu ?">¿Cómo te llamas?</label>
@@ -788,7 +788,7 @@ const TXT = {
   title1: { es: 'LAS SEIS', fr: 'LES SIX' },
   title2: { es: 'CORONAS', fr: 'COURONNES' },
   pressA: { es: 'Pulsa A para empezar', fr: 'Appuie sur A pour commencer' },
-  proto: { es: 'Prototipo v0.3', fr: 'Prototype v0.3' },
+  proto: { es: 'Prototipo v0.4', fr: 'Prototype v0.4' },
   year: { es: 'Año 1415', fr: 'An 1415' },
   cont: { es: 'CONTINUAR', fr: 'CONTINUER' },
   newGame: { es: 'NUEVA PARTIDA', fr: 'NOUVELLE PARTIE' },
@@ -900,6 +900,10 @@ const TXT = {
   b_wantLearn: { es: '{n} quiere aprender {m}, pero ya sabe cuatro técnicas.', fr: '{n} veut apprendre {m}, mais connaît déjà quatre techniques.' },
   b_forgetQ: { es: '¿Qué técnica olvida {n} para aprender {m}?', fr: 'Quelle technique {n} oublie pour apprendre {m} ?' },
   b_dontLearn: { es: 'NO APRENDER', fr: 'NE PAS APPRENDRE' },
+  b_cost: { es: '¡{a} pierde {v} PV por el esfuerzo!', fr: '{a} perd {v} PV dans l\'effort !' },
+  b_special: { es: 'Especial', fr: 'Spécial' },
+  s_titles: { es: 'Títulos: {v}', fr: 'Titres : {v}' },
+  w_levelTo: { es: '¡{name} sube al nivel {v}!', fr: '{name} passe au niveau {v} !' },
   b_notLearned: { es: '{n} no aprende {m}.', fr: '{n} n\'apprend pas {m}.' },
   // posadas, tiendas, premios
   inn_q: { es: '¡Bienvenid{o} a la posada! ¿Quieres descansar? Es gratis para quien lucha en los coliseos.', fr: 'Bienvenue à l\'auberge ! Tu veux te reposer ? C\'est gratuit pour qui combat dans les colisées.' },
@@ -1241,6 +1245,8 @@ const LOOKS = {
   nina: { base: 'f', skin: 'dark', hair: 'black', cloth: 'ochre' },
   anciano: { base: 'm', skin: 'light', hair: 'grey', cloth: 'grey', over: 'beard' },
   anciana: { base: 'f', skin: 'mid', hair: 'grey', cloth: 'brown' },
+  quijote: { base: 'm', skin: 'light', hair: 'grey', cloth: 'grey', over: ['helm', 'beard'], hose: 'dark' },
+  dante: { base: 'm', skin: 'light', hair: 'brown', cloth: 'crimson', over: 'cap', capc: 'crimson' },
 };
 
 function lookPalette(L) {
@@ -2495,6 +2501,9 @@ const MOVES = {
   mazazo: { name: { es: 'MAZAZO', fr: 'COUP DE MASSE' }, pow: 80, acc: 90, pp: 15 },
   remazo: { name: { es: 'REMAZO', fr: 'COUP DE RAME' }, pow: 65, acc: 95, pp: 20 },
   forcejeo: { name: { es: 'FORCEJEO', fr: 'LUTTE' }, pow: 30, acc: 100, pp: 1 },
+  // técnicas secretas (misión de Dante en Florencia)
+  matademonios: { name: { es: 'MATA DEMONIOS', fr: 'TUEUR DE DÉMONS' }, pow: 300, acc: 0, pp: 3, big: true },
+  beso: { name: { es: 'BESO DE AMADA', fr: 'BAISER DE L\'AIMÉE' }, pow: 0, acc: 0, pp: 2, ohko: true, cost: 0.5 },
 };
 const moveName = id => tr(MOVES[id].name);
 const LEARN = { 1: ['tajo', 'grito'], 4: ['estocada'], 7: ['escudo'], 12: ['mandoble'], 17: ['aliento'], 22: ['finta'], 28: ['golpe_escudo'], 34: ['guardia'], 40: ['tajo_cruzado'], 46: ['carga'] };
@@ -2588,6 +2597,8 @@ const EQUIP = {
   cota: { slot: 'armadura', def: 11, price: 1500, name: { es: 'COTA DE MALLA', fr: 'COTTE DE MAILLES' } },
   brigantina: { slot: 'armadura', def: 17, price: 3800, name: { es: 'BRIGANTINA', fr: 'BRIGANDINE' } },
   arnes: { slot: 'armadura', def: 24, price: 6800, name: { es: 'ARNÉS MILANÉS', fr: 'ARMURE MILANAISE' } },
+  // premio secreto de don Quijote (no se vende)
+  matagigantes: { slot: 'arma', atk: 25, name: { es: 'ESPADA MATAGIGANTES', fr: 'ÉPÉE TUE-GÉANTS' } },
 };
 const equipBonus = (id, k) => (id && EQUIP[id] ? EQUIP[id][k] || 0 : 0);
 function effStats() {
@@ -2668,8 +2679,8 @@ const playerLook = () => `player_${P().gender}_${P().skin}`;
 const motherLook = () => `mother_${P().skin}`;
 
 const TOKENS = {
-  es: { esc: ['escudero', 'escudera'], Esc: ['Escudero', 'Escudera'], ESC: ['ESCUDERO', 'ESCUDERA'], o: ['o', 'a'], e: ['', ''], cab: ['caballero', 'caballero'], el: ['el', 'la'], El: ['El', 'La'], un: ['un', 'una'] },
-  fr: { esc: ['écuyer', 'écuyère'], Esc: ['Écuyer', 'Écuyère'], ESC: ['ÉCUYER', 'ÉCUYÈRE'], o: ['', 'e'], e: ['', 'e'], cab: ['chevalier', 'chevalière'], el: ['le', 'la'], El: ['Le', 'La'], un: ['un', 'une'] },
+  es: { esc: ['escudero', 'escudera'], Esc: ['Escudero', 'Escudera'], ESC: ['ESCUDERO', 'ESCUDERA'], o: ['o', 'a'], e: ['', ''], cab: ['caballero', 'caballero'], el: ['el', 'la'], El: ['El', 'La'], un: ['un', 'una'], CAB: ['CABALLERO', 'CABALLERA'], Cab: ['Caballero', 'Caballera'], TUEUR: ['MATAGIGANTES', 'MATAGIGANTES'], Tueur: ['Matagigantes', 'Matagigantes'] },
+  fr: { esc: ['écuyer', 'écuyère'], Esc: ['Écuyer', 'Écuyère'], ESC: ['ÉCUYER', 'ÉCUYÈRE'], o: ['', 'e'], e: ['', 'e'], cab: ['chevalier', 'chevalière'], el: ['le', 'la'], El: ['Le', 'La'], un: ['un', 'une'], CAB: ['CHEVALIER', 'CHEVALIÈRE'], Cab: ['Chevalier', 'Chevalière'], TUEUR: ['TUEUR', 'TUEUSE'], Tueur: ['Tueur', 'Tueuse'] },
 };
 function fmt(text) {
   let s = tr(text);
@@ -3628,7 +3639,7 @@ Object.assign(MAPS, {
         intro: { es: '¡El camino es largo y yo me aburro! ¿Un duelo?', fr: 'La route est longue et je m\'ennuie ! Un duel ?' },
         lose: { es: '¡Qué bien luchas!', fr: 'Tu te bats bien !' },
         after: { es: 'En la VENTA DEL CAMINO puedes descansar gratis.', fr: 'À l\'AUBERGE DU CHEMIN, tu peux te reposer gratuitement.' } }),
-      talker('r3_hidalgo', 'anciano', 33, 3, 'left', { es: '¡Atrás, gigantes! ...Ah, perdón. Te había confundido con un molino.', fr: 'Arrière, géants ! ...Ah, pardon. Je t\'avais pris pour un moulin.' }),
+      { id: 'r3_quijote', look: 'quijote', x: 33, y: 3, dir: 'left', talk: W => scriptQuijote(W) },
     ],
     items: [
       { id: 'r3a', x: 40, y: 1, item: 'unguento', n: 2 },
@@ -3846,6 +3857,60 @@ async function scriptBarcoTarifa(W) {
   const r = await W.ask({ es: '¿Subir a bordo de LA GAVIOTA?', fr: 'Monter à bord de LA MOUETTE ?' }, [t('yes'), t('no')]);
   if (r !== 0) return;
   await W.warp({ map: 'ruta5', x: 3, y: 7, dir: 'right' });
+}
+
+// ─── Misión secreta: don Quijote y el emblema del Matagigantes ────────────
+async function scriptQuijote(W) {
+  if (W.flag('quijoteHecho')) {
+    await W.say({ es: 'QUIJOTE: ¡Salud, {cab} Matagigantes! Que Dulcinea y Rocinante te acompañen en cada aventura.', fr: 'QUICHOTTE : Salut à toi, {cab} {Tueur} de géants ! Que Dulcinée et Rossinante t\'accompagnent dans chaque aventure.' });
+    return;
+  }
+  if (!W.flag('quijote1')) {
+    await W.say({ es: 'QUIJOTE: ¡Atrás, gigantes! ...Ah, perdón. Te había confundido con un molino.', fr: 'QUICHOTTE : Arrière, géants ! ...Ah, pardon. Je t\'avais pris pour un moulin.' });
+    await W.say({ es: 'QUIJOTE: Soy don Quijote de la Mancha, {cab} andante. En un lugar de la Mancha, de cuyo nombre no quiero acordarme...', fr: 'QUICHOTTE : Je suis don Quichotte de la Manche, chevalier errant. Dans un village de la Manche, dont je ne veux pas me rappeler le nom...' });
+    await W.say({ es: 'QUIJOTE: ¡Ay, qué desdicha! Ahora tampoco me acuerdo del nombre de mi amada, la señora de mis pensamientos. ¿Me ayudas a recordarlo?', fr: 'QUICHOTTE : Hélas, quel malheur ! Je ne me rappelle plus non plus le nom de ma bien-aimée, la dame de mes pensées. Tu m\'aides à m\'en souvenir ?' });
+    const r1 = await W.ask({ es: '¿Cómo se llama la amada de don Quijote?', fr: 'Comment s\'appelle la bien-aimée de don Quichotte ?' },
+      [{ es: 'MELIBEA', fr: 'MÉLIBÉE' }, { es: 'DULCINEA', fr: 'DULCINÉE' }, { es: 'ISOLDA', fr: 'ISEUT' }, { es: 'BEATRIZ', fr: 'BÉATRICE' }].map(tr));
+    if (r1 !== 1) {
+      await W.say({ es: 'QUIJOTE: No, no... Ese nombre no me hace suspirar. Vuelve cuando lo recuerdes, {name}.', fr: 'QUICHOTTE : Non, non... Ce nom ne me fait pas soupirer. Reviens quand tu t\'en souviendras, {name}.' });
+      return;
+    }
+    await W.say({ es: 'QUIJOTE: ¡DULCINEA! ¡Dulcinea del Toboso, la más hermosa de todas las damas! ¡Gracias, gracias!', fr: 'QUICHOTTE : DULCINÉE ! Dulcinée du Toboso, la plus belle de toutes les dames ! Merci, merci !' });
+    await W.say({ es: 'QUIJOTE: ¿Y mi fiel caballo? ¿Cómo se llama? ¡Lo tengo en la punta de la lengua!', fr: 'QUICHOTTE : Et mon fidèle cheval ? Comment s\'appelle-t-il ? Je l\'ai sur le bout de la langue !' });
+    const r2 = await W.ask({ es: '¿Cómo se llama el caballo de don Quijote?', fr: 'Comment s\'appelle le cheval de don Quichotte ?' },
+      [{ es: 'BABIECA', fr: 'BABIECA' }, { es: 'BUCÉFALO', fr: 'BUCÉPHALE' }, { es: 'ROCINANTE', fr: 'ROSSINANTE' }, { es: 'CLAVILEÑO', fr: 'CLAVILEÑO' }].map(tr));
+    if (r2 !== 2) {
+      await W.say({ es: 'QUIJOTE: ¿Ese? ¡No! Ese es el caballo de otro {cab}. Vuelve cuando lo sepas.', fr: 'QUICHOTTE : Celui-là ? Non ! C\'est le cheval d\'un autre chevalier. Reviens quand tu le sauras.' });
+      return;
+    }
+    await W.say({ es: 'QUIJOTE: ¡ROCINANTE! ¡El mejor rocín de la Mancha! Toma, por devolverme la memoria.', fr: 'QUICHOTTE : ROSSINANTE ! La meilleure rosse de la Manche ! Tiens, pour m\'avoir rendu la mémoire.' });
+    await W.gold(100);
+    await W.receive('unguento', 5);
+    W.flag('quijote1', true);
+    Game.save();
+  } else {
+    await W.say({ es: 'QUIJOTE: ¡Ah, mi amig{o}! ¿Vienes a por la pregunta sorpresa?', fr: 'QUICHOTTE : Ah, mon ami{e} ! Tu viens pour la question surprise ?' });
+  }
+  await W.say({ es: 'QUIJOTE: Y ahora, una pregunta sorpresa. Dicen que algún día un tal Cervantes escribirá un libro con mis aventuras...', fr: 'QUICHOTTE : Et maintenant, une question surprise. On dit qu\'un jour, un certain Cervantès écrira un livre sur mes aventures...' });
+  const r3 = await W.ask({ es: '¿Cuántas páginas tiene el libro de don Quijote de la Mancha?', fr: 'Combien de pages compte le livre de don Quichotte de la Manche ?' },
+    [{ es: '664', fr: '664' }, { es: '0', fr: '0' }, { es: '1.250', fr: '1 250' }, { es: '312', fr: '312' }].map(tr));
+  if (r3 !== 1) {
+    await W.say({ es: 'QUIJOTE: ¡Ja, ja! Puede que algún día tenga esas páginas... ¡pero piensa bien en qué año estamos! Vuelve cuando lo tengas claro.', fr: 'QUICHOTTE : Ha, ha ! Un jour, il aura peut-être ces pages... mais réfléchis bien à l\'année où nous sommes ! Reviens quand tu auras compris.' });
+    return;
+  }
+  await W.say({ es: 'QUIJOTE: ¡CERO! ¡Exacto! Estamos en 1415: Cervantes ni siquiera ha nacido. Mi libro no se publicará hasta 1605... ¡dentro de 190 años!', fr: 'QUICHOTTE : ZÉRO ! Exactement ! Nous sommes en 1415 : Cervantès n\'est même pas né. Mon livre ne sera publié qu\'en 1605... dans 190 ans !' });
+  await W.say({ es: 'QUIJOTE: Hoy mis aventuras solo existen en mi cabeza. ¡Qué ingenio el tuyo! Te nombro MATAGIGANTES.', fr: 'QUICHOTTE : Aujourd\'hui, mes aventures n\'existent que dans ma tête. Quel esprit tu as ! Je te nomme {TUEUR} DE GÉANTS.' });
+  Sfx.play('win');
+  W.flag('emblemaMatagigantes', true);
+  await W.say({ es: '¡{name} recibe el EMBLEMA DEL MATAGIGANTES!', fr: '{name} reçoit l\'EMBLÈME DU TUEUR DE GÉANTS !' }, { color: 'blue' });
+  const up = await W.levelTo(35);
+  if (!up) await W.say({ es: 'QUIJOTE: Ya eres más fuerte que cualquier gigante. ¡El emblema te queda de maravilla!', fr: 'QUICHOTTE : Tu es déjà plus fort{e} que n\'importe quel géant. L\'emblème te va à merveille !' });
+  await W.say({ es: 'QUIJOTE: Y toma mi ESPADA MATAGIGANTES. Con ella vencí a cien gigantes... bueno, a cien molinos.', fr: 'QUICHOTTE : Et prends mon ÉPÉE TUE-GÉANTS. Avec elle, j\'ai vaincu cent géants... enfin, cent moulins.' });
+  Sfx.play('item');
+  W.giveEquip('matagigantes', true);
+  await W.say({ es: '¡{name} recibe la ESPADA MATAGIGANTES (+25 ATQ)!', fr: '{name} reçoit l\'ÉPÉE TUE-GÉANTS (+25 ATT) !' }, { color: 'blue' });
+  W.flag('quijoteHecho', true);
+  Game.save();
 }
 
 // ── 09c-marruecos.js ──
@@ -4892,6 +4957,7 @@ Object.assign(MAPS, {
         else await W.say({ es: 'Corvino tiene amigos en el ARSENAL de Venecia, donde se construyen los barcos de guerra.', fr: 'Corvino a des amis à l\'ARSENAL de Venise, là où on construit les navires de guerre.' });
       } }),
       talker('fl_pintor', 'anciano', 12, 7, 'down', { es: 'Llevo veinte años pintando esta ciudad y cada día la veo más bonita.', fr: 'Ça fait vingt ans que je peins cette ville et chaque jour je la trouve plus belle.' }),
+      { id: 'fl_dante', look: 'dante', x: 24, y: 8, dir: 'down', talk: W => scriptDante(W) },
       talker('fl_dama', 'florentina', 22, 10, 'left', { es: 'El maestro GUIDO es el mejor espadachín de Italia. Usa PARADA para defenderse y atacar a la vez.', fr: 'Maître GUIDO est le meilleur bretteur d\'Italie. Il utilise PARADE pour se défendre et attaquer à la fois.' }),
       talker('fl_nino', 'nino', 10, 17, 'down', { es: '¡Cruza el PUENTE VIEJO para llegar al coliseo!', fr: 'Traverse le PONT VIEUX pour aller au colisée !' }, { wander: 2 }),
     ],
@@ -5336,6 +5402,38 @@ async function scriptDux(W) {
   Sfx.play('win');
   await W.say({ es: '— FIN DEL CAPÍTULO I —', fr: '— FIN DU CHAPITRE I —' }, { color: 'blue' });
   await W.say({ es: '¡Gracias por jugar al prototipo de LAS SEIS CORONAS! El viaje a Alemania llegará en la próxima versión. Puedes seguir entrenando y explorando.', fr: 'Merci d\'avoir joué au prototype des SIX COURONNES ! Le voyage en Allemagne arrivera dans la prochaine version. Tu peux continuer à t\'entraîner et à explorer.' });
+  Game.save();
+}
+
+// ─── Misión secreta: Dante y el título de Caballero del Infierno ──────────
+async function scriptDante(W) {
+  if (W.flag('caballeroInfierno')) {
+    const p = P(), miss = ['matademonios', 'beso'].filter(m => !p.moves.find(x => x.id === m));
+    if (!miss.length) { await W.say({ es: 'DANTE: Ve, {cab} del Infierno. Y que el amor que mueve el sol y las estrellas te guíe.', fr: 'DANTE : Va, {cab} de l\'Enfer. Et que l\'amour qui meut le soleil et les étoiles te guide.' }); return; }
+    const r = await W.ask({ es: 'DANTE: ¿Has olvidado alguna de mis técnicas? ¿Quieres que te la enseñe otra vez?', fr: 'DANTE : Tu as oublié une de mes techniques ? Veux-tu que je te l\'enseigne de nouveau ?' }, [t('yes'), t('no')]);
+    if (r === 0) for (const m of miss) await W.learnMove(m);
+    return;
+  }
+  await W.say({ es: 'DANTE: ¿Me reconoces? Soy Dante Alighieri, poeta de Florencia. ¿Que llevo un siglo muerto? Digamos que he vuelto de un viaje muy largo...', fr: 'DANTE : Tu me reconnais ? Je suis Dante Alighieri, poète de Florence. Mort depuis un siècle, dis-tu ? Disons que je reviens d\'un très long voyage...' });
+  await W.say({ es: 'DANTE: En mi DIVINA COMEDIA cuento cómo, perdido en una selva oscura, viajé por el INFIERNO, el PURGATORIO y el PARAÍSO.', fr: 'DANTE : Dans ma DIVINE COMÉDIE, je raconte comment, perdu dans une forêt obscure, j\'ai voyagé à travers l\'ENFER, le PURGATOIRE et le PARADIS.' });
+  await W.say({ es: 'DANTE: Un gran poeta de la antigua Roma me guió por el Infierno, círculo a círculo, hasta el fondo, donde Lucifer está atrapado en el hielo.', fr: 'DANTE : Un grand poète de la Rome antique m\'a guidé à travers l\'Enfer, cercle après cercle, jusqu\'au fond, où Lucifer est pris dans la glace.' });
+  await W.say({ es: 'DANTE: Después subimos la montaña del Purgatorio, y al final mi amada BEATRIZ me llevó hasta el Paraíso.', fr: 'DANTE : Puis nous avons gravi la montagne du Purgatoire, et à la fin ma bien-aimée BÉATRICE m\'a conduit jusqu\'au Paradis.' });
+  await W.say({ es: 'DANTE: ¿Has escuchado bien? Si respondes a mis dos preguntas, te concederé un honor que nadie tiene.', fr: 'DANTE : As-tu bien écouté ? Si tu réponds à mes deux questions, je t\'accorderai un honneur que personne n\'a.' });
+  const r1 = await W.ask({ es: '¿Quién guía a Dante por el Infierno y el Purgatorio?', fr: 'Qui guide Dante à travers l\'Enfer et le Purgatoire ?' },
+    [{ es: 'HOMERO', fr: 'HOMÈRE' }, { es: 'VIRGILIO', fr: 'VIRGILE' }, { es: 'OVIDIO', fr: 'OVIDE' }, { es: 'ARISTÓTELES', fr: 'ARISTOTE' }].map(tr));
+  if (r1 !== 1) { await W.say({ es: 'DANTE: No... Lee mi obra con calma y vuelve a verme.', fr: 'DANTE : Non... Lis mon œuvre tranquillement et reviens me voir.' }); return; }
+  await W.say({ es: 'DANTE: ¡VIRGILIO, mi maestro! Bien. Segunda pregunta...', fr: 'DANTE : VIRGILE, mon maître ! Bien. Deuxième question...' });
+  const r2 = await W.ask({ es: '¿Cuántos círculos tiene el Infierno de Dante?', fr: 'Combien de cercles compte l\'Enfer de Dante ?' },
+    [{ es: 'SIETE', fr: 'SEPT' }, { es: 'TRES', fr: 'TROIS' }, { es: 'NUEVE', fr: 'NEUF' }, { es: 'DOCE', fr: 'DOUZE' }].map(tr));
+  if (r2 !== 2) { await W.say({ es: 'DANTE: No... Ese no es el número. Lee mi obra con calma y vuelve a verme.', fr: 'DANTE : Non... Ce n\'est pas le bon nombre. Lis mon œuvre tranquillement et reviens me voir.' }); return; }
+  await W.say({ es: 'DANTE: ¡NUEVE círculos! Has bajado conmigo hasta el fondo del Infierno... y has vuelto. Te nombro {CAB} DEL INFIERNO.', fr: 'DANTE : NEUF cercles ! Tu es descendu{e} avec moi jusqu\'au fond de l\'Enfer... et tu en es revenu{e}. Je te nomme {CAB} DE L\'ENFER.' });
+  Sfx.play('win');
+  W.flag('caballeroInfierno', true);
+  await W.say({ es: '¡{name} recibe el título de {CAB} DEL INFIERNO!', fr: '{name} reçoit le titre de {CAB} DE L\'ENFER !' }, { color: 'blue' });
+  await W.say({ es: 'DANTE: Te enseño dos técnicas. MATA DEMONIOS, un golpe terrible que solo puedes usar tres veces...', fr: 'DANTE : Je t\'enseigne deux techniques. TUEUR DE DÉMONS, un coup terrible que tu ne peux utiliser que trois fois...' });
+  await W.say({ es: 'DANTE: ...y BESO DE AMADA, que vence a cualquiera de un solo golpe. Pero ojo: te arranca la mitad de tus PV.', fr: 'DANTE : ...et BAISER DE L\'AIMÉE, qui vainc n\'importe qui d\'un seul coup. Mais attention : il t\'arrache la moitié de tes PV.' });
+  await W.learnMove('matademonios');
+  await W.learnMove('beso');
   Game.save();
 }
 
@@ -5800,10 +5898,30 @@ class WorldScene {
       Game.save();
     }
   }
-  giveEquip(id) {
+  // Sube directamente hasta el nivel L (si aún no lo tiene) y aprende las técnicas por el camino
+  async levelTo(L) {
+    const p = P();
+    if (p.level >= L) return false;
+    const events = gainXp(xpFor(L) - p.xp);
+    healPlayer();
+    Sfx.play('level');
+    await this.say(t('w_levelTo', { v: p.level }), { color: 'blue' });
+    for (const ev of events) for (const l of ev.learned) {
+      if (l.full) await learnWithChoice(this.ui, l.m, txt => this.say(txt));
+      else { Sfx.play('item'); await this.say(t('b_learn', { n: p.name, m: moveName(l.m) }), { color: 'blue' }); }
+    }
+    return true;
+  }
+  async learnMove(m) {
+    const p = P();
+    if (p.moves.find(x => x.id === m)) return;
+    if (p.moves.length < 4) { p.moves.push({ id: m, pp: MOVES[m].pp }); Sfx.play('item'); await this.say(t('b_learn', { n: p.name, m: moveName(m) }), { color: 'blue' }); return; }
+    await learnWithChoice(this.ui, m, txt => this.say(txt));
+  }
+  giveEquip(id, evenIfEqual) {
     const s = S0(), q = EQUIP[id], e = s.equip || {};
-    const stat = q.slot === 'arma' ? 'atk' : 'def';
-    if (equipBonus(e[q.slot], stat) < q[stat]) s.equip = Object.assign({}, e, { [q.slot]: id });
+    const stat = q.slot === 'arma' ? 'atk' : 'def', cur = equipBonus(e[q.slot], stat);
+    if (cur < q[stat] || (evenIfEqual && cur <= q[stat])) s.equip = Object.assign({}, e, { [q.slot]: id });
   }
   async receive(item, n = 1) {
     this.give(item, n);
@@ -6060,6 +6178,11 @@ function drawStatus(ctx) {
   Font.drawRight(ctx, t('s_more'), 230, 140, 'grey');
 }
 
+// Títulos de las misiones secretas
+const TITLES = [
+  ['emblemaMatagigantes', { es: 'Matagigantes', fr: '{Tueur} de géants' }],
+  ['caballeroInfierno', { es: '{Cab} del Infierno', fr: '{Cab} de l\'Enfer' }],
+];
 // Segunda página del estado: equipo y blasones
 const CRESTS = [
   ['toledo', '#c23a3a', '#f2ca52', { es: 'TOLEDO', fr: 'TOLÈDE' }],
@@ -6094,7 +6217,9 @@ function drawGear(ctx) {
     drawShield(ctx, x, 102, c1, c2, on);
   });
   const named = CRESTS.filter(([k]) => s.flags['blason_' + k]).map(c => tr(c[3]));
-  if (named.length) Font.draw(ctx, named.join(' · '), 12, 120, 'grey');
+  if (named.length) Font.draw(ctx, named.join(' · '), 12, 118, 'grey');
+  const titles = TITLES.filter(([f]) => s.flags[f]).map(([, n]) => fmt(n));
+  if (titles.length) Font.draw(ctx, t('s_titles', { v: titles.join(' · ') }), 12, 130, 'blue');
   Font.drawRight(ctx, t('k_back'), 228, 140, 'dark');
 }
 
@@ -6342,8 +6467,26 @@ class BattleScene {
     const mv = MOVES[id];
     if (side === 'me') { const m = P().moves.find(x => x.id === id); if (m) m.pp = Math.max(0, m.pp - 1); }
     await this.msg(t('b_uses', { a: this.ref(side, true), m: moveName(id) }), 650);
+    if (mv.ohko) {
+      // vence al rival de un golpe, pero cuesta la mitad de tus PV
+      await this.lunge(side);
+      Game.flashA = 0.9; tween(Game, { flashA: 0 }, 400, Ease.lin);
+      def.hp = 0;
+      Sfx.play('crit');
+      await this.hitAnim(other);
+      await tween(this.disp, { [other]: 0 }, 500, Ease.lin);
+      const lost = Math.floor(att.hp * (mv.cost || 0.5));
+      if (lost > 0) {
+        att.hp = Math.max(1, att.hp - lost);
+        Sfx.play('hit');
+        await tween(this.disp, { [side]: att.hp }, 450, Ease.lin);
+        await this.msg(t('b_cost', { a: this.ref(side, true), v: lost }));
+      }
+      return;
+    }
     if (mv.pow > 0) {
       if (mv.acc && Math.random() * 100 >= mv.acc) { Sfx.play('miss'); await this.msg(t('b_miss')); return; }
+      if (mv.big) { Game.flashA = 0.8; tween(Game, { flashA: 0 }, 350, Ease.lin); }
       await this.lunge(side);
       const { dmg, crit } = calcDamage(att, def, mv);
       def.hp = Math.max(0, def.hp - dmg);
@@ -6495,7 +6638,7 @@ class BattleScene {
       const m = moves[st.idx], mv = MOVES[m.id];
       Font.draw(ctx, t('b_pp'), 173, 119, 'dark');
       Font.drawRight(ctx, `${m.pp}/${mv.pp}`, 230, 119, m.pp > 0 ? 'dark' : 'red');
-      Font.draw(ctx, mv.pow > 0 ? t('b_dmg') : t('b_buff'), 173, 133, 'grey');
+      Font.draw(ctx, mv.pow > 0 ? t('b_dmg') : mv.ohko ? t('b_special') : t('b_buff'), 173, 133, 'grey');
       if (mv.pow > 0) Font.drawRight(ctx, String(mv.pow), 230, 133, 'dark');
     }, () => {
       const n = moves.length;

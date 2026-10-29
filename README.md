@@ -1,4 +1,4 @@
-# Las Seis Coronas · prototipo v0.3
+# Las Seis Coronas · prototipo v0.4
 
 RPG medieval por turnos en pixel art, ambientado en 1415. Se juega en español o en francés.
 
@@ -10,6 +10,7 @@ RPG medieval por turnos en pixel art, ambientado en 1415. Se juega en español o
 - Unos 70 entrenadores, 13 animales salvajes distintos y la historia de la Compañía del Cuervo, que roba los Sellos de la tregua.
 - Posadas para curarse (si caes en combate, despiertas en la última), tiendas de objetos y armerías con armas y armaduras.
 - Viajes en barco entre puertos y técnicas nuevas hasta el nivel 46 (eliges cuál olvidar).
+- **Dos misiones secretas** con preguntas y premios especiales. Pista: un caballero despistado en La Mancha y un poeta muy antiguo en Florencia.
 - Combate por turnos con técnicas, objetos, huida, golpes críticos y mejoras de atributos. Experiencia y niveles hasta el 150.
 - **Contador de kilómetros real** en la app de Android: los pasos del móvil se convierten en ducados y objetos.
 - Guardado automático y controles táctiles.
@@ -124,6 +125,7 @@ node tools/build.mjs
 node tools/validate.mjs          # revisa conexiones, puertas y que todo sea alcanzable
 node tools/balance.mjs 4         # simula la aventura: niveles, dinero y dificultad de cada maestro
 node tools/playthrough.mjs out es  # juega la historia entera con la interfaz real y guarda capturas
+node tools/quests.mjs out es       # prueba las misiones secretas (¡contiene las respuestas!)
 ```
 
 ## Construir la versión web

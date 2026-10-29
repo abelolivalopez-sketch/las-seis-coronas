@@ -280,7 +280,7 @@ Object.assign(MAPS, {
         intro: { es: '¡El camino es largo y yo me aburro! ¿Un duelo?', fr: 'La route est longue et je m\'ennuie ! Un duel ?' },
         lose: { es: '¡Qué bien luchas!', fr: 'Tu te bats bien !' },
         after: { es: 'En la VENTA DEL CAMINO puedes descansar gratis.', fr: 'À l\'AUBERGE DU CHEMIN, tu peux te reposer gratuitement.' } }),
-      talker('r3_hidalgo', 'anciano', 33, 3, 'left', { es: '¡Atrás, gigantes! ...Ah, perdón. Te había confundido con un molino.', fr: 'Arrière, géants ! ...Ah, pardon. Je t\'avais pris pour un moulin.' }),
+      { id: 'r3_quijote', look: 'quijote', x: 33, y: 3, dir: 'left', talk: W => scriptQuijote(W) },
     ],
     items: [
       { id: 'r3a', x: 40, y: 1, item: 'unguento', n: 2 },
@@ -498,4 +498,58 @@ async function scriptBarcoTarifa(W) {
   const r = await W.ask({ es: '¿Subir a bordo de LA GAVIOTA?', fr: 'Monter à bord de LA MOUETTE ?' }, [t('yes'), t('no')]);
   if (r !== 0) return;
   await W.warp({ map: 'ruta5', x: 3, y: 7, dir: 'right' });
+}
+
+// ─── Misión secreta: don Quijote y el emblema del Matagigantes ────────────
+async function scriptQuijote(W) {
+  if (W.flag('quijoteHecho')) {
+    await W.say({ es: 'QUIJOTE: ¡Salud, {cab} Matagigantes! Que Dulcinea y Rocinante te acompañen en cada aventura.', fr: 'QUICHOTTE : Salut à toi, {cab} {Tueur} de géants ! Que Dulcinée et Rossinante t\'accompagnent dans chaque aventure.' });
+    return;
+  }
+  if (!W.flag('quijote1')) {
+    await W.say({ es: 'QUIJOTE: ¡Atrás, gigantes! ...Ah, perdón. Te había confundido con un molino.', fr: 'QUICHOTTE : Arrière, géants ! ...Ah, pardon. Je t\'avais pris pour un moulin.' });
+    await W.say({ es: 'QUIJOTE: Soy don Quijote de la Mancha, {cab} andante. En un lugar de la Mancha, de cuyo nombre no quiero acordarme...', fr: 'QUICHOTTE : Je suis don Quichotte de la Manche, chevalier errant. Dans un village de la Manche, dont je ne veux pas me rappeler le nom...' });
+    await W.say({ es: 'QUIJOTE: ¡Ay, qué desdicha! Ahora tampoco me acuerdo del nombre de mi amada, la señora de mis pensamientos. ¿Me ayudas a recordarlo?', fr: 'QUICHOTTE : Hélas, quel malheur ! Je ne me rappelle plus non plus le nom de ma bien-aimée, la dame de mes pensées. Tu m\'aides à m\'en souvenir ?' });
+    const r1 = await W.ask({ es: '¿Cómo se llama la amada de don Quijote?', fr: 'Comment s\'appelle la bien-aimée de don Quichotte ?' },
+      [{ es: 'MELIBEA', fr: 'MÉLIBÉE' }, { es: 'DULCINEA', fr: 'DULCINÉE' }, { es: 'ISOLDA', fr: 'ISEUT' }, { es: 'BEATRIZ', fr: 'BÉATRICE' }].map(tr));
+    if (r1 !== 1) {
+      await W.say({ es: 'QUIJOTE: No, no... Ese nombre no me hace suspirar. Vuelve cuando lo recuerdes, {name}.', fr: 'QUICHOTTE : Non, non... Ce nom ne me fait pas soupirer. Reviens quand tu t\'en souviendras, {name}.' });
+      return;
+    }
+    await W.say({ es: 'QUIJOTE: ¡DULCINEA! ¡Dulcinea del Toboso, la más hermosa de todas las damas! ¡Gracias, gracias!', fr: 'QUICHOTTE : DULCINÉE ! Dulcinée du Toboso, la plus belle de toutes les dames ! Merci, merci !' });
+    await W.say({ es: 'QUIJOTE: ¿Y mi fiel caballo? ¿Cómo se llama? ¡Lo tengo en la punta de la lengua!', fr: 'QUICHOTTE : Et mon fidèle cheval ? Comment s\'appelle-t-il ? Je l\'ai sur le bout de la langue !' });
+    const r2 = await W.ask({ es: '¿Cómo se llama el caballo de don Quijote?', fr: 'Comment s\'appelle le cheval de don Quichotte ?' },
+      [{ es: 'BABIECA', fr: 'BABIECA' }, { es: 'BUCÉFALO', fr: 'BUCÉPHALE' }, { es: 'ROCINANTE', fr: 'ROSSINANTE' }, { es: 'CLAVILEÑO', fr: 'CLAVILEÑO' }].map(tr));
+    if (r2 !== 2) {
+      await W.say({ es: 'QUIJOTE: ¿Ese? ¡No! Ese es el caballo de otro {cab}. Vuelve cuando lo sepas.', fr: 'QUICHOTTE : Celui-là ? Non ! C\'est le cheval d\'un autre chevalier. Reviens quand tu le sauras.' });
+      return;
+    }
+    await W.say({ es: 'QUIJOTE: ¡ROCINANTE! ¡El mejor rocín de la Mancha! Toma, por devolverme la memoria.', fr: 'QUICHOTTE : ROSSINANTE ! La meilleure rosse de la Manche ! Tiens, pour m\'avoir rendu la mémoire.' });
+    await W.gold(100);
+    await W.receive('unguento', 5);
+    W.flag('quijote1', true);
+    Game.save();
+  } else {
+    await W.say({ es: 'QUIJOTE: ¡Ah, mi amig{o}! ¿Vienes a por la pregunta sorpresa?', fr: 'QUICHOTTE : Ah, mon ami{e} ! Tu viens pour la question surprise ?' });
+  }
+  await W.say({ es: 'QUIJOTE: Y ahora, una pregunta sorpresa. Dicen que algún día un tal Cervantes escribirá un libro con mis aventuras...', fr: 'QUICHOTTE : Et maintenant, une question surprise. On dit qu\'un jour, un certain Cervantès écrira un livre sur mes aventures...' });
+  const r3 = await W.ask({ es: '¿Cuántas páginas tiene el libro de don Quijote de la Mancha?', fr: 'Combien de pages compte le livre de don Quichotte de la Manche ?' },
+    [{ es: '664', fr: '664' }, { es: '0', fr: '0' }, { es: '1.250', fr: '1 250' }, { es: '312', fr: '312' }].map(tr));
+  if (r3 !== 1) {
+    await W.say({ es: 'QUIJOTE: ¡Ja, ja! Puede que algún día tenga esas páginas... ¡pero piensa bien en qué año estamos! Vuelve cuando lo tengas claro.', fr: 'QUICHOTTE : Ha, ha ! Un jour, il aura peut-être ces pages... mais réfléchis bien à l\'année où nous sommes ! Reviens quand tu auras compris.' });
+    return;
+  }
+  await W.say({ es: 'QUIJOTE: ¡CERO! ¡Exacto! Estamos en 1415: Cervantes ni siquiera ha nacido. Mi libro no se publicará hasta 1605... ¡dentro de 190 años!', fr: 'QUICHOTTE : ZÉRO ! Exactement ! Nous sommes en 1415 : Cervantès n\'est même pas né. Mon livre ne sera publié qu\'en 1605... dans 190 ans !' });
+  await W.say({ es: 'QUIJOTE: Hoy mis aventuras solo existen en mi cabeza. ¡Qué ingenio el tuyo! Te nombro MATAGIGANTES.', fr: 'QUICHOTTE : Aujourd\'hui, mes aventures n\'existent que dans ma tête. Quel esprit tu as ! Je te nomme {TUEUR} DE GÉANTS.' });
+  Sfx.play('win');
+  W.flag('emblemaMatagigantes', true);
+  await W.say({ es: '¡{name} recibe el EMBLEMA DEL MATAGIGANTES!', fr: '{name} reçoit l\'EMBLÈME DU TUEUR DE GÉANTS !' }, { color: 'blue' });
+  const up = await W.levelTo(35);
+  if (!up) await W.say({ es: 'QUIJOTE: Ya eres más fuerte que cualquier gigante. ¡El emblema te queda de maravilla!', fr: 'QUICHOTTE : Tu es déjà plus fort{e} que n\'importe quel géant. L\'emblème te va à merveille !' });
+  await W.say({ es: 'QUIJOTE: Y toma mi ESPADA MATAGIGANTES. Con ella vencí a cien gigantes... bueno, a cien molinos.', fr: 'QUICHOTTE : Et prends mon ÉPÉE TUE-GÉANTS. Avec elle, j\'ai vaincu cent géants... enfin, cent moulins.' });
+  Sfx.play('item');
+  W.giveEquip('matagigantes', true);
+  await W.say({ es: '¡{name} recibe la ESPADA MATAGIGANTES (+25 ATQ)!', fr: '{name} reçoit l\'ÉPÉE TUE-GÉANTS (+25 ATT) !' }, { color: 'blue' });
+  W.flag('quijoteHecho', true);
+  Game.save();
 }

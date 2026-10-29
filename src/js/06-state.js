@@ -41,8 +41,8 @@ const playerLook = () => `player_${P().gender}_${P().skin}`;
 const motherLook = () => `mother_${P().skin}`;
 
 const TOKENS = {
-  es: { esc: ['escudero', 'escudera'], Esc: ['Escudero', 'Escudera'], ESC: ['ESCUDERO', 'ESCUDERA'], o: ['o', 'a'], e: ['', ''], cab: ['caballero', 'caballero'], el: ['el', 'la'], El: ['El', 'La'], un: ['un', 'una'] },
-  fr: { esc: ['écuyer', 'écuyère'], Esc: ['Écuyer', 'Écuyère'], ESC: ['ÉCUYER', 'ÉCUYÈRE'], o: ['', 'e'], e: ['', 'e'], cab: ['chevalier', 'chevalière'], el: ['le', 'la'], El: ['Le', 'La'], un: ['un', 'une'] },
+  es: { esc: ['escudero', 'escudera'], Esc: ['Escudero', 'Escudera'], ESC: ['ESCUDERO', 'ESCUDERA'], o: ['o', 'a'], e: ['', ''], cab: ['caballero', 'caballero'], el: ['el', 'la'], El: ['El', 'La'], un: ['un', 'una'], CAB: ['CABALLERO', 'CABALLERA'], Cab: ['Caballero', 'Caballera'], TUEUR: ['MATAGIGANTES', 'MATAGIGANTES'], Tueur: ['Matagigantes', 'Matagigantes'] },
+  fr: { esc: ['écuyer', 'écuyère'], Esc: ['Écuyer', 'Écuyère'], ESC: ['ÉCUYER', 'ÉCUYÈRE'], o: ['', 'e'], e: ['', 'e'], cab: ['chevalier', 'chevalière'], el: ['le', 'la'], El: ['Le', 'La'], un: ['un', 'une'], CAB: ['CHEVALIER', 'CHEVALIÈRE'], Cab: ['Chevalier', 'Chevalière'], TUEUR: ['TUEUR', 'TUEUSE'], Tueur: ['Tueur', 'Tueuse'] },
 };
 function fmt(text) {
   let s = tr(text);

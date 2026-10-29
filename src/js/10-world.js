@@ -458,10 +458,30 @@ class WorldScene {
       Game.save();
     }
   }
-  giveEquip(id) {
+  // Sube directamente hasta el nivel L (si aún no lo tiene) y aprende las técnicas por el camino
+  async levelTo(L) {
+    const p = P();
+    if (p.level >= L) return false;
+    const events = gainXp(xpFor(L) - p.xp);
+    healPlayer();
+    Sfx.play('level');
+    await this.say(t('w_levelTo', { v: p.level }), { color: 'blue' });
+    for (const ev of events) for (const l of ev.learned) {
+      if (l.full) await learnWithChoice(this.ui, l.m, txt => this.say(txt));
+      else { Sfx.play('item'); await this.say(t('b_learn', { n: p.name, m: moveName(l.m) }), { color: 'blue' }); }
+    }
+    return true;
+  }
+  async learnMove(m) {
+    const p = P();
+    if (p.moves.find(x => x.id === m)) return;
+    if (p.moves.length < 4) { p.moves.push({ id: m, pp: MOVES[m].pp }); Sfx.play('item'); await this.say(t('b_learn', { n: p.name, m: moveName(m) }), { color: 'blue' }); return; }
+    await learnWithChoice(this.ui, m, txt => this.say(txt));
+  }
+  giveEquip(id, evenIfEqual) {
     const s = S0(), q = EQUIP[id], e = s.equip || {};
-    const stat = q.slot === 'arma' ? 'atk' : 'def';
-    if (equipBonus(e[q.slot], stat) < q[stat]) s.equip = Object.assign({}, e, { [q.slot]: id });
+    const stat = q.slot === 'arma' ? 'atk' : 'def', cur = equipBonus(e[q.slot], stat);
+    if (cur < q[stat] || (evenIfEqual && cur <= q[stat])) s.equip = Object.assign({}, e, { [q.slot]: id });
   }
   async receive(item, n = 1) {
     this.give(item, n);
@@ -718,6 +738,11 @@ function drawStatus(ctx) {
   Font.drawRight(ctx, t('s_more'), 230, 140, 'grey');
 }
 
+// Títulos de las misiones secretas
+const TITLES = [
+  ['emblemaMatagigantes', { es: 'Matagigantes', fr: '{Tueur} de géants' }],
+  ['caballeroInfierno', { es: '{Cab} del Infierno', fr: '{Cab} de l\'Enfer' }],
+];
 // Segunda página del estado: equipo y blasones
 const CRESTS = [
   ['toledo', '#c23a3a', '#f2ca52', { es: 'TOLEDO', fr: 'TOLÈDE' }],
@@ -752,7 +777,9 @@ function drawGear(ctx) {
     drawShield(ctx, x, 102, c1, c2, on);
   });
   const named = CRESTS.filter(([k]) => s.flags['blason_' + k]).map(c => tr(c[3]));
-  if (named.length) Font.draw(ctx, named.join(' · '), 12, 120, 'grey');
+  if (named.length) Font.draw(ctx, named.join(' · '), 12, 118, 'grey');
+  const titles = TITLES.filter(([f]) => s.flags[f]).map(([, n]) => fmt(n));
+  if (titles.length) Font.draw(ctx, t('s_titles', { v: titles.join(' · ') }), 12, 130, 'blue');
   Font.drawRight(ctx, t('k_back'), 228, 140, 'dark');
 }
 

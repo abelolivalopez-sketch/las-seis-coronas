@@ -337,6 +337,7 @@ Object.assign(MAPS, {
         else await W.say({ es: 'Corvino tiene amigos en el ARSENAL de Venecia, donde se construyen los barcos de guerra.', fr: 'Corvino a des amis à l\'ARSENAL de Venise, là où on construit les navires de guerre.' });
       } }),
       talker('fl_pintor', 'anciano', 12, 7, 'down', { es: 'Llevo veinte años pintando esta ciudad y cada día la veo más bonita.', fr: 'Ça fait vingt ans que je peins cette ville et chaque jour je la trouve plus belle.' }),
+      { id: 'fl_dante', look: 'dante', x: 24, y: 8, dir: 'down', talk: W => scriptDante(W) },
       talker('fl_dama', 'florentina', 22, 10, 'left', { es: 'El maestro GUIDO es el mejor espadachín de Italia. Usa PARADA para defenderse y atacar a la vez.', fr: 'Maître GUIDO est le meilleur bretteur d\'Italie. Il utilise PARADE pour se défendre et attaquer à la fois.' }),
       talker('fl_nino', 'nino', 10, 17, 'down', { es: '¡Cruza el PUENTE VIEJO para llegar al coliseo!', fr: 'Traverse le PONT VIEUX pour aller au colisée !' }, { wander: 2 }),
     ],
@@ -781,5 +782,37 @@ async function scriptDux(W) {
   Sfx.play('win');
   await W.say({ es: '— FIN DEL CAPÍTULO I —', fr: '— FIN DU CHAPITRE I —' }, { color: 'blue' });
   await W.say({ es: '¡Gracias por jugar al prototipo de LAS SEIS CORONAS! El viaje a Alemania llegará en la próxima versión. Puedes seguir entrenando y explorando.', fr: 'Merci d\'avoir joué au prototype des SIX COURONNES ! Le voyage en Allemagne arrivera dans la prochaine version. Tu peux continuer à t\'entraîner et à explorer.' });
+  Game.save();
+}
+
+// ─── Misión secreta: Dante y el título de Caballero del Infierno ──────────
+async function scriptDante(W) {
+  if (W.flag('caballeroInfierno')) {
+    const p = P(), miss = ['matademonios', 'beso'].filter(m => !p.moves.find(x => x.id === m));
+    if (!miss.length) { await W.say({ es: 'DANTE: Ve, {cab} del Infierno. Y que el amor que mueve el sol y las estrellas te guíe.', fr: 'DANTE : Va, {cab} de l\'Enfer. Et que l\'amour qui meut le soleil et les étoiles te guide.' }); return; }
+    const r = await W.ask({ es: 'DANTE: ¿Has olvidado alguna de mis técnicas? ¿Quieres que te la enseñe otra vez?', fr: 'DANTE : Tu as oublié une de mes techniques ? Veux-tu que je te l\'enseigne de nouveau ?' }, [t('yes'), t('no')]);
+    if (r === 0) for (const m of miss) await W.learnMove(m);
+    return;
+  }
+  await W.say({ es: 'DANTE: ¿Me reconoces? Soy Dante Alighieri, poeta de Florencia. ¿Que llevo un siglo muerto? Digamos que he vuelto de un viaje muy largo...', fr: 'DANTE : Tu me reconnais ? Je suis Dante Alighieri, poète de Florence. Mort depuis un siècle, dis-tu ? Disons que je reviens d\'un très long voyage...' });
+  await W.say({ es: 'DANTE: En mi DIVINA COMEDIA cuento cómo, perdido en una selva oscura, viajé por el INFIERNO, el PURGATORIO y el PARAÍSO.', fr: 'DANTE : Dans ma DIVINE COMÉDIE, je raconte comment, perdu dans une forêt obscure, j\'ai voyagé à travers l\'ENFER, le PURGATOIRE et le PARADIS.' });
+  await W.say({ es: 'DANTE: Un gran poeta de la antigua Roma me guió por el Infierno, círculo a círculo, hasta el fondo, donde Lucifer está atrapado en el hielo.', fr: 'DANTE : Un grand poète de la Rome antique m\'a guidé à travers l\'Enfer, cercle après cercle, jusqu\'au fond, où Lucifer est pris dans la glace.' });
+  await W.say({ es: 'DANTE: Después subimos la montaña del Purgatorio, y al final mi amada BEATRIZ me llevó hasta el Paraíso.', fr: 'DANTE : Puis nous avons gravi la montagne du Purgatoire, et à la fin ma bien-aimée BÉATRICE m\'a conduit jusqu\'au Paradis.' });
+  await W.say({ es: 'DANTE: ¿Has escuchado bien? Si respondes a mis dos preguntas, te concederé un honor que nadie tiene.', fr: 'DANTE : As-tu bien écouté ? Si tu réponds à mes deux questions, je t\'accorderai un honneur que personne n\'a.' });
+  const r1 = await W.ask({ es: '¿Quién guía a Dante por el Infierno y el Purgatorio?', fr: 'Qui guide Dante à travers l\'Enfer et le Purgatoire ?' },
+    [{ es: 'HOMERO', fr: 'HOMÈRE' }, { es: 'VIRGILIO', fr: 'VIRGILE' }, { es: 'OVIDIO', fr: 'OVIDE' }, { es: 'ARISTÓTELES', fr: 'ARISTOTE' }].map(tr));
+  if (r1 !== 1) { await W.say({ es: 'DANTE: No... Lee mi obra con calma y vuelve a verme.', fr: 'DANTE : Non... Lis mon œuvre tranquillement et reviens me voir.' }); return; }
+  await W.say({ es: 'DANTE: ¡VIRGILIO, mi maestro! Bien. Segunda pregunta...', fr: 'DANTE : VIRGILE, mon maître ! Bien. Deuxième question...' });
+  const r2 = await W.ask({ es: '¿Cuántos círculos tiene el Infierno de Dante?', fr: 'Combien de cercles compte l\'Enfer de Dante ?' },
+    [{ es: 'SIETE', fr: 'SEPT' }, { es: 'TRES', fr: 'TROIS' }, { es: 'NUEVE', fr: 'NEUF' }, { es: 'DOCE', fr: 'DOUZE' }].map(tr));
+  if (r2 !== 2) { await W.say({ es: 'DANTE: No... Ese no es el número. Lee mi obra con calma y vuelve a verme.', fr: 'DANTE : Non... Ce n\'est pas le bon nombre. Lis mon œuvre tranquillement et reviens me voir.' }); return; }
+  await W.say({ es: 'DANTE: ¡NUEVE círculos! Has bajado conmigo hasta el fondo del Infierno... y has vuelto. Te nombro {CAB} DEL INFIERNO.', fr: 'DANTE : NEUF cercles ! Tu es descendu{e} avec moi jusqu\'au fond de l\'Enfer... et tu en es revenu{e}. Je te nomme {CAB} DE L\'ENFER.' });
+  Sfx.play('win');
+  W.flag('caballeroInfierno', true);
+  await W.say({ es: '¡{name} recibe el título de {CAB} DEL INFIERNO!', fr: '{name} reçoit le titre de {CAB} DE L\'ENFER !' }, { color: 'blue' });
+  await W.say({ es: 'DANTE: Te enseño dos técnicas. MATA DEMONIOS, un golpe terrible que solo puedes usar tres veces...', fr: 'DANTE : Je t\'enseigne deux techniques. TUEUR DE DÉMONS, un coup terrible que tu ne peux utiliser que trois fois...' });
+  await W.say({ es: 'DANTE: ...y BESO DE AMADA, que vence a cualquiera de un solo golpe. Pero ojo: te arranca la mitad de tus PV.', fr: 'DANTE : ...et BAISER DE L\'AIMÉE, qui vainc n\'importe qui d\'un seul coup. Mais attention : il t\'arrache la moitié de tes PV.' });
+  await W.learnMove('matademonios');
+  await W.learnMove('beso');
   Game.save();
 }

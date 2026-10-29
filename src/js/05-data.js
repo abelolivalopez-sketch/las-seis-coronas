@@ -68,6 +68,9 @@ const MOVES = {
   mazazo: { name: { es: 'MAZAZO', fr: 'COUP DE MASSE' }, pow: 80, acc: 90, pp: 15 },
   remazo: { name: { es: 'REMAZO', fr: 'COUP DE RAME' }, pow: 65, acc: 95, pp: 20 },
   forcejeo: { name: { es: 'FORCEJEO', fr: 'LUTTE' }, pow: 30, acc: 100, pp: 1 },
+  // técnicas secretas (misión de Dante en Florencia)
+  matademonios: { name: { es: 'MATA DEMONIOS', fr: 'TUEUR DE DÉMONS' }, pow: 300, acc: 0, pp: 3, big: true },
+  beso: { name: { es: 'BESO DE AMADA', fr: 'BAISER DE L\'AIMÉE' }, pow: 0, acc: 0, pp: 2, ohko: true, cost: 0.5 },
 };
 const moveName = id => tr(MOVES[id].name);
 const LEARN = { 1: ['tajo', 'grito'], 4: ['estocada'], 7: ['escudo'], 12: ['mandoble'], 17: ['aliento'], 22: ['finta'], 28: ['golpe_escudo'], 34: ['guardia'], 40: ['tajo_cruzado'], 46: ['carga'] };
@@ -161,6 +164,8 @@ const EQUIP = {
   cota: { slot: 'armadura', def: 11, price: 1500, name: { es: 'COTA DE MALLA', fr: 'COTTE DE MAILLES' } },
   brigantina: { slot: 'armadura', def: 17, price: 3800, name: { es: 'BRIGANTINA', fr: 'BRIGANDINE' } },
   arnes: { slot: 'armadura', def: 24, price: 6800, name: { es: 'ARNÉS MILANÉS', fr: 'ARMURE MILANAISE' } },
+  // premio secreto de don Quijote (no se vende)
+  matagigantes: { slot: 'arma', atk: 25, name: { es: 'ESPADA MATAGIGANTES', fr: 'ÉPÉE TUE-GÉANTS' } },
 };
 const equipBonus = (id, k) => (id && EQUIP[id] ? EQUIP[id][k] || 0 : 0);
 function effStats() {

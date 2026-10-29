@@ -301,6 +301,8 @@ const LOOKS = {
   nina: { base: 'f', skin: 'dark', hair: 'black', cloth: 'ochre' },
   anciano: { base: 'm', skin: 'light', hair: 'grey', cloth: 'grey', over: 'beard' },
   anciana: { base: 'f', skin: 'mid', hair: 'grey', cloth: 'brown' },
+  quijote: { base: 'm', skin: 'light', hair: 'grey', cloth: 'grey', over: ['helm', 'beard'], hose: 'dark' },
+  dante: { base: 'm', skin: 'light', hair: 'brown', cloth: 'crimson', over: 'cap', capc: 'crimson' },
 };
 
 function lookPalette(L) {
