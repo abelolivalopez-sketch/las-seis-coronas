@@ -506,6 +506,10 @@ async function scriptQuijote(W) {
     await W.say({ es: 'QUIJOTE: ¡Salud, {cab} Matagigantes! Que Dulcinea y Rocinante te acompañen en cada aventura.', fr: 'QUICHOTTE : Salut à toi, {cab} {Tueur} de géants ! Que Dulcinée et Rossinante t\'accompagnent dans chaque aventure.' });
     return;
   }
+  if (W.flag('quijoteCerrado')) {
+    await W.say({ es: 'QUIJOTE: ¿Nos conocemos? Perdona, mi memoria ya no da para más. ¡Que tengas buenas aventuras, {cab}!', fr: 'QUICHOTTE : On se connaît ? Pardonne-moi, ma mémoire ne suit plus. Bonnes aventures, {cab} !' });
+    return;
+  }
   if (!W.flag('quijote1')) {
     await W.say({ es: 'QUIJOTE: ¡Atrás, gigantes! ...Ah, perdón. Te había confundido con un molino.', fr: 'QUICHOTTE : Arrière, géants ! ...Ah, pardon. Je t\'avais pris pour un moulin.' });
     await W.say({ es: 'QUIJOTE: Soy don Quijote de la Mancha, {cab} andante. En un lugar de la Mancha, de cuyo nombre no quiero acordarme...', fr: 'QUICHOTTE : Je suis don Quichotte de la Manche, chevalier errant. Dans un village de la Manche, dont je ne veux pas me rappeler le nom...' });
@@ -513,7 +517,8 @@ async function scriptQuijote(W) {
     const r1 = await W.ask({ es: '¿Cómo se llama la amada de don Quijote?', fr: 'Comment s\'appelle la bien-aimée de don Quichotte ?' },
       [{ es: 'MELIBEA', fr: 'MÉLIBÉE' }, { es: 'DULCINEA', fr: 'DULCINÉE' }, { es: 'ISOLDA', fr: 'ISEUT' }, { es: 'BEATRIZ', fr: 'BÉATRICE' }].map(tr));
     if (r1 !== 1) {
-      await W.say({ es: 'QUIJOTE: No, no... Ese nombre no me hace suspirar. Vuelve cuando lo recuerdes, {name}.', fr: 'QUICHOTTE : Non, non... Ce nom ne me fait pas soupirer. Reviens quand tu t\'en souviendras, {name}.' });
+      await W.say({ es: 'QUIJOTE: No, no... Ese nombre no me hace suspirar. ¡Ay, se me ha vuelto a nublar la memoria del todo!', fr: 'QUICHOTTE : Non, non... Ce nom ne me fait pas soupirer. Hélas, ma mémoire s\'est de nouveau embrumée !' });
+      await closeSpecialQuest(W, 'quijoteCerrado');
       return;
     }
     await W.say({ es: 'QUIJOTE: ¡DULCINEA! ¡Dulcinea del Toboso, la más hermosa de todas las damas! ¡Gracias, gracias!', fr: 'QUICHOTTE : DULCINÉE ! Dulcinée du Toboso, la plus belle de toutes les dames ! Merci, merci !' });
@@ -521,7 +526,8 @@ async function scriptQuijote(W) {
     const r2 = await W.ask({ es: '¿Cómo se llama el caballo de don Quijote?', fr: 'Comment s\'appelle le cheval de don Quichotte ?' },
       [{ es: 'BABIECA', fr: 'BABIECA' }, { es: 'BUCÉFALO', fr: 'BUCÉPHALE' }, { es: 'ROCINANTE', fr: 'ROSSINANTE' }, { es: 'CLAVILEÑO', fr: 'CLAVILEÑO' }].map(tr));
     if (r2 !== 2) {
-      await W.say({ es: 'QUIJOTE: ¿Ese? ¡No! Ese es el caballo de otro {cab}. Vuelve cuando lo sepas.', fr: 'QUICHOTTE : Celui-là ? Non ! C\'est le cheval d\'un autre chevalier. Reviens quand tu le sauras.' });
+      await W.say({ es: 'QUIJOTE: ¿Ese? ¡No! Ese es el caballo de otro {cab}. ¡Ay, ya no me acuerdo de nada!', fr: 'QUICHOTTE : Celui-là ? Non ! C\'est le cheval d\'un autre chevalier. Hélas, je ne me souviens plus de rien !' });
+      await closeSpecialQuest(W, 'quijoteCerrado');
       return;
     }
     await W.say({ es: 'QUIJOTE: ¡ROCINANTE! ¡El mejor rocín de la Mancha! Toma, por devolverme la memoria.', fr: 'QUICHOTTE : ROSSINANTE ! La meilleure rosse de la Manche ! Tiens, pour m\'avoir rendu la mémoire.' });
@@ -536,7 +542,8 @@ async function scriptQuijote(W) {
   const r3 = await W.ask({ es: '¿Cuántas páginas tiene el libro de don Quijote de la Mancha?', fr: 'Combien de pages compte le livre de don Quichotte de la Manche ?' },
     [{ es: '664', fr: '664' }, { es: '0', fr: '0' }, { es: '1.250', fr: '1 250' }, { es: '312', fr: '312' }].map(tr));
   if (r3 !== 1) {
-    await W.say({ es: 'QUIJOTE: ¡Ja, ja! Puede que algún día tenga esas páginas... ¡pero piensa bien en qué año estamos! Vuelve cuando lo tengas claro.', fr: 'QUICHOTTE : Ha, ha ! Un jour, il aura peut-être ces pages... mais réfléchis bien à l\'année où nous sommes ! Reviens quand tu auras compris.' });
+    await W.say({ es: 'QUIJOTE: ¡Ja, ja! Puede que algún día tenga esas páginas... ¡pero piensa en qué año estamos! Estamos en 1415: mi libro aún no existe.', fr: 'QUICHOTTE : Ha, ha ! Un jour, il aura peut-être ces pages... mais pense à l\'année où nous sommes ! Nous sommes en 1415 : mon livre n\'existe pas encore.' });
+    await closeSpecialQuest(W, 'quijoteCerrado');
     return;
   }
   await W.say({ es: 'QUIJOTE: ¡CERO! ¡Exacto! Estamos en 1415: Cervantes ni siquiera ha nacido. Mi libro no se publicará hasta 1605... ¡dentro de 190 años!', fr: 'QUICHOTTE : ZÉRO ! Exactement ! Nous sommes en 1415 : Cervantès n\'est même pas né. Mon livre ne sera publié qu\'en 1605... dans 190 ans !' });

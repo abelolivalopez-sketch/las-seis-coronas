@@ -16,6 +16,9 @@ const Art = {
     this.goat = drawGoat(false);
     this.mouflon = drawGoat(true);
     this.bear = drawBear();
+    this.marmot = drawMarmot();
+    this.eagle = drawEagle();
+    this.deer = drawDeer();
   },
 };
 function drawChar(ctx, look, frame, x, y, scale = 1) {

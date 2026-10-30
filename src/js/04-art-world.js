@@ -210,6 +210,21 @@ function drawHouse(ctx, ox, oy, wc, hc, o) {
   for (let k = 0; k < Wd; k++) if (hash2(k, oy, 3) < 0.25) px(ctx, ox + k, oy + wallY + 3 + Math.floor(hash2(k, ox, 4) * 22), WL[2]);
   rect(ctx, ox, oy + wallY, 1, Ht - wallY, OL); rect(ctx, ox + Wd - 1, oy + wallY, 1, Ht - wallY, OL);
   rect(ctx, ox + Wd - 2, oy + wallY, 1, Ht - wallY, WL[1]);
+  // muro de ladrillo (Lübeck)
+  if (o.brick) for (let y = oy + wallY + 3, r = 0; y < oy + Ht - 8; y += 4, r++) {
+    rect(ctx, ox + 1, y, Wd - 3, 1, WL[1]);
+    for (let x = (r % 2) * 4; x < Wd - 3; x += 8) px(ctx, ox + 1 + x, y + 1, WL[1]), px(ctx, ox + 1 + x, y + 2, WL[1]);
+  }
+  // entramado de madera (casas alemanas)
+  if (o.timber) {
+    const B = o.timber === true ? '#5a3a24' : o.timber, top = oy + wallY + 2, bot = oy + Ht - 8;
+    rect(ctx, ox + 1, top, Wd - 3, 2, B); rect(ctx, ox + 1, oy + wallY + 17, Wd - 3, 2, B);
+    for (let k = 0; k <= wc; k++) rect(ctx, ox + Math.min(Wd - 4, Math.max(1, k * 16 - 1)), top, 2, bot - top, B);
+    for (let k = 0; k < wc; k++) for (let i = 0; i < 13; i++) {
+      const xx = k % 2 ? ox + k * 16 + 1 + i : ox + k * 16 + 14 - i;
+      px(ctx, xx, oy + wallY + 4 + i, B); px(ctx, xx + 1, oy + wallY + 4 + i, B);
+    }
+  }
   // zócalo
   const zy = oy + Ht - 8;
   rect(ctx, ox + 1, zy, Wd - 2, 8, o.plinth || '#d9a94a');

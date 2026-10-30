@@ -272,7 +272,7 @@
 <main class="console">
   <div class="screen-wrap">
     <canvas id="screen" width="240" height="160" aria-label="Pantalla del juego Las Seis Coronas"></canvas>
-    <div class="brand"><b data-es="LAS SEIS CORONAS" data-fr="LES SIX COURONNES">LAS SEIS CORONAS</b><span data-es="prototipo v0.4.1" data-fr="prototype v0.4.1">prototipo v0.4.1</span></div>
+    <div class="brand"><b data-es="LAS SEIS CORONAS" data-fr="LES SIX COURONNES">LAS SEIS CORONAS</b><span data-es="prototipo v0.5" data-fr="prototype v0.5">prototipo v0.5</span></div>
     <div class="name-dlg" id="nameDlg" hidden>
       <form id="nameForm" autocomplete="off">
         <label for="nameInput" data-es="¿Cómo te llamas?" data-fr="Comment t'appelles-tu ?">¿Cómo te llamas?</label>
@@ -491,6 +491,15 @@ const Input = {
       el.addEventListener('contextmenu', e => e.preventDefault());
     });
 
+    // toques directos en la pantalla del juego (los usa el tablero de ajedrez)
+    const scr = document.getElementById('screen');
+    if (scr) scr.addEventListener('pointerdown', e => {
+      const r = scr.getBoundingClientRect();
+      if (!r.width || !r.height) return;
+      this.tapPending = { x: (e.clientX - r.left) / r.width * 240, y: (e.clientY - r.top) / r.height * 160 };
+      Sfx.unlock();
+    });
+
     const pad = document.getElementById('dpad');
     if (pad) {
       let active = null;
@@ -530,6 +539,8 @@ const Input = {
   poll(dt) {
     this.pressed = this.pending;
     this.pending = new Set();
+    this.tap = this.locked ? null : this.tapPending || null;
+    this.tapPending = null;
     this.rep = new Set(this.pressed);
     for (const k of DIRS) {
       if (!this.held[k]) continue;
@@ -543,7 +554,7 @@ const Input = {
   hit(k) { return this.pressed.has(k); },
   repeat(k) { return this.rep.has(k); },
   down(k) { return !this.locked && !!this.held[k]; },
-  clear() { this.pressed = new Set(); this.rep = new Set(); this.pending = new Set(); },
+  clear() { this.pressed = new Set(); this.rep = new Set(); this.pending = new Set(); this.tap = null; this.tapPending = null; },
   dir() {
     if (this.locked) return null;
     if (this.lastDir && this.held[this.lastDir]) return this.lastDir;
@@ -806,7 +817,7 @@ const TXT = {
   title1: { es: 'LAS SEIS', fr: 'LES SIX' },
   title2: { es: 'CORONAS', fr: 'COURONNES' },
   pressA: { es: 'Pulsa A para empezar', fr: 'Appuie sur A pour commencer' },
-  proto: { es: 'Prototipo v0.4.1', fr: 'Prototype v0.4.1' },
+  proto: { es: 'Prototipo v0.5', fr: 'Prototype v0.5' },
   year: { es: 'Año 1415', fr: 'An 1415' },
   cont: { es: 'CONTINUAR', fr: 'CONTINUER' },
   newGame: { es: 'NUEVA PARTIDA', fr: 'NOUVELLE PARTIE' },
@@ -853,6 +864,7 @@ const TXT = {
   b_yield: { es: '¡{t} se rinde!', fr: '{t} abandonne !' },
   b_banditFlees: { es: '¡El SALTEADOR sale huyendo!', fr: 'Le BRIGAND prend la fuite !' },
   b_defeated: { es: '¡{f} cae derrotado!', fr: '{f} est vaincu !' },
+  b_defeatedF: { es: '¡{f} cae derrotada!', fr: '{f} est vaincue !' },
   b_xp: { es: '{n} gana {v} puntos de experiencia.', fr: '{n} gagne {v} points d\'expérience.' },
   b_goldTrainer: { es: 'Recibes {v} ducados.', fr: 'Tu reçois {v} ducats.' },
   b_goldBandit: { es: 'Al huir, se le caen {v} ducados.', fr: 'En fuyant, il laisse tomber {v} ducats.' },
@@ -1280,6 +1292,26 @@ const LOOKS = {
   anciana: { base: 'f', skin: 'mid', hair: 'grey', cloth: 'brown' },
   quijote: { base: 'm', skin: 'light', hair: 'grey', cloth: 'grey', over: ['helm', 'beard'], hose: 'dark' },
   dante: { base: 'm', skin: 'light', hair: 'brown', cloth: 'crimson', over: 'cap', capc: 'crimson' },
+  // Alemania
+  sabio_fez: { base: 'm', skin: 'mid', hair: 'grey', cloth: 'white', over: ['turban', 'beard'], wrap: 'navy' },
+  tiroles: { base: 'm', skin: 'light', hair: 'blond', cloth: 'green', over: 'cap', capc: 'green', hose: 'dark' },
+  tirolesa: { base: 'f', skin: 'light', hair: 'blond', cloth: 'red' },
+  minero: { base: 'm', skin: 'mid', hair: 'black', cloth: 'grey', over: ['cap', 'beard'], capc: 'white', hose: 'dark' },
+  lenador: { base: 'm', skin: 'light', hair: 'auburn', cloth: 'brown', over: 'beard', hose: 'dark' },
+  pastor: { base: 'm', skin: 'light', hair: 'straw', cloth: 'sand', over: 'hat' },
+  pastora: { base: 'f', skin: 'light', hair: 'blond', cloth: 'olive' },
+  armero: { base: 'm', skin: 'light', hair: 'brown', cloth: 'grey', over: ['helm', 'beard'], hose: 'dark' },
+  caballero_al: { base: 'm', skin: 'light', hair: 'blond', cloth: 'gold', over: 'helm', hose: 'dark' },
+  dama_al: { base: 'f', skin: 'light', hair: 'auburn', cloth: 'navy', over: 'helm' },
+  teuton: { base: 'm', skin: 'light', hair: 'blond', cloth: 'white', over: ['helm', 'beard'], hose: 'dark' },
+  konrad: { base: 'm', skin: 'light', hair: 'grey', cloth: 'black', over: ['helm', 'beard'], hose: 'dark' },
+  baron: { base: 'm', skin: 'light', hair: 'raven', cloth: 'raven', over: ['helm', 'beard'], hose: 'dark' },
+  aleman: { base: 'm', skin: 'light', hair: 'brown', cloth: 'navy', over: 'hat' },
+  alemana: { base: 'f', skin: 'light', hair: 'blond', cloth: 'teal' },
+  guardia_al: { base: 'm', skin: 'light', hair: 'blond', cloth: 'red', over: 'helm', hose: 'dark' },
+  hanseata: { base: 'm', skin: 'light', hair: 'auburn', cloth: 'crimson', over: 'hat' },
+  hanseata_f: { base: 'f', skin: 'light', hair: 'blond', cloth: 'navy' },
+  burgomaestre: { base: 'm', skin: 'light', hair: 'grey', cloth: 'crimson', over: ['cap', 'beard'], capc: 'black' },
 };
 
 function lookPalette(L) {
@@ -1544,6 +1576,21 @@ function drawHouse(ctx, ox, oy, wc, hc, o) {
   for (let k = 0; k < Wd; k++) if (hash2(k, oy, 3) < 0.25) px(ctx, ox + k, oy + wallY + 3 + Math.floor(hash2(k, ox, 4) * 22), WL[2]);
   rect(ctx, ox, oy + wallY, 1, Ht - wallY, OL); rect(ctx, ox + Wd - 1, oy + wallY, 1, Ht - wallY, OL);
   rect(ctx, ox + Wd - 2, oy + wallY, 1, Ht - wallY, WL[1]);
+  // muro de ladrillo (Lübeck)
+  if (o.brick) for (let y = oy + wallY + 3, r = 0; y < oy + Ht - 8; y += 4, r++) {
+    rect(ctx, ox + 1, y, Wd - 3, 1, WL[1]);
+    for (let x = (r % 2) * 4; x < Wd - 3; x += 8) px(ctx, ox + 1 + x, y + 1, WL[1]), px(ctx, ox + 1 + x, y + 2, WL[1]);
+  }
+  // entramado de madera (casas alemanas)
+  if (o.timber) {
+    const B = o.timber === true ? '#5a3a24' : o.timber, top = oy + wallY + 2, bot = oy + Ht - 8;
+    rect(ctx, ox + 1, top, Wd - 3, 2, B); rect(ctx, ox + 1, oy + wallY + 17, Wd - 3, 2, B);
+    for (let k = 0; k <= wc; k++) rect(ctx, ox + Math.min(Wd - 4, Math.max(1, k * 16 - 1)), top, 2, bot - top, B);
+    for (let k = 0; k < wc; k++) for (let i = 0; i < 13; i++) {
+      const xx = k % 2 ? ox + k * 16 + 1 + i : ox + k * 16 + 14 - i;
+      px(ctx, xx, oy + wallY + 4 + i, B); px(ctx, xx + 1, oy + wallY + 4 + i, B);
+    }
+  }
   // zócalo
   const zy = oy + Ht - 8;
   rect(ctx, ox + 1, zy, Wd - 2, 8, o.plinth || '#d9a94a');
@@ -2083,12 +2130,22 @@ function drawFountain(ctx, ox, oy, o = {}) {
 
 function drawTower(ctx, ox, oy, wc, hc, o) {
   const Wd = wc * 16, Ht = hc * 16, S = o.stone || STONE.claro;
-  const top = o.roof ? 12 : 4;
+  const top = o.roof || o.spire ? 12 : 4;
   rect(ctx, ox + 2, oy + top, Wd - 4, Ht - top, S[1]);
   rect(ctx, ox + 2, oy + top, 3, Ht - top, S[0]); rect(ctx, ox + Wd - 6, oy + top, 4, Ht - top, S[2]);
   rect(ctx, ox + 2, oy + top, 1, Ht - top, OLB); rect(ctx, ox + Wd - 3, oy + top, 1, Ht - top, OLB);
   for (let y = top + 8; y < Ht - 2; y += 8) rect(ctx, ox + 3, oy + y, Wd - 6, 1, S[2]);
-  if (o.roof) {
+  if (o.spire) {
+    const sh = o.spire, R = o.roof || ['#7aa88a', '#5a8a6a', '#3a6a4a'];
+    for (let y = 0; y < sh; y++) {
+      const half = Math.max(1, Math.floor((y + 1) * (Wd / 2 - 3) / sh));
+      rect(ctx, ox + Wd / 2 - half, oy + 12 - sh + y, half * 2, 1, y % 4 === 3 ? R[2] : R[1]);
+      px(ctx, ox + Wd / 2 - half, oy + 12 - sh + y, OLB); px(ctx, ox + Wd / 2 + half - 1, oy + 12 - sh + y, OLB);
+      if (y % 4 === 1) px(ctx, ox + Wd / 2 - half + 1, oy + 12 - sh + y, R[0]);
+    }
+    rect(ctx, ox + 1, oy + 12, Wd - 2, 1, OLB);
+    rect(ctx, ox + Wd / 2 - 1, oy + 12 - sh - 4, 2, 4, '#e8c050');
+  } else if (o.roof) {
     for (let y = 0; y < 13; y++) { const half = Math.floor(y * (Wd / 2) / 13) + 1; rect(ctx, ox + Wd / 2 - half, oy + y, half * 2, 1, y % 3 ? o.roof[1] : o.roof[2]); }
     rect(ctx, ox + 1, oy + 12, Wd - 2, 1, OLB);
   } else {
@@ -2463,11 +2520,150 @@ function drawBear() {
   });
 }
 
+// ── 04d-art-alemania.js ──
+// ─── Arte de Alemania: colores de cada región, objetos nuevos y animales ───
+Object.assign(THEMES, {
+  // Dolomitas y Brennero: prados alpinos, roca clara y neveros (la 's' es nieve aquí)
+  alpes: Object.assign({}, PAL, BASE_GP, {
+    grass: '#9ccc78', grassD: '#78ac58', grassL: '#c0e49a', grassS: '#86b864',
+    tall: '#5a9a48', tallD: '#3e7a34', tallM: '#76b45a', tallL: '#b0dc8a',
+    dirt: { b: '#d6c09a', d: '#bca27a', l: '#e8d6b4', e: '#a08660' },
+    sand: { b: '#eef3f8', d: '#d2dce8', l: '#ffffff', e: '#b6c4d4' },
+    rock: ['#ece4d4', '#c8bea8', '#9a907c', '#5a5246'],
+    water: '#4fa8c0', waterD: '#2a6a84', waterL: '#8ad0e2', foam: '#d2f0f6',
+  }),
+  // Baviera y Turingia: bosque cerrado
+  bosque: Object.assign({}, PAL, BASE_GP, {
+    grass: '#78b058', grassD: '#5a9040', grassL: '#9ccc78', grassS: '#66a04a',
+    tall: '#3e7a34', tallD: '#2a5a24', tallM: '#56943e', tallL: '#86c060',
+    dirt: { b: '#c8a878', d: '#ac8c5e', l: '#dcc29a', e: '#8e7048' },
+    rock: ['#a8a49a', '#7e7a70', '#5a564e', '#2e2a26'],
+    water: '#4f8ab8', waterD: '#2c5680', waterL: '#86b4dc',
+  }),
+  // Brezales de Luneburgo: brezo morado y caminos de arena
+  brezal: Object.assign({}, PAL, BASE_GP, {
+    grass: '#a8b874', grassD: '#889a58', grassL: '#c8d498', grassS: '#96a864',
+    tall: '#9a5a9a', tallD: '#6e3a72', tallM: '#b874b4', tallL: '#e0a8dc',
+    dirt: { b: '#ecd8a8', d: '#d4bc88', l: '#f8ecc8', e: '#bca070' },
+    rock: ['#c2b8a4', '#9a8e78', '#706654', '#3c342a'],
+  }),
+  // Núremberg: arenisca roja
+  franconia: Object.assign({}, PAL, BASE_GP, {
+    stone: { b: '#dcbcaa', d: '#bc9682', l: '#eed6c8', m: '#9a7666' },
+    wall: { top: '#d49a7e', b: '#c07e62', d: '#9a5e46', l: '#e2b096', ol: '#4a2a1e' },
+    rock: ['#d4a088', '#b07a62', '#86584a', '#4a2c22'],
+    water: '#5a92c0', waterD: '#335e88', waterL: '#8ebce0',
+  }),
+  // Lübeck: ladrillo de la Hansa y aguas del norte
+  hansa: Object.assign({}, PAL, BASE_GP, {
+    stone: { b: '#c8c4bc', d: '#a6a29a', l: '#dedad2', m: '#86827a' },
+    wall: { top: '#c0705a', b: '#a8503c', d: '#7e3426', l: '#d08a74', ol: '#3a1a12' },
+    water: '#4a7aa8', waterD: '#2a4a74', waterL: '#7aa6d0', foam: '#c4dcf0',
+  }),
+});
+const BRICK = ['#b8583e', '#8a3a28', '#c8705a'];
+const TIMBER_WALL = ['#f4ecd8', '#d8ccb0', '#fbf6ea'];
+
+// La Fuente Hermosa (Schöner Brunnen) de Núremberg: pilón y aguja gótica dorada
+function drawBrunnen(ctx, ox, oy) {
+  drawFountain(ctx, ox, oy, { stone: STONE.claro });
+  const OL = '#3a2a14', G = ['#f2ca52', '#c89a2a', '#8a6618'], V = '#3e7a48';
+  for (let y = 0; y < 34; y++) {
+    const half = Math.max(1, Math.round(5 - y * 0.12));
+    const yy = oy + 12 - y;
+    rect(ctx, ox + 16 - half, yy, half * 2, 1, y % 6 === 0 ? V : y % 3 ? G[0] : G[1]);
+    px(ctx, ox + 16 - half - 1, yy, OL); px(ctx, ox + 16 + half, yy, OL);
+  }
+  for (const y of [6, 14, 22]) { rect(ctx, ox + 10, oy + 12 - y, 12, 2, G[1]); rect(ctx, ox + 10, oy + 12 - y, 12, 1, OL); }
+  rect(ctx, ox + 15, oy - 24, 2, 3, G[0]); px(ctx, ox + 15, oy - 25, OL); px(ctx, ox + 16, oy - 25, OL);
+}
+
+// Pasarela de tablones sobre el agua
+function drawPlank(ctx, ox, oy) {
+  const OL = '#2e1c10';
+  rect(ctx, ox, oy + 3, 16, 10, OL);
+  rect(ctx, ox, oy + 4, 16, 8, '#a87444');
+  for (let x = 3; x < 16; x += 4) rect(ctx, ox + x, oy + 4, 1, 8, '#7a4c28');
+  rect(ctx, ox, oy + 4, 16, 1, '#c89060');
+  rect(ctx, ox, oy + 1, 16, 1, '#6a4428'); rect(ctx, ox, oy + 14, 16, 1, '#6a4428');
+  for (const x of [1, 14]) { rect(ctx, ox + x, oy, 1, 4, OL); rect(ctx, ox + x, oy + 12, 1, 4, OL); }
+}
+
+// Mesita baja con un tablero de ajedrez
+function drawChessTable(ctx, ox, oy) {
+  const OL = '#2a1a10';
+  rect(ctx, ox + 1, oy + 5, 14, 2, OL); rect(ctx, ox + 2, oy + 7, 2, 7, OL); rect(ctx, ox + 12, oy + 7, 2, 7, OL);
+  rect(ctx, ox + 1, oy + 3, 14, 3, '#8a5a32');
+  for (let i = 0; i < 6; i++) for (let j = 0; j < 2; j++) px(ctx, ox + 2 + i * 2 + j, oy + 2 + j, (i + j) % 2 ? '#f6ecd4' : '#3a2a20');
+  rect(ctx, ox + 2, oy + 1, 12, 1, OL);
+  px(ctx, ox + 5, oy, '#f6ecd4'); px(ctx, ox + 10, oy, '#2a2030'); px(ctx, ox + 10, oy - 1, '#2a2030');
+  rect(ctx, ox + 1, oy + 14, 14, 2, 'rgba(30,20,10,0.25)');
+}
+
+// ─── Animales de los Alpes y de los bosques (miran a la izquierda) ───
+function drawMarmot() {
+  const f = ['#c89c6a', '#9c7448', '#6e4e2e'], dk = ['#8a6440', '#6a4a2e', '#4a321e'];
+  return shapeArt(26, 28, [
+    { e: [20.5, 23, 4, 2.6], c: dk },
+    { e: [14, 18, 8, 8.5], c: f, noise: 111 },
+    { e: [13, 20, 4.5, 5.6], c: ['#ead6b0', '#ccb088', '#a48a60'] },
+    { e: [10.5, 8.5, 6, 5.2], c: f, noise: 112 },
+    { e: [5.6, 10.2, 2.8, 2.3], c: ['#e2c89a', '#bea070', '#94784c'] },
+    { e: [13.5, 4, 1.8, 1.6], c: dk },
+    { e: [8.5, 15.5, 2.2, 3], c: f },
+    { r: [9, 25, 12.5, 27.5], c: dk },
+    { r: [15.5, 25, 19, 27.5], c: dk },
+  ], '#2a1a0e', x => {
+    px(x, 9, 7, '#140a04'); px(x, 8, 7, '#140a04'); px(x, 9, 6, '#f6eedc');
+    px(x, 3, 9, '#2a1a0e'); rect(x, 4, 11, 2, 2, '#f8f4ea');
+    for (const X of [7, 8, 9]) px(x, X, 18, '#2a1a0e');
+  });
+}
+function drawEagle() {
+  const br = ['#8a5a32', '#5e3c20', '#3e2614'], gold = ['#e2b25a', '#b88838', '#8a6020'], y = ['#f2c838', '#c89a18', '#8a6a10'];
+  return shapeArt(38, 30, [
+    { p: [[18, 15], [36, 1], [33, 9], [27, 18]], c: br, noise: 121, lt: 0.2 },
+    { e: [21, 18, 8, 5.5], c: br, noise: 123 },
+    { p: [[25, 21], [35, 27], [33, 29], [24, 24]], c: br },
+    { p: [[12, 16], [5, 2], [11, 4], [19, 15]], c: br, noise: 122, lt: 0.2 },
+    { e: [11.5, 13, 4.2, 3.8], c: gold, noise: 124 },
+    { p: [[8, 12], [3.5, 14], [5.5, 17], [8.5, 15]], c: y },
+    { r: [18, 22, 19.4, 27], c: y },
+    { r: [22, 22, 23.4, 27], c: y },
+  ], '#1e1208', x => {
+    px(x, 10, 12, '#1a0a04'); px(x, 10, 11, '#f6eedc'); px(x, 11, 12, '#c89a18');
+    for (let k = 0; k < 6; k++) { px(x, 8 + k, 5 + k * 2, '#2e1c0e'); px(x, 30 - k * 2, 5 + k * 2, '#2e1c0e'); }
+    for (const X of [17, 19, 21, 23]) px(x, X, 27, '#3a2a10');
+  });
+}
+function drawDeer() {
+  const f = ['#c07a44', '#94582c', '#683a1a'], leg = ['#7a4a26', '#5a341a', '#3a2010'];
+  return shapeArt(34, 36, [
+    { r: [24, 23, 26.4, 35.5], c: leg },
+    { r: [12, 23, 14.4, 35.5], c: leg },
+    { e: [21, 21, 10, 5.6], c: f, noise: 131 },
+    { e: [29, 20.5, 2.6, 3.4], c: ['#f2e6d0', '#d6c6a6', '#a89878'] },
+    { r: [27, 23, 29.4, 35.5], c: f },
+    { r: [15, 23, 17.4, 35.5], c: f },
+    { p: [[10, 19], [8, 11], [13.5, 10], [17, 18]], c: f, noise: 133 },
+    { e: [8, 11.5, 4.6, 3.4], c: f, noise: 132 },
+    { e: [4.2, 13, 2.6, 2], c: ['#8a5a34', '#6a4224', '#4a2c16'] },
+    { e: [12.5, 8.5, 2.2, 1.4], c: f },
+  ], '#2a160a', x => {
+    const A = '#e2d0aa', D = '#8a7454';
+    const ant = pts => { for (const [X, Y] of pts) { px(x, X, Y, A); px(x, X + 1, Y, D); } };
+    ant([[9, 7], [9, 6], [8, 5], [8, 4], [7, 3], [6, 2], [5, 1]]); ant([[8, 4], [6, 4], [5, 3]]); ant([[7, 2], [8, 1], [9, 0]]);
+    ant([[11, 7], [12, 6], [13, 5], [14, 4], [15, 3], [16, 2], [17, 1]]); ant([[14, 4], [16, 5]]); ant([[15, 2], [14, 1], [14, 0]]);
+    px(x, 7, 10, '#1a0a04'); px(x, 2, 13, '#1a0a04');
+    for (const X of [12, 13, 15, 16, 24, 25, 27, 28]) px(x, X, 35, '#24120a');
+  });
+}
+
 // ── 05-data.js ──
 // ─── Datos de juego: técnicas, enemigos, objetos, equipo, niveles ─────────
 const MAX_LV = 150;
 const PLAYER_BASE = { hp: 60, atk: 56, def: 52, spd: 54 };
-const XP_MULT = 3.0;          // multiplicador de experiencia (ajustado para el prototipo)          // multiplicador de experiencia (ajustado para el prototipo)          // multiplicador de experiencia (ajustado para el prototipo)
+const XP_MULT = 3.0;          // multiplicador de experiencia (ajustado para el prototipo)
 
 // pow: daño · acc: precisión (0 = nunca falla) · pp: usos
 // self/foe: cambia atributos · heal: cura (fracción de la vida) · crit: más críticos
@@ -2484,6 +2680,9 @@ const MOVES = {
   guardia: { name: { es: 'GUARDIA DE HIERRO', fr: 'GARDE DE FER' }, pow: 0, acc: 0, pp: 15, self: { def: 2 } },
   tajo_cruzado: { name: { es: 'TAJO CRUZADO', fr: 'TAILLE CROISÉE' }, pow: 95, acc: 90, pp: 10, crit: true },
   carga: { name: { es: 'CARGA DEL CABALLERO', fr: 'CHARGE DU CHEVALIER' }, pow: 120, acc: 85, pp: 5 },
+  // técnicas de la escuela alemana de esgrima (Liechtenauer)
+  media_espada: { name: { es: 'MEDIA ESPADA', fr: 'DEMI-ÉPÉE' }, pow: 90, acc: 100, pp: 15, foe: { def: -1 } },
+  golpe_maestro: { name: { es: 'GOLPE MAESTRO', fr: 'COUP DE MAÎTRE' }, pow: 110, acc: 95, pp: 8, crit: true },
   // animales
   embestida: { name: { es: 'EMBESTIDA', fr: 'CHARGE' }, pow: 40, acc: 100, pp: 35 },
   colmillazo: { name: { es: 'COLMILLAZO', fr: 'COUP DE BOUTOIR' }, pow: 55, acc: 90, pp: 20 },
@@ -2533,13 +2732,20 @@ const MOVES = {
   parada: { name: { es: 'PARADA', fr: 'PARADE' }, pow: 0, acc: 0, pp: 15, self: { def: 1, spd: 1 } },
   mazazo: { name: { es: 'MAZAZO', fr: 'COUP DE MASSE' }, pow: 80, acc: 90, pp: 15 },
   remazo: { name: { es: 'REMAZO', fr: 'COUP DE RAME' }, pow: 65, acc: 95, pp: 20 },
+  hachazo: { name: { es: 'HACHAZO', fr: 'COUP DE HACHE' }, pow: 75, acc: 90, pp: 15 },
+  piolet: { name: { es: 'PICO DE MINERO', fr: 'PIC DE MINEUR' }, pow: 70, acc: 95, pp: 15 },
+  honda: { name: { es: 'HONDA', fr: 'FRONDE' }, pow: 55, acc: 0, pp: 20 },
+  garras: { name: { es: 'GARRAS', fr: 'SERRES' }, pow: 75, acc: 95, pp: 15 },
+  silbido: { name: { es: 'SILBIDO', fr: 'SIFFLEMENT' }, pow: 0, acc: 100, pp: 20, foe: { atk: -1 } },
+  cuernas: { name: { es: 'CORNAMENTA', fr: 'BOIS' }, pow: 80, acc: 90, pp: 15 },
+  bramido: { name: { es: 'BRAMIDO', fr: 'BRAME' }, pow: 0, acc: 0, pp: 15, self: { atk: 1 } },
   forcejeo: { name: { es: 'FORCEJEO', fr: 'LUTTE' }, pow: 30, acc: 100, pp: 1 },
   // técnicas secretas (misión de Dante en Florencia)
   matademonios: { name: { es: 'MATA DEMONIOS', fr: 'TUEUR DE DÉMONS' }, pow: 300, acc: 0, pp: 3, big: true },
   beso: { name: { es: 'BESO DE AMADA', fr: 'BAISER DE L\'AIMÉE' }, pow: 0, acc: 0, pp: 2, ohko: true, cost: 0.5 },
 };
 const moveName = id => tr(MOVES[id].name);
-const LEARN = { 1: ['tajo', 'grito'], 4: ['estocada'], 7: ['escudo'], 12: ['mandoble'], 17: ['aliento'], 22: ['finta'], 28: ['golpe_escudo'], 34: ['guardia'], 40: ['tajo_cruzado'], 46: ['carga'] };
+const LEARN = { 1: ['tajo', 'grito'], 4: ['estocada'], 7: ['escudo'], 12: ['mandoble'], 17: ['aliento'], 22: ['finta'], 28: ['golpe_escudo'], 34: ['guardia'], 40: ['tajo_cruzado'], 46: ['carga'], 52: ['media_espada'], 58: ['golpe_maestro'] };
 const STATNAME = {
   atk: { es: 'ATAQUE', fr: 'ATTAQUE' },
   def: { es: 'DEFENSA', fr: 'DÉFENSE' },
@@ -2547,7 +2753,7 @@ const STATNAME = {
 };
 
 // Técnicas por nivel (las 4 últimas aprendidas son las que usa)
-const KNIGHT_MOVES = [['tajo', 1], ['grito', 1], ['estocada', 4], ['escudo', 7], ['mandoble', 12], ['aliento', 17], ['finta', 22], ['golpe_escudo', 28], ['guardia', 34], ['tajo_cruzado', 40], ['carga', 46]];
+const KNIGHT_MOVES = [['tajo', 1], ['grito', 1], ['estocada', 4], ['escudo', 7], ['mandoble', 12], ['aliento', 17], ['finta', 22], ['golpe_escudo', 28], ['guardia', 34], ['tajo_cruzado', 40], ['carga', 46], ['media_espada', 52], ['golpe_maestro', 58]];
 const WILD = { es: ' salvaje', fr: ' sauvage' }, NOTAG = { es: '', fr: '' };
 const FOES = {
   // ── animales ──
@@ -2572,11 +2778,17 @@ const FOES = {
   cangrejo: { name: { es: 'CANGREJO', fr: 'CRABE' }, art: 'crab', base: { hp: 50, atk: 66, def: 74, spd: 36 }, exp: 66, moves: ['pinzas', 'caparazon', 'embestida'], wild: true,
     intro: { es: '¡Un CANGREJO enorme sale de la arena!', fr: 'Un énorme CRABE sort du sable !' }, wildTag: NOTAG },
   cabra: { name: { es: 'CABRA MONTÉS', fr: 'BOUQUETIN' }, art: 'goat', base: { hp: 58, atk: 62, def: 56, spd: 58 }, exp: 66, moves: ['embestida', 'balido', 'topetazo'], wild: true,
-    intro: { es: '¡Una CABRA MONTÉS baja de un salto!', fr: 'Un BOUQUETIN descend d\'un bond !' }, wildTag: NOTAG, fem: true },
+    intro: { es: '¡Una CABRA MONTÉS baja de un salto!', fr: 'Un BOUQUETIN descend d\'un bond !' }, wildTag: NOTAG, fem: { es: true, fr: false } },
   muflon: { name: { es: 'MUFLÓN', fr: 'MOUFLON' }, art: 'mouflon', base: { hp: 62, atk: 66, def: 58, spd: 56 }, exp: 70, moves: ['topetazo', 'balido', 'cornada'], wild: true,
     intro: { es: '¡Un MUFLÓN agacha los cuernos!', fr: 'Un MOUFLON baisse les cornes !' }, wildTag: NOTAG },
   oso: { name: { es: 'OSO', fr: 'OURS' }, art: 'bear', base: { hp: 80, atk: 76, def: 62, spd: 42 }, exp: 84, moves: ['zarpazo', 'rugido', 'abrazo', 'zarpazo_feroz'], wild: true,
     intro: { es: '¡Un OSO se alza sobre las patas traseras!', fr: 'Un OURS se dresse sur ses pattes arrière !' }, wildTag: NOTAG },
+  marmota: { name: { es: 'MARMOTA', fr: 'MARMOTTE' }, art: 'marmot', base: { hp: 60, atk: 60, def: 62, spd: 60 }, exp: 66, moves: ['mordisco', 'silbido', 'zarpazo'], wild: true,
+    intro: { es: '¡Una MARMOTA silba y se lanza a por ti!', fr: 'Une MARMOTTE siffle et se jette sur toi !' }, wildTag: NOTAG, fem: true },
+  aguila: { name: { es: 'ÁGUILA REAL', fr: 'AIGLE ROYAL' }, art: 'eagle', base: { hp: 56, atk: 72, def: 50, spd: 82 }, exp: 74, moves: ['picotazo', 'aletazo', 'acecho', ['garras', 30]], wild: true,
+    intro: { es: '¡Un ÁGUILA REAL cae en picado desde las cumbres!', fr: 'Un AIGLE ROYAL fond sur toi depuis les sommets !' }, wildTag: NOTAG, fem: { es: true, fr: false } },
+  ciervo: { name: { es: 'CIERVO', fr: 'CERF' }, art: 'deer', base: { hp: 72, atk: 72, def: 60, spd: 64 }, exp: 76, moves: ['embestida', 'bramido', 'topetazo', ['cuernas', 30]], wild: true,
+    intro: { es: '¡Un CIERVO baja la cornamenta y te embiste!', fr: 'Un CERF baisse ses bois et te charge !' }, wildTag: NOTAG },
   // ── gente del camino ──
   salteador: { name: { es: 'SALTEADOR', fr: 'BRIGAND' }, art: 'char:bandit', base: { hp: 50, atk: 52, def: 44, spd: 56 }, exp: 60, moves: ['punal', 'pedrada', 'empujon', ['golpe_bajo', 18]], gold: [2, 5], wild: true,
     intro: { es: '¡Un SALTEADOR te corta el paso!', fr: 'Un BRIGAND te barre la route !' }, wildTag: NOTAG },
@@ -2598,12 +2810,20 @@ const FOES = {
   fraile: { name: { es: 'FRAILE', fr: 'MOINE' }, art: 'char:fraile', base: { hp: 66, atk: 54, def: 62, spd: 48 }, exp: 66, moves: ['bastonazo', 'guardia', 'aliento'], gold: 6 },
   gondolero: { name: { es: 'GONDOLERO', fr: 'GONDOLIER' }, art: 'char:gondolero', base: { hp: 60, atk: 62, def: 56, spd: 56 }, exp: 66, moves: ['remazo', 'empujon', 'punetazo'], gold: 9 },
   guardia: { name: { es: 'GUARDIA', fr: 'GARDE' }, art: 'char:guard', base: { hp: 64, atk: 64, def: 66, spd: 48 }, exp: 70, moves: ['lanzada', 'paves', 'mazazo'], gold: 10 },
+  minero: { name: { es: 'MINERO', fr: 'MINEUR' }, art: 'char:minero', base: { hp: 64, atk: 68, def: 62, spd: 46 }, exp: 70, moves: ['piolet', 'pedrada', 'temple', ['mazazo', 40]], gold: 10 },
+  lenador: { name: { es: 'LEÑADOR', fr: 'BÛCHERON' }, art: 'char:lenador', base: { hp: 66, atk: 72, def: 56, spd: 48 }, exp: 70, moves: ['hachazo', 'grito', 'empujon', ['mandoble', 40]], gold: 9 },
+  pastor: { name: { es: 'PASTOR', fr: 'BERGER' }, art: 'char:pastor', base: { hp: 60, atk: 60, def: 58, spd: 62 }, exp: 66, moves: ['bastonazo', 'honda', 'empujon'], gold: 6 },
+  armero: { name: { es: 'ARMERO', fr: 'ARMURIER' }, art: 'char:armero', base: { hp: 66, atk: 68, def: 72, spd: 44 }, exp: 74, moves: ['martillazo', 'temple', 'golpe_escudo', ['mazazo', 40]], gold: 12 },
+  caballero: { name: { es: 'CABALLERO', fr: 'CHEVALIER' }, art: 'char:caballero_al', base: { hp: 66, atk: 70, def: 68, spd: 48 }, exp: 76, moves: ['mandoble', 'guardia', 'golpe_escudo', ['media_espada', 52]], gold: 13 },
+  teuton: { name: { es: 'CABALLERO TEUTÓN', fr: 'CHEVALIER TEUTONIQUE' }, art: 'char:teuton', base: { hp: 70, atk: 74, def: 70, spd: 50 }, exp: 78, moves: ['lanzada', 'mandoble', 'guardia', ['carga', 50]], gold: 14 },
   // ── maestros de coliseo y jefe ──
   rodrigo: { name: { es: 'DON RODRIGO', fr: 'DON RODRIGO' }, art: 'char:rodrigo', base: { hp: 74, atk: 70, def: 68, spd: 54 }, exp: 90, moves: ['martillazo', 'temple', 'estocada', 'mandoble'], gold: 30 },
   zaynab: { name: 'ZAYNAB', art: 'char:zaynab', base: { hp: 72, atk: 74, def: 62, spd: 80 }, exp: 95, moves: ['lanzada', 'galope', 'cimitarra', 'carga_jinete'], gold: 30 },
   bianca: { name: 'BIANCA', art: 'char:bianca', base: { hp: 72, atk: 78, def: 66, spd: 72 }, exp: 98, moves: ['virote', 'recargar', 'paves', 'tiro'], gold: 30 },
   guido: { name: 'GUIDO', art: 'char:guido', base: { hp: 76, atk: 82, def: 70, spd: 80 }, exp: 102, moves: ['finta', 'estocada', 'parada', 'tajo_cruzado'], gold: 30 },
   capitan: { name: { es: 'CAPITÁN', fr: 'CAPITAINE' }, art: 'char:capitan', base: { hp: 66, atk: 70, def: 58, spd: 64 }, exp: 80, moves: ['sablazo', 'arena', 'golpe_bajo', 'abordaje'], gold: 20 },
+  konrad: { name: 'KONRAD', art: 'char:konrad', base: { hp: 78, atk: 78, def: 74, spd: 56 }, exp: 112, moves: ['media_espada', 'temple', 'golpe_escudo', 'golpe_maestro'], gold: 32 },
+  baron: { name: { es: 'BARÓN', fr: 'BARON' }, art: 'char:baron', base: { hp: 84, atk: 84, def: 72, spd: 72 }, exp: 120, moves: ['golpe_maestro', 'sablazo', 'arena', 'aliento'], gold: 45 },
   corvino: { name: 'CORVINO', art: 'char:corvino', base: { hp: 82, atk: 84, def: 72, spd: 74 }, exp: 110, moves: ['sablazo', 'golpe_bajo', 'arena', 'aliento', ['abordaje', 50]], gold: 40 },
 };
 
@@ -2616,6 +2836,8 @@ const ITEMS = {
     txt: { es: 'Remedio de boticario. Recupera 120 PV.', fr: 'Remède d\'apothicaire. Rend 120 PV.' } },
   elixir: { name: { es: 'ELIXIR', fr: 'ÉLIXIR' }, plural: { es: 'ELIXIRES', fr: 'ÉLIXIRS' }, art: { es: 'un', fr: 'un' }, heal: 9999, price: 800,
     txt: { es: 'Licor de alquimista. Recupera todos los PV.', fr: 'Liqueur d\'alchimiste. Rend tous les PV.' } },
+  lebkuchen: { name: { es: 'LEBKUCHEN', fr: 'LEBKUCHEN' }, plural: { es: 'LEBKUCHEN', fr: 'LEBKUCHEN' }, art: { es: 'un', fr: 'un' }, heal: 80, price: 160,
+    txt: { es: 'Pan de especias de Núremberg, con miel. Recupera 80 PV.', fr: 'Pain d\'épices de Nuremberg, au miel. Rend 80 PV.' } },
 };
 const itemQty = (id, n) => (n === 1 ? tr(ITEMS[id].art) + ' ' + tr(ITEMS[id].name) : n + ' ' + tr(ITEMS[id].plural));
 
@@ -2630,8 +2852,11 @@ const EQUIP = {
   cota: { slot: 'armadura', def: 11, price: 1500, name: { es: 'COTA DE MALLA', fr: 'COTTE DE MAILLES' } },
   brigantina: { slot: 'armadura', def: 17, price: 3800, name: { es: 'BRIGANTINA', fr: 'BRIGANDINE' } },
   arnes: { slot: 'armadura', def: 24, price: 6800, name: { es: 'ARNÉS MILANÉS', fr: 'ARMURE MILANAISE' } },
-  // premio secreto de don Quijote (no se vende)
+  espada_larga: { slot: 'arma', atk: 32, price: 9800, name: { es: 'ESPADA LARGA', fr: 'ÉPÉE LONGUE' } },
+  arnes_nuremberg: { slot: 'armadura', def: 30, price: 9600, name: { es: 'ARNÉS DE NÚREMBERG', fr: 'ARMURE DE NUREMBERG' } },
+  // premios de las misiones especiales (no se venden)
   matagigantes: { slot: 'arma', atk: 25, name: { es: 'ESPADA MATAGIGANTES', fr: 'ÉPÉE TUE-GÉANTS' } },
+  torre: { slot: 'armadura', def: 40, name: { es: 'ARMADURA DE LA TORRE INEXPUGNABLE', fr: 'ARMURE DE LA TOUR IMPRENABLE' } },
 };
 const equipBonus = (id, k) => (id && EQUIP[id] ? EQUIP[id][k] || 0 : 0);
 function effStats() {
@@ -2946,6 +3171,9 @@ const Art = {
     this.goat = drawGoat(false);
     this.mouflon = drawGoat(true);
     this.bear = drawBear();
+    this.marmot = drawMarmot();
+    this.eagle = drawEagle();
+    this.deer = drawDeer();
   },
 };
 function drawChar(ctx, look, frame, x, y, scale = 1) {
@@ -3209,6 +3437,14 @@ const GREET = {
 
 // Mensaje genérico para mapas de interior: salida por la puerta de abajo
 function exitDown(x, y, to) { return { x, y, dir: 'down', to }; }
+
+// Misiones especiales: una sola oportunidad. Si fallas, se cierran para siempre (pero puedes seguir jugando).
+async function closeSpecialQuest(W, flag) {
+  W.flag(flag, true);
+  Sfx.play('bump');
+  await W.say({ es: 'La misión especial se ha cerrado para siempre.', fr: 'La mission spéciale est fermée pour toujours.' }, { color: 'blue' });
+  Game.save();
+}
 
 // ── 09-maps.js ──
 // ─── Mapas: Villaolivo y Ruta 1 ───────────────────────────────────────────
@@ -3946,6 +4182,10 @@ async function scriptQuijote(W) {
     await W.say({ es: 'QUIJOTE: ¡Salud, {cab} Matagigantes! Que Dulcinea y Rocinante te acompañen en cada aventura.', fr: 'QUICHOTTE : Salut à toi, {cab} {Tueur} de géants ! Que Dulcinée et Rossinante t\'accompagnent dans chaque aventure.' });
     return;
   }
+  if (W.flag('quijoteCerrado')) {
+    await W.say({ es: 'QUIJOTE: ¿Nos conocemos? Perdona, mi memoria ya no da para más. ¡Que tengas buenas aventuras, {cab}!', fr: 'QUICHOTTE : On se connaît ? Pardonne-moi, ma mémoire ne suit plus. Bonnes aventures, {cab} !' });
+    return;
+  }
   if (!W.flag('quijote1')) {
     await W.say({ es: 'QUIJOTE: ¡Atrás, gigantes! ...Ah, perdón. Te había confundido con un molino.', fr: 'QUICHOTTE : Arrière, géants ! ...Ah, pardon. Je t\'avais pris pour un moulin.' });
     await W.say({ es: 'QUIJOTE: Soy don Quijote de la Mancha, {cab} andante. En un lugar de la Mancha, de cuyo nombre no quiero acordarme...', fr: 'QUICHOTTE : Je suis don Quichotte de la Manche, chevalier errant. Dans un village de la Manche, dont je ne veux pas me rappeler le nom...' });
@@ -3953,7 +4193,8 @@ async function scriptQuijote(W) {
     const r1 = await W.ask({ es: '¿Cómo se llama la amada de don Quijote?', fr: 'Comment s\'appelle la bien-aimée de don Quichotte ?' },
       [{ es: 'MELIBEA', fr: 'MÉLIBÉE' }, { es: 'DULCINEA', fr: 'DULCINÉE' }, { es: 'ISOLDA', fr: 'ISEUT' }, { es: 'BEATRIZ', fr: 'BÉATRICE' }].map(tr));
     if (r1 !== 1) {
-      await W.say({ es: 'QUIJOTE: No, no... Ese nombre no me hace suspirar. Vuelve cuando lo recuerdes, {name}.', fr: 'QUICHOTTE : Non, non... Ce nom ne me fait pas soupirer. Reviens quand tu t\'en souviendras, {name}.' });
+      await W.say({ es: 'QUIJOTE: No, no... Ese nombre no me hace suspirar. ¡Ay, se me ha vuelto a nublar la memoria del todo!', fr: 'QUICHOTTE : Non, non... Ce nom ne me fait pas soupirer. Hélas, ma mémoire s\'est de nouveau embrumée !' });
+      await closeSpecialQuest(W, 'quijoteCerrado');
       return;
     }
     await W.say({ es: 'QUIJOTE: ¡DULCINEA! ¡Dulcinea del Toboso, la más hermosa de todas las damas! ¡Gracias, gracias!', fr: 'QUICHOTTE : DULCINÉE ! Dulcinée du Toboso, la plus belle de toutes les dames ! Merci, merci !' });
@@ -3961,7 +4202,8 @@ async function scriptQuijote(W) {
     const r2 = await W.ask({ es: '¿Cómo se llama el caballo de don Quijote?', fr: 'Comment s\'appelle le cheval de don Quichotte ?' },
       [{ es: 'BABIECA', fr: 'BABIECA' }, { es: 'BUCÉFALO', fr: 'BUCÉPHALE' }, { es: 'ROCINANTE', fr: 'ROSSINANTE' }, { es: 'CLAVILEÑO', fr: 'CLAVILEÑO' }].map(tr));
     if (r2 !== 2) {
-      await W.say({ es: 'QUIJOTE: ¿Ese? ¡No! Ese es el caballo de otro {cab}. Vuelve cuando lo sepas.', fr: 'QUICHOTTE : Celui-là ? Non ! C\'est le cheval d\'un autre chevalier. Reviens quand tu le sauras.' });
+      await W.say({ es: 'QUIJOTE: ¿Ese? ¡No! Ese es el caballo de otro {cab}. ¡Ay, ya no me acuerdo de nada!', fr: 'QUICHOTTE : Celui-là ? Non ! C\'est le cheval d\'un autre chevalier. Hélas, je ne me souviens plus de rien !' });
+      await closeSpecialQuest(W, 'quijoteCerrado');
       return;
     }
     await W.say({ es: 'QUIJOTE: ¡ROCINANTE! ¡El mejor rocín de la Mancha! Toma, por devolverme la memoria.', fr: 'QUICHOTTE : ROSSINANTE ! La meilleure rosse de la Manche ! Tiens, pour m\'avoir rendu la mémoire.' });
@@ -3976,7 +4218,8 @@ async function scriptQuijote(W) {
   const r3 = await W.ask({ es: '¿Cuántas páginas tiene el libro de don Quijote de la Mancha?', fr: 'Combien de pages compte le livre de don Quichotte de la Manche ?' },
     [{ es: '664', fr: '664' }, { es: '0', fr: '0' }, { es: '1.250', fr: '1 250' }, { es: '312', fr: '312' }].map(tr));
   if (r3 !== 1) {
-    await W.say({ es: 'QUIJOTE: ¡Ja, ja! Puede que algún día tenga esas páginas... ¡pero piensa bien en qué año estamos! Vuelve cuando lo tengas claro.', fr: 'QUICHOTTE : Ha, ha ! Un jour, il aura peut-être ces pages... mais réfléchis bien à l\'année où nous sommes ! Reviens quand tu auras compris.' });
+    await W.say({ es: 'QUIJOTE: ¡Ja, ja! Puede que algún día tenga esas páginas... ¡pero piensa en qué año estamos! Estamos en 1415: mi libro aún no existe.', fr: 'QUICHOTTE : Ha, ha ! Un jour, il aura peut-être ces pages... mais pense à l\'année où nous sommes ! Nous sommes en 1415 : mon livre n\'existe pas encore.' });
+    await closeSpecialQuest(W, 'quijoteCerrado');
     return;
   }
   await W.say({ es: 'QUIJOTE: ¡CERO! ¡Exacto! Estamos en 1415: Cervantes ni siquiera ha nacido. Mi libro no se publicará hasta 1605... ¡dentro de 190 años!', fr: 'QUICHOTTE : ZÉRO ! Exactement ! Nous sommes en 1415 : Cervantès n\'est même pas né. Mon livre ne sera publié qu\'en 1605... dans 190 ans !' });
@@ -5261,7 +5504,8 @@ Object.assign(MAPS, {
       plainHouse(9, 3, null, { wall: ['#f0b4a8', '#d48c80', '#f6ccc0'], frame: '#3d8c58' }),
       plainHouse(20, 3, null, { wall: ['#f6e0a0', '#d8bc78', '#fbecc0'], frame: '#3a70c0' }),
       plainHouse(28, 3, null, { wall: ['#e8e4dc', '#c0b8ac', '#f6f4ee'], frame: '#a0402e' }),
-      signAt(14, 7, { es: 'Al norte, tras la laguna: los DOLOMITAS y ALEMANIA. (Próximamente)', fr: 'Au nord, après la lagune : les DOLOMITES et l\'ALLEMAGNE. (Prochainement)' }),
+      signAt(14, 7, { es: 'MUELLE NORTE: el barquero cruza a tierra firme. Desde allí, los DOLOMITAS y ALEMANIA.', fr: 'QUAI NORD : le passeur traverse vers la terre ferme. De là, les DOLOMITES et l\'ALLEMAGNE.' }),
+      { type: 'boat', x: 13, y: 1, w: 2, h: 1, text: { es: 'La barca del barquero.', fr: 'La barque du passeur.' } },
       innHouse(2, 11, { wall: ['#f6e0a0', '#d8bc78', '#fbecc0'] }),
       shopHouse(8, 11, ['hogaza', 'unguento', 'triaca', 'elixir'], GREET.shop, { wall: ['#f0b4a8', '#d48c80', '#f6ccc0'] }),
       { type: 'fountain', x: 11, y: 17, w: 2, h: 2, o: { stone: STONE.claro }, text: { es: 'Un pozo de agua de lluvia. En Venecia, el agua dulce vale oro.', fr: 'Un puits d\'eau de pluie. À Venise, l\'eau douce vaut de l\'or.' } },
@@ -5281,6 +5525,7 @@ Object.assign(MAPS, {
     conn: { left: { map: 'ruta16', dy: 0 } },
     npcs: [
       { id: 've_dux', look: 'dux', x: 31, y: 15, dir: 'down', talk: W => scriptDux(W) },
+      { id: 've_barquero', look: 'gondolero', x: 14, y: 2, dir: 'up', talk: W => scriptBarqueroVenecia(W) },
       talker('ve_gondolero', 'gondolero', 15, 16, 'left', { es: '¡Bienvenid{o} a Venecia! Aquí no hay calles: hay canales y puentes.', fr: 'Bienvenue à Venise ! Ici, pas de rues : des canaux et des ponts.' }),
       talker('ve_veneciana', 'veneciana', 6, 17, 'down', { es: 'Desde que llegó el Cuervo, el Arsenal está cerrado. ¡Ya no se construyen barcos!', fr: 'Depuis l\'arrivée du Corbeau, l\'Arsenal est fermé. On ne construit plus de navires !' }),
       talker('ve_mercader', 'veneciano', 24, 17, 'down', { es: 'Las especias de Oriente llegan a Venecia y de aquí van a toda Europa.', fr: 'Les épices d\'Orient arrivent à Venise et partent d\'ici vers toute l\'Europe.' }),
@@ -5294,7 +5539,7 @@ Object.assign(MAPS, {
         lose: { es: 'La puerta... ¡está abierta!', fr: 'La porte... est ouverte !' },
         after: { es: '...', fr: '...' } }),
     ],
-    entry: [[0, 14]],
+    entry: [[0, 14], [15, 2]],
     onEnter: async W => { if (!W.flag('rivalVenecia') && W.player.x <= 1) await scriptRivalVenecia(W); },
   },
 
@@ -5471,7 +5716,7 @@ async function scriptDux(W) {
     return;
   }
   if (W.flag('finCapitulo1')) {
-    await W.say({ es: 'DUX: Venecia nunca olvidará lo que hiciste, {name}. Cuando estés list{o}, el camino de los Dolomitas te llevará a Alemania.', fr: 'DOGE : Venise n\'oubliera jamais ce que tu as fait, {name}. Quand tu seras prêt{e}, la route des Dolomites te mènera en Allemagne.' });
+    await W.say({ es: 'DUX: Venecia nunca olvidará lo que hiciste, {name}. El barquero del MUELLE NORTE te llevará a tierra firme, camino de los Dolomitas.', fr: 'DOGE : Venise n\'oubliera jamais ce que tu as fait, {name}. Le passeur du QUAI NORD t\'emmènera sur la terre ferme, vers les Dolomites.' });
     return;
   }
   W.flag('finCapitulo1', true);
@@ -5482,7 +5727,7 @@ async function scriptDux(W) {
   await W.say({ es: 'DUX: Corvino ha huido hacia el norte, a ALEMANIA. Allí está el coliseo de NÚREMBERG... y quizá el jefe del Cuervo.', fr: 'DOGE : Corvino a fui vers le nord, en ALLEMAGNE. Là-bas se trouve le colisée de NUREMBERG... et peut-être le chef du Corbeau.' });
   Sfx.play('win');
   await W.say({ es: '— FIN DEL CAPÍTULO I —', fr: '— FIN DU CHAPITRE I —' }, { color: 'blue' });
-  await W.say({ es: '¡Gracias por jugar al prototipo de LAS SEIS CORONAS! El viaje a Alemania llegará en la próxima versión. Puedes seguir entrenando y explorando.', fr: 'Merci d\'avoir joué au prototype des SIX COURONNES ! Le voyage en Allemagne arrivera dans la prochaine version. Tu peux continuer à t\'entraîner et à explorer.' });
+  await W.say({ es: 'DUX: El barquero del MUELLE NORTE te cruzará la laguna. ¡Empieza el CAPÍTULO II: ALEMANIA!', fr: 'DOGE : Le passeur du QUAI NORD te fera traverser la lagune. Le CHAPITRE II commence : l\'ALLEMAGNE !' });
   Game.save();
 }
 
@@ -5495,6 +5740,10 @@ async function scriptDante(W) {
     if (r === 0) for (const m of miss) await W.learnMove(m);
     return;
   }
+  if (W.flag('danteCerrado')) {
+    await W.say({ es: 'DANTE: «Abandonad toda esperanza...» Bueno, tanto no. Pero mis preguntas ya no son para ti. Ve en paz.', fr: 'DANTE : « Abandonnez toute espérance... » Bon, pas à ce point. Mais mes questions ne sont plus pour toi. Va en paix.' });
+    return;
+  }
   await W.say({ es: 'DANTE: ¿Me reconoces? Soy Dante Alighieri, poeta de Florencia. ¿Que llevo un siglo muerto? Digamos que he vuelto de un viaje muy largo...', fr: 'DANTE : Tu me reconnais ? Je suis Dante Alighieri, poète de Florence. Mort depuis un siècle, dis-tu ? Disons que je reviens d\'un très long voyage...' });
   await W.say({ es: 'DANTE: En mi DIVINA COMEDIA cuento cómo, perdido en una selva oscura, viajé por el INFIERNO, el PURGATORIO y el PARAÍSO.', fr: 'DANTE : Dans ma DIVINE COMÉDIE, je raconte comment, perdu dans une forêt obscure, j\'ai voyagé à travers l\'ENFER, le PURGATOIRE et le PARADIS.' });
   await W.say({ es: 'DANTE: Un gran poeta de la antigua Roma me guió por el Infierno, círculo a círculo, hasta el fondo, donde Lucifer está atrapado en el hielo.', fr: 'DANTE : Un grand poète de la Rome antique m\'a guidé à travers l\'Enfer, cercle après cercle, jusqu\'au fond, où Lucifer est pris dans la glace.' });
@@ -5502,11 +5751,11 @@ async function scriptDante(W) {
   await W.say({ es: 'DANTE: ¿Has escuchado bien? Si respondes a mis dos preguntas, te concederé un honor que nadie tiene.', fr: 'DANTE : As-tu bien écouté ? Si tu réponds à mes deux questions, je t\'accorderai un honneur que personne n\'a.' });
   const r1 = await W.ask({ es: '¿Quién guía a Dante por el Infierno y el Purgatorio?', fr: 'Qui guide Dante à travers l\'Enfer et le Purgatoire ?' },
     [{ es: 'HOMERO', fr: 'HOMÈRE' }, { es: 'VIRGILIO', fr: 'VIRGILE' }, { es: 'OVIDIO', fr: 'OVIDE' }, { es: 'ARISTÓTELES', fr: 'ARISTOTE' }].map(tr));
-  if (r1 !== 1) { await W.say({ es: 'DANTE: No... Lee mi obra con calma y vuelve a verme.', fr: 'DANTE : Non... Lis mon œuvre tranquillement et reviens me voir.' }); return; }
+  if (r1 !== 1) { await W.say({ es: 'DANTE: No... Mi maestro fue VIRGILIO. Lee mi obra con calma, aunque mis preguntas ya no volverán.', fr: 'DANTE : Non... Mon maître était VIRGILE. Lis mon œuvre tranquillement, même si mes questions ne reviendront pas.' }); await closeSpecialQuest(W, 'danteCerrado'); return; }
   await W.say({ es: 'DANTE: ¡VIRGILIO, mi maestro! Bien. Segunda pregunta...', fr: 'DANTE : VIRGILE, mon maître ! Bien. Deuxième question...' });
   const r2 = await W.ask({ es: '¿Cuántos círculos tiene el Infierno de Dante?', fr: 'Combien de cercles compte l\'Enfer de Dante ?' },
     [{ es: 'SIETE', fr: 'SEPT' }, { es: 'TRES', fr: 'TROIS' }, { es: 'NUEVE', fr: 'NEUF' }, { es: 'DOCE', fr: 'DOUZE' }].map(tr));
-  if (r2 !== 2) { await W.say({ es: 'DANTE: No... Ese no es el número. Lee mi obra con calma y vuelve a verme.', fr: 'DANTE : Non... Ce n\'est pas le bon nombre. Lis mon œuvre tranquillement et reviens me voir.' }); return; }
+  if (r2 !== 2) { await W.say({ es: 'DANTE: No... Ese no es el número. El Infierno tiene NUEVE círculos. Ve en paz, viajer{o}.', fr: 'DANTE : Non... Ce n\'est pas le bon nombre. L\'Enfer compte NEUF cercles. Va en paix.' }); await closeSpecialQuest(W, 'danteCerrado'); return; }
   await W.say({ es: 'DANTE: ¡NUEVE círculos! Has bajado conmigo hasta el fondo del Infierno... y has vuelto. Te nombro {CAB} DEL INFIERNO.', fr: 'DANTE : NEUF cercles ! Tu es descendu{e} avec moi jusqu\'au fond de l\'Enfer... et tu en es revenu{e}. Je te nomme {CAB} DE L\'ENFER.' });
   Sfx.play('win');
   W.flag('caballeroInfierno', true);
@@ -5516,6 +5765,875 @@ async function scriptDante(W) {
   await W.learnMove('matademonios');
   await W.learnMove('beso');
   Game.save();
+}
+
+// ── 09e-alemania.js ──
+// ─── Capítulo II · Alemania: Dolomitas, Brennero, Baviera, Núremberg, Turingia, Luneburgo y Lübeck ───
+const DOLOMITAS_ARRIVAL = { map: 'ruta17', x: 14, y: 40, dir: 'up' };
+
+// Fondos de combate de Alemania
+Object.assign(BG, {
+  alpes: { sky: ['#9ccaee', '#b6d8f2', '#cfe6f6', '#e6f2fa'], far: ['#c8c2b4', 'mount'], hill: ['#8cc070', '#78ac5c', '#689c50'], ground: ['#b4d494', '#a8ca88'], plat: ['#c6e2a8', '#a8ca88', '#76985a', '#8eb470'], deco: 'fir' },
+  bosque: { sky: ['#a2cdea', '#b8d8ee', '#cee4f2', '#e2eef6'], far: ['#4e7a54', 'mount'], hill: ['#4e8a44', '#3e7a38', '#336a30'], ground: ['#9cc47e', '#90b872'], plat: ['#b0d492', '#94bc76', '#5e8446', '#7aa45e'], deco: 'fir' },
+  brezal: { sky: ['#a8d0ee', '#bedcf2', '#d4e8f6', '#e8f2f8'], hill: ['#b08ab0', '#9a6c9c', '#86588a'], ground: ['#cccc8e', '#c0c082'], plat: ['#dada9e', '#c2c284', '#8a8a54', '#a6a66a'], deco: 'cypress' },
+  franconia: { sky: ['#9cd2f2', '#b6def5', '#cde9f6', '#e2f2f8'], far: ['#d49a7e', 'walls'], hill: null, ground: ['#dcbcaa', '#d0ae9c'], plat: ['#eed6c8', '#dcbcaa', '#9a7666', '#bc9682'], deco: null },
+  hansa: { sky: ['#a6c6e2', '#bcd4ea', '#d2e2f0', '#e6eef6'], far: ['#b8604a', 'walls'], hill: null, ground: ['#c8c4bc', '#bcb8b0'], plat: ['#dedad2', '#c8c4bc', '#86827a', '#a6a29a'], deco: null },
+});
+
+Object.assign(MAPS, {
+  // ── Ruta 17 · Dolomitas (niveles 51-54) ──
+  ruta17: {
+    name: { es: 'RUTA 17 · DOLOMITAS', fr: 'ROUTE 17 · DOLOMITES' }, bg: 'alpes', theme: 'alpes',
+    wild: [{ id: 'marmota', w: 30, lv: [51, 53] }, { id: 'cabra', w: 20, lv: [51, 53] }, { id: 'aguila', w: 25, lv: [52, 53] }, { id: 'lobo', w: 25, lv: [51, 53] }],
+    build: () => asciiMap([
+      'MMMMMMMMMMMMMM==MMMMMMMMMMMMMM',
+      'MMMMMMMMMMMMMM==MMMMMMMMMMMMMM',
+      'MMMMMMMM....Y.==....MMMMMMMMMM',
+      'MMMMMMMMssss..==ssssMMMMMMMMMM',
+      'MMMMMMMMssss..==ssssMMMMMMMMMM',
+      'MMMMMMMM......==ssssMMMMMMMMMM',
+      'MM............==....MMMMMMMMMM',
+      'MM.,,,,,......==.sss........MM',
+      'MM.,,,,,Y.....==.sssR.......MM',
+      'MM.,,,,,......==...........YMM',
+      'MM.,,,,,.=======.,,,,,,.....MM',
+      'MM.......======..,,,,,,.....MM',
+      'MMMMMMY..==......,,,,,,.MMMMMM',
+      'MMMMMM.Y.==.MMMMM,,,,,,.MMMMMM',
+      'MMMMMM...==.MMMMM,,,,,,.MMMMMM',
+      'MMMMMM...==.MMMMM.......MMMMMM',
+      'MMY...Y..==.............Y...MM',
+      'MM.Y.R.Y.==...............YYMM',
+      'MM.......=============......MM',
+      'MM.......=============......MM',
+      'MMMMM...............==..MMMMMM',
+      'MMMMM...R..MMMMMM...==,,MMMMMM',
+      'MMMMM...,,,MMMMMM...==,,MMMMMM',
+      'MMMMM...,,,MMMMMMY..==,,MMMMMM',
+      'MMY.....,,,.........==,,...YMM',
+      'MM......,,,.........==......MM',
+      'MM....================......MM',
+      'MM....===============......YMM',
+      'MMMMM.==...................RMM',
+      'MMMMM.==............Y.~~~~Y.MM',
+      'MMMMM.==..MMMM....YRR~~~~~~.MM',
+      'MMMMM.==..MMMMR......~~~~~~.MM',
+      'MM....==..........Y...~~~~Y.MM',
+      'MMY...==.........,,,,,......MM',
+      'MMY.Y.==========.,,,,,......MM',
+      'MM.Y..==========.,,,,,..MMMMMM',
+      'MM.......,,,,,==........MMMMMM',
+      'MM....Y..,,,,,==........MMMMMM',
+      'MM....Y.R,,,,,==..YY....Y...MM',
+      'MM..YY........==......Y...Y.MM',
+      '~~~~~~~~~~~~~~DD~~~~~~~~~~~~~~',
+      '~~~~~~~~~~~~~~DD~~~~~~~~~~~~~~',
+      '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~',
+      '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~',
+    ]),
+    objects: [
+      { type: 'boat', x: 12, y: 41, w: 2, h: 1, text: { es: 'La barca del barquero. Lleva de vuelta a VENECIA.', fr: 'La barque du passeur. Elle ramène à VENISE.' } },
+      signAt(16, 37, { es: 'RUTA 17 · DOLOMITAS\nMontañas pálidas, prados y neveros. Al norte: el paso del BRENNERO.', fr: 'ROUTE 17 · DOLOMITES\nMontagnes pâles, prairies et névés. Au nord : le col du BRENNER.' }),
+      signAt(20, 32, { es: 'LAGO DE BRAIES. Dicen que sus aguas guardan una puerta a un reino escondido.', fr: 'LAC DE BRAIES. On dit que ses eaux cachent la porte d\'un royaume secret.' }),
+    ],
+    conn: { up: { map: 'ruta18', dx: 0 } },
+    entry: [[14, 40]],
+    npcs: [
+      { id: 'r17_barquero', look: 'gondolero', x: 16, y: 39, dir: 'left', talk: W => scriptBarqueroDolomitas(W) },
+      talker('r17_ermitano', 'anciano', 4, 25, 'down', { es: '¿Ves esas montañas pálidas? Al atardecer se vuelven rosas, como brasas. Aquí lo llamamos ENROSADIRA.', fr: 'Tu vois ces montagnes pâles ? Au coucher du soleil, elles deviennent roses comme des braises. Ici, on appelle ça l\'ENROSADIRA.' }),
+      talker('r17_pastora', 'tirolesa', 25, 9, 'down', { es: 'En verano subimos las vacas a los prados altos. ¡Cuidado con las MARMOTAS, silban y muerden!', fr: 'En été, nous montons les vaches aux alpages. Attention aux MARMOTTES, elles sifflent et elles mordent !' }),
+      trainer({ id: 'r17_hansi', look: 'tiroles', x: 8, y: 33, dir: 'left', range: 2, foe: 'cazador', title: { es: 'CAZADOR', fr: 'CHASSEUR' }, level: 52, name: 'Hansi',
+        intro: { es: '¡Grüß Gott! En estas montañas solo sobrevive quien sabe apuntar.', fr: 'Grüß Gott ! Dans ces montagnes, seuls ceux qui savent viser survivent.' },
+        lose: { es: '¡Vaya puntería la tuya!', fr: 'Quelle précision !' },
+        after: { es: 'Las ÁGUILAS REALES anidan en las cumbres. Atacan desde muy alto.', fr: 'Les AIGLES ROYAUX nichent sur les sommets. Ils attaquent de très haut.' } }),
+      trainer({ id: 'r17_sepp', look: 'lenador', x: 12, y: 24, dir: 'down', range: 2, foe: 'lenador', level: 52, name: 'Sepp',
+        intro: { es: 'Tumbo un abeto de tres hachazos. ¿Cuántos necesitaré contigo?', fr: 'J\'abats un sapin en trois coups de hache. Combien m\'en faudra-t-il pour toi ?' },
+        lose: { es: 'Más de tres, está claro.', fr: 'Plus de trois, c\'est sûr.' },
+        after: { es: 'La madera de estos bosques acaba en los barcos de Venecia.', fr: 'Le bois de ces forêts finit dans les navires de Venise.' } }),
+      trainer({ id: 'r17_toni', look: 'minero', x: 18, y: 16, dir: 'down', range: 2, foe: 'minero', level: 53, name: 'Toni',
+        intro: { es: '¡Bajo la montaña hay plata! Y no pienso compartirla.', fr: 'Sous la montagne, il y a de l\'argent ! Et je ne le partagerai pas.' },
+        lose: { es: 'Me vuelvo a la mina...', fr: 'Je retourne à la mine...' },
+        after: { es: 'Unos hombres de negro compraron todo nuestro hierro. Pagaron muy bien.', fr: 'Des hommes en noir ont acheté tout notre fer. Ils ont très bien payé.' } }),
+      trainer({ id: 'r17_paolo', look: 'peregrino', x: 11, y: 12, dir: 'left', range: 1, foe: 'peregrino', level: 53, name: 'Paolo',
+        intro: { es: 'Bajo de los Alpes hacia Roma. ¡Un combate para calentar las piernas!', fr: 'Je descends des Alpes vers Rome. Un combat pour me dégourdir les jambes !' },
+        lose: { es: 'Ya tengo las piernas calientes... y doloridas.', fr: 'J\'ai les jambes échauffées... et douloureuses.' },
+        after: { es: 'En el BRENNERO hay un hospicio donde descansar gratis.', fr: 'Au BRENNER, il y a un hospice où se reposer gratuitement.' } }),
+      trainer({ id: 'r17_cuervo', look: 'cuervo', x: 16, y: 8, dir: 'left', range: 1, foe: 'cuervo', level: 54,
+        intro: { es: '¡Alto! ¡El barón no quiere curiosos en el camino del norte!', fr: 'Halte ! Le baron ne veut pas de curieux sur la route du nord !' },
+        lose: { es: '¿El barón? ¡Yo no he dicho nada de ningún barón!', fr: 'Le baron ? Je n\'ai parlé d\'aucun baron !' },
+        after: { es: '...', fr: '...' } }),
+    ],
+    items: [
+      { id: 'r17a', x: 3, y: 8, item: 'elixir', n: 1 },
+      { id: 'r17b', x: 26, y: 10, item: 'triaca', n: 2 },
+      { id: 'r17c', x: 4, y: 17, item: 'unguento', n: 3 },
+      { id: 'r17d', x: 25, y: 38, item: 'triaca', n: 1 },
+    ],
+  },
+
+  // ── Ruta 18 · Paso del Brennero (niveles 53-56) ──
+  ruta18: {
+    name: { es: 'RUTA 18 · PASO DEL BRENNERO', fr: 'ROUTE 18 · COL DU BRENNER' }, bg: 'alpes', theme: 'alpes',
+    wild: [{ id: 'marmota', w: 20, lv: [53, 55] }, { id: 'aguila', w: 25, lv: [53, 55] }, { id: 'oso', w: 20, lv: [54, 55] }, { id: 'cabra', w: 15, lv: [53, 54] }, { id: 'salteador', w: 20, lv: [53, 55] }],
+    build: () => asciiMap([
+      'MMMMMMMMMMMMMMMMMM==MMMMMMMMMMMMMM',
+      'MMMMMMMMMMMMMMMMMM==MMMMMMMMMMMMMM',
+      'MMMMMMMMMMMMMM....==...MMMMMMMMMMM',
+      'MMMMMMMMMMMMMM....==...MMMMMMMMMMM',
+      'MMMMMMMMMMMMMM..R.==..YMM......MMM',
+      'MMMMMMMM......R...==...MM......MMM',
+      'MMMMMMMM...sssss..==...MM......MMM',
+      'MM...R.....sssss..==...MM......MMM',
+      'MM.........sssss..==.Y.MM......MMM',
+      'MMssssss..........==...........MMM',
+      'MMssssssY.........==.Y.MM......MMM',
+      'MMssssss...Y....Y.==...MM......MMM',
+      'MM................==.Y.MMMMMMMMMMM',
+      'MM........==========...MMMMMMMMMMM',
+      'MM....Y...=========..........Y..MM',
+      'MM...MMM..==........,,,.....ssssMM',
+      'MM.YYMMM..==........,,,....RssssMM',
+      'MM...MMM..==........,,,.....ssssMM',
+      'MM...MMM..==......Y.,,,..Y..ssssMM',
+      'MM.,,,,,..==........,,,....R....MM',
+      'MM.,,,,,..==........Y....Y......MM',
+      'MM.,,,,,..==...............Y....MM',
+      'MM.,,,,,..================.MMMMMMM',
+      'MM.Y......================.MMMMMMM',
+      'MM......................==.MMMMMMM',
+      'MM.........Y,,,.MMMMY...==.MMMMMMM',
+      'MMMMMMM...YY,,,YMMMM....==......MM',
+      'MMMMMMM...Y.,,,.MMMM....==,,,,,.MM',
+      'MMMMMMMY......Y.MMMMY...==,,,,,.MM',
+      'MMMMMMM.................==,,,,,.MM',
+      'MMMMMMM..Y..............==,,,,,.MM',
+      'MM............============.Y....MM',
+      'MM............===========.......MM',
+      'MM...Y......,,==,..........MMMMMMM',
+      'MMMMMMM.....,,==,MMMMMM.Y..MMMMMMM',
+      'MMMMMMM.....,,==,MMMMMM....MMMMMMM',
+      'MMMMMMM.....,,==,MMMMMM....MMMMMMM',
+      'MMMMMMM.......==.MMMMMM....MMMMMMM',
+      'MMMMMMMMMMMMMM==MMMMMMMMMMMMMMMMMM',
+      'MMMMMMMMMMMMMM==MMMMMMMMMMMMMMMMMM',
+    ]),
+    objects: [
+      signAt(16, 37, { es: 'RUTA 18 · PASO DEL BRENNERO\nEl paso más bajo de los Alpes. Al norte: BAVIERA.', fr: 'ROUTE 18 · COL DU BRENNER\nLe col le plus bas des Alpes. Au nord : la BAVIÈRE.' }),
+      innHouse(12, 15, { wall: TIMBER_WALL, timber: true, roof: ['#8a8a98', '#6a6a78', '#4a4a58'] }),
+      signAt(12, 20, { es: 'HOSPICIO DEL BRENNERO. Desde aquí, al norte, se habla alemán.', fr: 'HOSPICE DU BRENNER. À partir d\'ici, vers le nord, on parle allemand.' }),
+      { type: 'tent', x: 25, y: 4, w: 2, h: 2, o: { color: '#2a5aa0' }, text: { es: 'Una tienda de lana azul, con alfombras de Fez.', fr: 'Une tente de laine bleue, avec des tapis de Fès.' } },
+      { type: 'chesstable', x: 28, y: 8, text: { es: 'Un tablero de ajedrez de marfil y ébano.', fr: 'Un échiquier d\'ivoire et d\'ébène.' } },
+    ],
+    conn: { down: { map: 'ruta17', dx: 0 }, up: { map: 'ruta19', dx: 0 } },
+    npcs: [
+      { id: 'r18_sabio', look: 'sabio_fez', x: 27, y: 8, dir: 'down', talk: W => scriptSabioFez(W) },
+      talker('r18_aduanero', 'guardia_al', 21, 24, 'down', { es: 'Soy el aduanero del Brennero. Los mercaderes pagan peaje... ¡pero los coliseos te dan paso libre!', fr: 'Je suis le douanier du Brenner. Les marchands paient un péage... mais les colisées te donnent libre passage !' }),
+      trainer({ id: 'r18_greta', look: 'peregrina', x: 8, y: 14, dir: 'right', range: 2, foe: 'peregrino', title: { es: 'PEREGRINA', fr: 'PÈLERINE' }, level: 54, name: 'Greta',
+        intro: { es: 'Vengo de Roma y vuelvo a casa. ¡Aún me quedan fuerzas para un combate!', fr: 'Je reviens de Rome et je rentre chez moi. Il me reste des forces pour un combat !' },
+        lose: { es: 'Bueno... ya no me quedan.', fr: 'Bon... maintenant, il ne m\'en reste plus.' },
+        after: { es: 'He visto a un sabio con turbante entre las rocas del este. ¡Qué tranquilo parecía!', fr: 'J\'ai vu un sage avec un turban entre les rochers de l\'est. Il avait l\'air si tranquille !' } }),
+      trainer({ id: 'r18_liesl', look: 'tirolesa', x: 16, y: 10, dir: 'right', range: 2, foe: 'cazador', title: { es: 'CAZADORA', fr: 'CHASSERESSE' }, level: 55, name: 'Liesl',
+        intro: { es: 'Mi flecha nunca falla. ¿Y tu escudo?', fr: 'Ma flèche ne rate jamais. Et ton bouclier ?' },
+        lose: { es: 'Tu escudo sí que no falla.', fr: 'Ton bouclier, lui, ne faiblit jamais.' },
+        after: { es: 'Más allá del paso empiezan los bosques de Baviera.', fr: 'Au-delà du col commencent les forêts de Bavière.' } }),
+      trainer({ id: 'r18_jakob', look: 'minero', x: 12, y: 24, dir: 'up', range: 1, foe: 'minero', level: 55, name: 'Jakob',
+        intro: { es: '¡Llevo un mes picando roca! Necesito pelear con algo que se mueva.', fr: 'Ça fait un mois que je pique la roche ! J\'ai besoin de me battre contre quelque chose qui bouge.' },
+        lose: { es: 'La roca era más fácil.', fr: 'La roche, c\'était plus facile.' },
+        after: { es: 'En el hospicio dan sopa caliente y cama gratis.', fr: 'À l\'hospice, on donne une soupe chaude et un lit gratuit.' } }),
+      trainer({ id: 'r18_c1', look: 'cuerva', x: 26, y: 30, dir: 'left', range: 2, foe: 'cuervo', title: { es: 'MERCENARIA', fr: 'MERCENAIRE' }, level: 56,
+        intro: { es: '¡Nadie cruza el Brennero sin pagar el peaje del Cuervo!', fr: 'Personne ne passe le Brenner sans payer le péage du Corbeau !' },
+        lose: { es: '¡Peaje... perdonado!', fr: 'Péage... offert !' },
+        after: { es: 'El barón nos paga en oro de Venecia.', fr: 'Le baron nous paie en or de Venise.' } }),
+      trainer({ id: 'r18_c2', look: 'cuervo', x: 20, y: 4, dir: 'left', range: 1, foe: 'cuervo', level: 56,
+        intro: { es: '¡Has llegado lejos! Pero Corvino ya está a salvo en el norte.', fr: 'Tu es allé{e} loin ! Mais Corvino est déjà à l\'abri dans le nord.' },
+        lose: { es: 'Corvino... está en NÚREMBERG... ¡Ups!', fr: 'Corvino... est à NUREMBERG... Oups !' },
+        after: { es: '...', fr: '...' } }),
+    ],
+    items: [
+      { id: 'r18a', x: 3, y: 10, item: 'elixir', n: 1 },
+      { id: 'r18b', x: 30, y: 17, item: 'triaca', n: 2 },
+      { id: 'r18c', x: 29, y: 29, item: 'unguento', n: 3 },
+      { id: 'r18d', x: 30, y: 10, item: 'triaca', n: 1 },
+    ],
+  },
+
+  // ── Ruta 19 · Bosques de Baviera y el Danubio (niveles 55-58) ──
+  ruta19: {
+    name: { es: 'RUTA 19 · BOSQUES DE BAVIERA', fr: 'ROUTE 19 · FORÊTS DE BAVIÈRE' }, bg: 'bosque', theme: 'bosque',
+    wild: [{ id: 'ciervo', w: 30, lv: [55, 57] }, { id: 'jabali', w: 25, lv: [55, 57] }, { id: 'lobo', w: 25, lv: [55, 57] }, { id: 'oso', w: 20, lv: [56, 57] }],
+    build: () => asciiMap([
+      'MMMMMMMMMMMMMMMMMMMM==MMMMMMMMMMMMMMMMMM',
+      'MMMMMMMMMMMMMMMMMMMM==MMMMMMMMMMMMMMMMMM',
+      'MM......Y.Y..Y..Y...==...Y............MM',
+      'MMY..YY.....Y...Y.Y.==.Y....Y....,,,,.MM',
+      'MM.......Y.....Y..Y.==.......Y..Y,,,,.MM',
+      'MM.......Y..........==..YY..Y.YYY,,,,.MM',
+      'MM........YY.....Y..==..Y.....YY.,,,,YMM',
+      'MM.Y..Y..YY.........==................MM',
+      'MM.......YY.....Y...==============..Y.MM',
+      'MM.Y.Y........Y.....==============.YY.MM',
+      'MM...............Y..............==.Y..MM',
+      'MM..Y.........YY......,,,,,.....==....MM',
+      'MM..,,,,,,,,.R..Y.Y...,,,,,.YY..==...YMM',
+      'MM..,,,,,,,,.....Y....,,,,,.....==....MM',
+      'MMY.,,,,,,,,....Y..Y..,,,,,.....==....MM',
+      'MM.Y,,,,,,,,Y.....Y....Y........==....MM',
+      'MM..,,,,,,,,.....R.RY.....========....MM',
+      'MM..,,,,,,,,......Y...Y...=======.....MM',
+      'MM..YY...Y....R....Y..Y...==..........MM',
+      'MMY...............Y.YY....==.Y..Y.Y...MM',
+      'MM~~~~~~~~~~~~~~~~~~~~~~~~BB~~~~~~~~~~MM',
+      'MM~~~~~~~~~~~~~~~~~~~~~~~~BB~~~~~~~~~~MM',
+      'MM~~~~~~~~~~~~~~~~~~~~~~~~BB~~~~~~~~~~MM',
+      'MM...Y....................==.Y........MM',
+      'MM.....Y.....Y.Y......Y.Y.==......Y...MM',
+      'MM.YY..Y..................==.......Y..MM',
+      'MM......====================.,,,,,,...MM',
+      'MM...Y..===================.Y,,,,,,...MM',
+      'MM......==..,,,,,..........Y.,,,,,,...MM',
+      'MM......==..,,,,,.Y..R.R.Y...,,,,,,...MM',
+      'MM.Y....==.Y,,,,,......Y....Y.........MM',
+      'MMY.....==...........................YMM',
+      'MM...Y..============.......Y.......YY.MM',
+      'MM..Y...============..,,,,,,Y....Y....MM',
+      'MM.,,,,,..........==..,,,,,,......Y...MM',
+      'MMY,,,,,..........==..,,,,,,.YY.......MM',
+      'MMY,,,,,...Y......==.Y,,,,,,..Y.......MM',
+      'MM.,,,,,..........==.......Y......YY.YMM',
+      'MMMMMMMMMMMMMMMMMM==MMMMMMMMMMMMMMMMMMMM',
+      'MMMMMMMMMMMMMMMMMM==MMMMMMMMMMMMMMMMMMMM',
+    ]),
+    objects: [
+      signAt(16, 37, { es: 'RUTA 19 · BOSQUES DE BAVIERA\nAl norte, tras el DANUBIO: NÚREMBERG.', fr: 'ROUTE 19 · FORÊTS DE BAVIÈRE\nAu nord, après le DANUBE : NUREMBERG.' }),
+      signAt(23, 23, { es: 'EL DANUBIO. Nace en la Selva Negra y llega hasta el mar Negro.', fr: 'LE DANUBE. Il naît en Forêt-Noire et va jusqu\'à la mer Noire.' }),
+    ],
+    conn: { down: { map: 'ruta18', dx: 0 }, up: { map: 'nuremberg', dx: -3 } },
+    npcs: [
+      talker('r19_pescador', 'pescador', 30, 23, 'down', { es: 'En el Danubio pescamos lucios enormes. Y en invierno el río se hiela entero.', fr: 'Dans le Danube, on pêche des brochets énormes. Et en hiver, le fleuve gèle entièrement.' }),
+      trainer({ id: 'r19_wolfgang', look: 'lenador', x: 10, y: 31, dir: 'down', range: 1, foe: 'lenador', level: 56, name: 'Wolfgang',
+        intro: { es: 'En este bosque mando yo. ¡Y mi hacha!', fr: 'Dans cette forêt, c\'est moi qui commande. Et ma hache !' },
+        lose: { es: 'Mi hacha te cede el paso.', fr: 'Ma hache te cède le passage.' },
+        after: { es: 'Los CIERVOS de Baviera tienen cuernas como ramas de roble.', fr: 'Les CERFS de Bavière ont des bois comme des branches de chêne.' } }),
+      trainer({ id: 'r19_ulrich', look: 'cazador', x: 4, y: 28, dir: 'right', range: 3, foe: 'cazador', level: 56, name: 'Ulrich',
+        intro: { es: '¡Llevo tres días siguiendo a un oso! Tú me servirás de práctica.', fr: 'Ça fait trois jours que je suis un ours ! Tu me serviras d\'entraînement.' },
+        lose: { es: 'Mejor sigo con el oso.', fr: 'Je ferais mieux de suivre l\'ours.' },
+        after: { es: 'Ten cuidado con los osos: son lentos, pero pegan muy fuerte.', fr: 'Méfie-toi des ours : ils sont lents, mais ils frappent très fort.' } }),
+      trainer({ id: 'r19_dietrich', look: 'caballero_al', x: 20, y: 25, dir: 'down', range: 1, foe: 'caballero', level: 57, name: 'Dietrich',
+        intro: { es: 'Soy caballero del duque de Baviera. ¡Muéstrame tu valor!', fr: 'Je suis chevalier du duc de Bavière. Montre-moi ta valeur !' },
+        lose: { es: 'Tienes el valor de un león.', fr: 'Tu as le courage d\'un lion.' },
+        after: { es: 'En Núremberg está el mejor armero del Imperio: Meister KONRAD.', fr: 'À Nuremberg vit le meilleur armurier de l\'Empire : Meister KONRAD.' } }),
+      trainer({ id: 'r19_cuervo', look: 'cuervo', x: 30, y: 18, dir: 'up', range: 1, foe: 'cuervo', level: 57,
+        intro: { es: '¡No cruzarás el Danubio! ¡Órdenes del barón!', fr: 'Tu ne traverseras pas le Danube ! Ordres du baron !' },
+        lose: { es: '¡Me rindo! ¡Me rindo!', fr: 'Je me rends ! Je me rends !' },
+        after: { es: 'El barón tiene un castillo en una roca... la «piedra del cuervo».', fr: 'Le baron a un château sur un rocher... la « pierre du corbeau ».' } }),
+      trainer({ id: 'r19_adelheid', look: 'dama_al', x: 24, y: 10, dir: 'up', range: 1, foe: 'caballero', title: { es: 'CABALLERA', fr: 'CHEVALIÈRE' }, level: 58, name: 'Adelheid',
+        intro: { es: 'Mi armadura es de Núremberg. ¡A ver si la abollas!', fr: 'Mon armure vient de Nuremberg. Voyons si tu la cabosses !' },
+        lose: { es: '¡Me la has abollado!', fr: 'Tu l\'as cabossée !' },
+        after: { es: 'Meister Konrad usa MEDIA ESPADA: baja tu defensa y luego remata.', fr: 'Meister Konrad utilise DEMI-ÉPÉE : il baisse ta défense, puis il achève.' } }),
+      trainer({ id: 'r19_anselm', look: 'fraile', x: 17, y: 5, dir: 'right', range: 3, foe: 'fraile', level: 57, name: 'Anselm',
+        intro: { es: 'Copio libros en el monasterio. Hoy me apetece algo más movido.', fr: 'Je copie des livres au monastère. Aujourd\'hui, j\'ai envie de quelque chose de plus mouvementé.' },
+        lose: { es: 'Volveré a mis libros.', fr: 'Je retourne à mes livres.' },
+        after: { es: 'Copiar un libro a mano lleva meses. ¡Ojalá alguien inventara una máquina para hacerlo!', fr: 'Copier un livre à la main prend des mois. Si seulement quelqu\'un inventait une machine pour ça !' } }),
+    ],
+    items: [
+      { id: 'r19a', x: 34, y: 4, item: 'elixir', n: 1 },
+      { id: 'r19b', x: 5, y: 14, item: 'triaca', n: 2 },
+      { id: 'r19c', x: 36, y: 35, item: 'unguento', n: 3 },
+    ],
+  },
+
+  // ── Núremberg: ciudad libre del Imperio, coliseo 5 ──
+  nuremberg: {
+    name: { es: 'NÚREMBERG', fr: 'NUREMBERG' }, bg: 'franconia', theme: 'franconia',
+    build: () => asciiMap([
+      'WWWWWWWWWWWWWWWWW##WWWWWWWWWWWWWWWWW',
+      'WWWWWWWWWWWWWWWWW##WWWWWWWWWWWWWWWWW',
+      'WMMMMMMMMM#########################W',
+      'WMMMMMMMMM#########################W',
+      'WMMMMMMMMM#########################W',
+      'WMMMMMMMMM#########################W',
+      'W##################################W',
+      'W##################################W',
+      'W##################################W',
+      'W##################################W',
+      'W##################################W',
+      'W##################################W',
+      'W##################################W',
+      'W##################################W',
+      'W##################################W',
+      'W~~~~~~~BB~~~~~~~BB~~~~~~~BB~~~~~~~W',
+      'W~~~~~~~BB~~~~~~~BB~~~~~~~BB~~~~~~~W',
+      'W##################################W',
+      'W##################################W',
+      'W##################################W',
+      'W##################################W',
+      'W##################################W',
+      'W##################################W',
+      'W##################################W',
+      'W##################################W',
+      'W##################################W',
+      'W##################################W',
+      'W##################################W',
+      'W##################################W',
+      'W##################################W',
+      'WWWWWWWWWWWWWWWWW##WWWWWWWWWWWWWWWWW',
+      'WWWWWWWWWWWWWWWWW##WWWWWWWWWWWWWWWWW',
+    ]),
+    objects: [
+      { type: 'tower', x: 2, y: 1, w: 2, h: 4, o: { stone: STONE.rojo, roof: ['#8a8a98', '#6a6a78', '#4a4a58'] } },
+      { type: 'tower', x: 6, y: 0, w: 3, h: 5, o: { stone: STONE.rojo, roof: ['#8a8a98', '#6a6a78', '#4a4a58'], color: '#f2ca52' } },
+      signAt(5, 6, { es: 'EL CASTILLO DEL EMPERADOR. Aquí se alojan los emperadores cuando visitan la ciudad.', fr: 'LE CHÂTEAU DE L\'EMPEREUR. Les empereurs y logent quand ils visitent la ville.' }),
+      innHouse(11, 3, { wall: TIMBER_WALL, timber: true }),
+      { type: 'tower', x: 21, y: 2, w: 2, h: 5, o: { stone: STONE.rojo, spire: 32, roof: ['#8a8a98', '#6a6a78', '#4a4a58'] }, text: { es: 'La iglesia de SAN SEBALDO, patrón de Núremberg.', fr: 'L\'église SAINT-SEBALD, patron de Nuremberg.' } },
+      { type: 'tower', x: 24, y: 2, w: 2, h: 5, o: { stone: STONE.rojo, spire: 32, roof: ['#8a8a98', '#6a6a78', '#4a4a58'] }, text: { es: 'Las torres de San Sebaldo. Se ven desde todo el valle.', fr: 'Les tours de Saint-Sebald. On les voit de toute la vallée.' } },
+      plainHouse(27, 3, null, { wall: TIMBER_WALL, timber: true, frame: '#3d8c58' }),
+      plainHouse(2, 8, null, { wall: TIMBER_WALL, timber: true, frame: '#a0402e' }),
+      plainHouse(9, 8, null, { wall: TIMBER_WALL, timber: '#7a3a2a', frame: '#3a70c0' }),
+      { type: 'stall', x: 19, y: 9, w: 2, h: 2, o: { color: '#2a2a30', goods: ['#c8803a', '#8a4a2a', '#e8b860', '#a0602a'] }, text: { es: 'Un puesto de especias venecianas: canela, clavo y jengibre.', fr: 'Un étal d\'épices vénitiennes : cannelle, clou de girofle et gingembre.' } },
+      { type: 'brunnen', x: 23, y: 9, w: 2, h: 2, text: { es: 'La FUENTE HERMOSA: cuarenta figuras de piedra pintadas y doradas. ¡Recién terminada!', fr: 'La BELLE FONTAINE : quarante statues de pierre peintes et dorées. Toute neuve !' } },
+      shopHouse(27, 8, ['hogaza', 'unguento', 'triaca', 'lebkuchen', 'elixir'], { es: '¡Grüß Gott! Pruebe nuestro LEBKUCHEN: miel, almendras y especias de Venecia.', fr: 'Grüß Gott ! Goûtez notre LEBKUCHEN : miel, amandes et épices de Venise.' }, { wall: TIMBER_WALL, timber: true }),
+      { type: 'coliseo', x: 3, y: 18, w: 8, h: 5, o: { color: '#2a2a30', stone: STONE.rojo }, door: [3, 4], enter: { map: 'coliseo_nuremberg', x: 7, y: 13, dir: 'up' } },
+      armoryHouse(12, 18, ['espada_larga', 'arnes_nuremberg'], { es: 'Armaduras de Núremberg: las mejores del Imperio. ¡Y espadas largas para luchar a dos manos!', fr: 'Armures de Nuremberg : les meilleures de l\'Empire. Et des épées longues pour combattre à deux mains !' }, { wall: TIMBER_WALL, timber: true }),
+      { type: 'tower', x: 22, y: 18, w: 2, h: 5, o: { stone: STONE.rojo, spire: 34, roof: ['#7aa88a', '#5a8a6a', '#3a6a4a'] }, text: { es: 'La iglesia de SAN LORENZO, de arenisca roja.', fr: 'L\'église SAINT-LAURENT, en grès rouge.' } },
+      { type: 'tower', x: 25, y: 18, w: 2, h: 5, o: { stone: STONE.rojo, spire: 34, roof: ['#7aa88a', '#5a8a6a', '#3a6a4a'] }, text: { es: 'Desde lo alto de San Lorenzo, los vigías avisan de los incendios.', fr: 'Du haut de Saint-Laurent, les guetteurs signalent les incendies.' } },
+      plainHouse(29, 18, null, { wall: TIMBER_WALL, timber: true, frame: '#a0402e' }),
+      plainHouse(3, 24, null, { wall: TIMBER_WALL, timber: '#7a3a2a', frame: '#3d8c58' }),
+      plainHouse(24, 24, { es: 'TALLER DE ARMADURAS. Se oyen martillazos día y noche.', fr: 'ATELIER D\'ARMURES. On entend des coups de marteau jour et nuit.' }, { wall: TIMBER_WALL, timber: true, shield: true }),
+      plainHouse(29, 24, null, { wall: TIMBER_WALL, timber: true, frame: '#3a70c0' }),
+      signAt(15, 28, { es: 'NÚREMBERG\nCiudad libre del Imperio. Coliseo de ARMADURA: Meister KONRAD.', fr: 'NUREMBERG\nVille libre d\'Empire. Colisée de l\'ARMURE : Meister KONRAD.' }),
+      signAt(19, 2, { es: 'PUERTA NORTE → RUTA 20 · BOSQUE DE TURINGIA', fr: 'PORTE NORD → ROUTE 20 · FORÊT DE THURINGE' }),
+    ],
+    conn: { down: { map: 'ruta19', dx: 3 }, up: { map: 'ruta20', dx: 0 } },
+    npcs: [
+      talker('nu_guardia', 'guardia_al', 16, 2, 'right', null, { talk: async W => {
+        if (!W.flag('nurembergOpen')) await W.say({ es: 'La puerta norte solo se abre a quien tenga el BLASÓN DE NÚREMBERG.', fr: 'La porte nord ne s\'ouvre que pour qui possède le BLASON DE NUREMBERG.' });
+        else await W.say({ es: 'Sigue el camino del bosque de Turingia. LÜBECK está muy al norte, junto al mar.', fr: 'Suis la route de la forêt de Thuringe. LÜBECK est très au nord, au bord de la mer.' });
+      } }),
+      talker('nu_pintor', 'anciano', 12, 13, 'down', { es: 'Tengo la extraña sensación de que, dentro de cien años, un pintor de esta ciudad dibujará un rinoceronte... ¡sin haber visto ninguno!', fr: 'J\'ai l\'étrange impression que, dans cent ans, un peintre de cette ville dessinera un rhinocéros... sans en avoir jamais vu !' }),
+      talker('nu_burgues', 'aleman', 20, 13, 'down', { es: '¡Gran noticia! Nuestro burgrave, Federico de Hohenzollern, acaba de ser nombrado príncipe elector de Brandeburgo.', fr: 'Grande nouvelle ! Notre burgrave, Frédéric de Hohenzollern, vient d\'être nommé prince-électeur de Brandebourg.' }),
+      talker('nu_panadera', 'alemana', 26, 13, 'down', { es: 'El LEBKUCHEN cura más que un ungüento... ¡y sabe mucho mejor!', fr: 'Le LEBKUCHEN soigne mieux qu\'un onguent... et il a bien meilleur goût !' }),
+      talker('nu_esgrimista', 'aleman', 9, 23, 'down', { es: 'Mi maestro copió en un libro los secretos del gran LIECHTENAUER: la MEDIA ESPADA y los GOLPES MAESTROS.', fr: 'Mon maître a copié dans un livre les secrets du grand LIECHTENAUER : la DEMI-ÉPÉE et les COUPS DE MAÎTRE.' }),
+      talker('nu_dama', 'dama_al', 14, 23, 'down', { es: 'Meister KONRAD usa TEMPLE DE ACERO para subir ataque y defensa. ¡No le dejes prepararse!', fr: 'Meister KONRAD utilise TREMPE D\'ACIER pour monter son attaque et sa défense. Ne le laisse pas se préparer !' }),
+      talker('nu_nino', 'nino', 20, 26, 'down', { es: '¡De mayor seré armero, como Meister Konrad!', fr: 'Quand je serai grand, je serai armurier, comme Meister Konrad !' }, { wander: 2 }),
+    ],
+    triggers: [
+      { x: 17, y: 2, cond: () => !S0().flags.nurembergOpen, run: W => scriptCityGate(W, 'nu_guardia', 'down', { es: '¡Alto! Sin el BLASÓN DE NÚREMBERG no puedes salir hacia el norte.', fr: 'Halte ! Sans le BLASON DE NUREMBERG, tu ne peux pas partir vers le nord.' }) },
+      { x: 18, y: 2, cond: () => !S0().flags.nurembergOpen, run: W => scriptCityGate(W, 'nu_guardia', 'down', { es: '¡Alto! Sin el BLASÓN DE NÚREMBERG no puedes salir hacia el norte.', fr: 'Halte ! Sans le BLASON DE NUREMBERG, tu ne peux pas partir vers le nord.' }) },
+      { x: 17, y: 29, cond: () => !S0().flags.rivalNuremberg, run: W => scriptRivalNuremberg(W) },
+      { x: 18, y: 29, cond: () => !S0().flags.rivalNuremberg, run: W => scriptRivalNuremberg(W) },
+    ],
+  },
+
+  coliseo_nuremberg: {
+    name: { es: 'COLISEO DE NÚREMBERG', fr: 'COLISÉE DE NUREMBERG' }, bg: 'coliseo', theme: 'franconia', edgeOk: true,
+    build: () => asciiMap([
+      'WWWWWWWWWWWWWWW',
+      'WWWWWWWWWWWWWWW',
+      'W#####sss#####W',
+      'W#####sss#####W',
+      'W#############W',
+      'W##X#######X##W',
+      'W#############W',
+      'W#############W',
+      'W#############W',
+      'W#############W',
+      'W##X#######X##W',
+      'W#############W',
+      'W#############W',
+      'W#############W',
+      'WWWWWWW#WWWWWWW',
+    ]),
+    objects: [
+      { type: 'stand', x: 0, y: 0, w: 15, h: 2, o: { stone: STONE.rojo } },
+      { type: 'banner', x: 4, y: 2, h: 2, o: { color: '#f2ca52', mark: '#2a2a30' } },
+      { type: 'banner', x: 10, y: 2, h: 2, o: { color: '#f2ca52', mark: '#2a2a30' } },
+      { type: 'dummy', x: 2, y: 12, text: { es: 'Un muñeco con una armadura vieja. Tiene cien abolladuras.', fr: 'Un mannequin avec une vieille armure. Il a cent bosses.' } },
+      { type: 'dummy', x: 12, y: 12 },
+    ],
+    exits: [exitDown(7, 14, { map: 'nuremberg', x: 6, y: 23, dir: 'down' })],
+    npcs: [
+      trainer({ id: 'cnu_hans', look: 'armero', x: 5, y: 9, dir: 'right', range: 4, foe: 'armero', level: 58, name: 'Hans',
+        intro: { es: 'Yo forjo las armaduras... ¡y también sé usarlas!', fr: 'Je forge les armures... et je sais aussi m\'en servir !' },
+        lose: { es: 'Tendré que forjarme otra.', fr: 'Il va falloir que je m\'en forge une autre.' },
+        after: { es: 'El maestro usa GOLPE MAESTRO cuando está herido. ¡Acaba rápido!', fr: 'Le maître utilise COUP DE MAÎTRE quand il est blessé. Finis vite !' } }),
+      trainer({ id: 'cnu_kunigunde', look: 'dama_al', x: 10, y: 6, dir: 'left', range: 4, foe: 'caballero', title: { es: 'CABALLERA', fr: 'CHEVALIÈRE' }, level: 59, name: 'Kunigunde',
+        intro: { es: 'Llevo veinte kilos de acero encima. ¡Y aún así soy más rápida que tú!', fr: 'Je porte vingt kilos d\'acier. Et je suis quand même plus rapide que toi !' },
+        lose: { es: 'Bueno... quizá no tan rápida.', fr: 'Bon... peut-être pas si rapide.' },
+        after: { es: 'Suerte con el maestro.', fr: 'Bonne chance avec le maître.' } }),
+      { id: 'konrad', look: 'konrad', x: 7, y: 3, dir: 'down', talk: W => scriptKonrad(W) },
+    ],
+  },
+
+  // ── Ruta 20 · Bosque de Turingia (niveles 59-62) ──
+  ruta20: {
+    name: { es: 'RUTA 20 · BOSQUE DE TURINGIA', fr: 'ROUTE 20 · FORÊT DE THURINGE' }, bg: 'bosque', theme: 'bosque',
+    wild: [{ id: 'ciervo', w: 25, lv: [59, 61] }, { id: 'lobo', w: 25, lv: [59, 61] }, { id: 'oso', w: 25, lv: [60, 61] }, { id: 'lince', w: 25, lv: [59, 61] }],
+    build: () => asciiMap([
+      'MMMMMMMMMMMM==MMMMMMMMMMMMMMMM',
+      'MMMMMMMMMMMM==MMMMMMMMMMMMMMMM',
+      'MMMMMMMMMY..==.Y..YY..MMMMMMMM',
+      'MMMMMMMMM.Y.==.Y......MMMMMMMM',
+      'MMMMMMMMM...==..Y....YMMMMMMMM',
+      'MM.Y.YYY..Y.==..............MM',
+      'MMY.Y....Y..==========.....YMM',
+      'MM.......Y..==========......MM',
+      'MM.,,,,YYYY....,,,,.==.....YMM',
+      'MMY,,,,......Y.,,,,.==......MM',
+      'MM.,,,,Y..YY...,,,,.==.....YMM',
+      'MM.Y..Y.............==..YYY.MM',
+      'MM......==============..YY.YMM',
+      'MM.Y..Y.=============...Y..YMM',
+      'MMY.Y.Y.==..............MMMMMM',
+      'MMY.....==..MMMMY.......MMMMMM',
+      'MMY.....==..MMMM.Y...Y..MMMMMM',
+      'MM...Y..==..MMMM..R...YYMMMMMM',
+      'MM......==..Y......Y..YY....MM',
+      'MM.Y.Y..==..................MM',
+      'MM.YY...================..Y.MM',
+      'MMY.....================.Y..MM',
+      'MM..Y.Y...,,,,,,......==.Y..MM',
+      'MMMMM...YY,,,,,,YY....==.Y..MM',
+      'MMMMM.....,,,,,,......==....MM',
+      'MMMMM.YY.Y,,,,,,.YYY..==....MM',
+      'MMMMM.Y...........Y...==..Y.MM',
+      'MM....................==....MM',
+      'MMY...==================..YYMM',
+      'MM.R..=================.....MM',
+      'MM.Y..==................,,,,MM',
+      'MM....==....MMMMM.Y.....,,,,MM',
+      'MM....==....MMMMMY..Y.YY,,,,MM',
+      'MM....==.Y.YMMMMMY......,,,,MM',
+      'MM....==.....Y...Y..Y...,,,,MM',
+      'MM.R..==............YY.Y..R.MM',
+      'MM.Y..=============...Y.....MM',
+      'MM....=============......YY.MM',
+      'MMY,,,,,,........==,,,,.MMMMMM',
+      'MM.,,,,,,.YYY....==,,,,.MMMMMM',
+      'MMY,,,,,,......Y.==,,,,.MMMMMM',
+      'MM.........Y.....==.Y.R.MMMMMM',
+      'MMMMMMMMMMMMMMMMM==MMMMMMMMMMM',
+      'MMMMMMMMMMMMMMMMM==MMMMMMMMMMM',
+    ]),
+    objects: [
+      signAt(19, 41, { es: 'RUTA 20 · BOSQUE DE TURINGIA\nAbetos, colinas y carboneros. Al norte: los BREZALES.', fr: 'ROUTE 20 · FORÊT DE THURINGE\nSapins, collines et charbonniers. Au nord : les LANDES.' }),
+      signAt(3, 27, { es: 'Al oeste, sobre la colina: el castillo de WARTBURG.', fr: 'À l\'ouest, sur la colline : le château de la WARTBURG.' }),
+    ],
+    conn: { down: { map: 'nuremberg', dx: 0 }, up: { map: 'ruta21', dx: 0 } },
+    npcs: [
+      talker('r20_carbonera', 'anciana', 24, 24, 'down', { es: 'Hago carbón para las herrerías de Núremberg. Con tantas armaduras negras, ¡este año no paro!', fr: 'Je fais du charbon pour les forges de Nuremberg. Avec toutes ces armures noires, cette année je n\'arrête pas !' }),
+      trainer({ id: 'r20_bernd', look: 'lenador', x: 10, y: 35, dir: 'down', range: 1, foe: 'lenador', level: 60, name: 'Bernd',
+        intro: { es: '¡Cuidado, que cae! ...Ah, no era un árbol. ¡Era un desafío!', fr: 'Attention, ça tombe ! ...Ah non, ce n\'était pas un arbre. C\'était un défi !' },
+        lose: { es: 'El que ha caído soy yo.', fr: 'C\'est moi qui suis tombé.' },
+        after: { es: 'Este bosque es tan espeso que a mediodía parece de noche.', fr: 'Cette forêt est si épaisse qu\'à midi on se croirait la nuit.' } }),
+      trainer({ id: 'r20_gottfried', look: 'teuton', x: 8, y: 27, dir: 'down', range: 1, foe: 'teuton', level: 61, name: 'Gottfried',
+        intro: { es: 'Soy caballero de la Orden Teutónica. Vuelvo de Prusia. ¡Prepárate!', fr: 'Je suis chevalier de l\'Ordre Teutonique. Je reviens de Prusse. Prépare-toi !' },
+        lose: { es: 'Luchas como diez caballeros.', fr: 'Tu te bats comme dix chevaliers.' },
+        after: { es: 'En LÜBECK hay muchos caballeros como yo. Allí embarcamos hacia el este.', fr: 'À LÜBECK, il y a beaucoup de chevaliers comme moi. C\'est là qu\'on embarque vers l\'est.' } }),
+      trainer({ id: 'r20_karl', look: 'herrero', x: 15, y: 19, dir: 'down', range: 1, foe: 'lenador', title: { es: 'CARBONERO', fr: 'CHARBONNIER' }, level: 60, name: 'Karl',
+        intro: { es: 'Tengo la cara negra de carbón... ¡y los puños duros!', fr: 'J\'ai le visage noir de charbon... et les poings durs !' },
+        lose: { es: 'Ahora tengo la cara negra y morada.', fr: 'Maintenant, j\'ai le visage noir et violet.' },
+        after: { es: 'Los hombres del barón compran todo mi carbón para sus herrerías.', fr: 'Les hommes du baron achètent tout mon charbon pour leurs forges.' } }),
+      trainer({ id: 'r20_cuerva', look: 'cuerva', x: 6, y: 16, dir: 'right', range: 2, foe: 'cuervo', title: { es: 'MERCENARIA', fr: 'MERCENAIRE' }, level: 61,
+        intro: { es: '¡Mira mi armadura negra! ¡Recién salida de Núremberg!', fr: 'Regarde mon armure noire ! Toute neuve, de Nuremberg !' },
+        lose: { es: '¡Me la has rayado!', fr: 'Tu l\'as rayée !' },
+        after: { es: 'LA CORNEJA zarpa pronto de Lübeck...', fr: 'LA CORNEILLE part bientôt de Lübeck...' } }),
+      trainer({ id: 'r20_heinrich', look: 'caballero_al', x: 21, y: 5, dir: 'down', range: 1, foe: 'caballero', level: 62, name: 'Heinrich',
+        intro: { es: 'Soy Heinrich, de Turingia. Ningún viajero pasa sin cruzar espadas conmigo.', fr: 'Je suis Heinrich, de Thuringe. Aucun voyageur ne passe sans croiser le fer avec moi.' },
+        lose: { es: 'Pasa, pasa. Con honor.', fr: 'Passe, passe. Avec honneur.' },
+        after: { es: 'Al norte empiezan los BREZALES DE LUNEBURGO. Todo se vuelve morado.', fr: 'Au nord commencent les LANDES DE LUNEBOURG. Tout devient violet.' } }),
+      trainer({ id: 'r20_fraile', look: 'fraile', x: 14, y: 10, dir: 'down', range: 2, foe: 'fraile', level: 60, name: 'Martín',
+        intro: { es: 'Tengo el presentimiento de que en ese castillo alguien traducirá un libro muy importante... ¡Pero antes, un combate!', fr: 'J\'ai le pressentiment que dans ce château, quelqu\'un traduira un livre très important... Mais d\'abord, un combat !' },
+        lose: { es: 'Vuelvo a mis presentimientos.', fr: 'Je retourne à mes pressentiments.' },
+        after: { es: 'Dentro de cien años... ya verás.', fr: 'Dans cent ans... tu verras.' } }),
+    ],
+    items: [
+      { id: 'r20a', x: 3, y: 9, item: 'triaca', n: 2 },
+      { id: 'r20b', x: 25, y: 32, item: 'elixir', n: 1 },
+      { id: 'r20c', x: 26, y: 8, item: 'unguento', n: 3 },
+    ],
+  },
+
+  // ── Ruta 21 · Brezales de Luneburgo (niveles 61-64) ──
+  ruta21: {
+    name: { es: 'RUTA 21 · BREZALES DE LUNEBURGO', fr: 'ROUTE 21 · LANDES DE LUNEBOURG' }, bg: 'brezal', theme: 'brezal',
+    wild: [{ id: 'vibora', w: 25, lv: [61, 63] }, { id: 'jabali', w: 25, lv: [61, 63] }, { id: 'ciervo', w: 25, lv: [61, 63] }, { id: 'salteador', w: 25, lv: [61, 63] }],
+    build: () => asciiMap([
+      'MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM',
+      'MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM',
+      'MM..C............C........................MM',
+      'MM.,,,,,,...........Y..,,,,,,....C.....Y..MM',
+      'MM.,,,,,,......C.......,,,,,,......C..C...MM',
+      'MM.,,,,,,..............,,,,,,.............MM',
+      'MM.,,,,,,.Y.........C..,,,,,,.............MM',
+      'MM..Y.....................................MM',
+      'MM.R....========================..C.========',
+      'MM......========================.C..========',
+      'MM...C..==.,,,,,,,,,..........==..C.==....MM',
+      'MMC.Y.Y.==.,,,,,,,,,..........==..R.==....MM',
+      'MM......==.,,,,,,,,,......C...==....==...CMM',
+      'MM......==.,,,,,,,,,..........==....==....MM',
+      'MM......==...............R....========....MM',
+      'MM......================......=======.....MM',
+      'MM..Y...================.............C....MM',
+      'MM.,,,................==.........,,,,,,C..MM',
+      'MM.,,,................==.,,,,,,,,,,,,,,...MM',
+      'MM.,,,................==.,,,,,,,,,,,,,,...MM',
+      'MM.............C......==.,,,,,,,,,,,,,,R..MM',
+      'MM........C...........==.,,,,,,,,,,,,FFFFFMM',
+      'MMC.........============.,,,,,,,,,,,,F...FMM',
+      'MM....C.C...===========..,,,,,,,,.C..F...FMM',
+      'MM.,,,,,,,..==.,,,,,,................FFFFFMM',
+      'MM.,,,,,,,..==.,,,,,,...C..............C.CMM',
+      'MM.,,,,,,,Y.==.,,,,,,C.C..................MM',
+      'MM.,,,,,,,..==.,,,,,,.................C...MM',
+      'MMMMMMMMMMMM==MMMMMMMMMMMMMMMMMMMMMMMMMMMMMM',
+      'MMMMMMMMMMMM==MMMMMMMMMMMMMMMMMMMMMMMMMMMMMM',
+    ]),
+    objects: [
+      signAt(14, 27, { es: 'RUTA 21 · BREZALES DE LUNEBURGO\nBrezo, enebros y ovejas. Al este: LÜBECK y el mar.', fr: 'ROUTE 21 · LANDES DE LUNEBOURG\nBruyère, genévriers et moutons. À l\'est : LÜBECK et la mer.' }),
+    ],
+    conn: { down: { map: 'ruta20', dx: 0 }, right: { map: 'lubeck', dy: 5 } },
+    npcs: [
+      talker('r21_pastora', 'pastora', 36, 23, 'down', { es: 'Mis ovejas comen brezo todo el día. Tienen los cuernos retorcidos y la lana gris.', fr: 'Mes moutons mangent de la bruyère toute la journée. Ils ont les cornes tordues et la laine grise.' }),
+      talker('r21_apicultor', 'anciano', 21, 6, 'down', { es: 'La miel de brezo es oscura y fuerte. ¡La mejor de todo el Imperio!', fr: 'Le miel de bruyère est sombre et corsé. Le meilleur de tout l\'Empire !' }),
+      talker('r21_salinero', 'mercader', 33, 10, 'down', { es: 'Llevo SAL de Luneburgo a Lübeck. Desde allí viaja por todos los mares del norte.', fr: 'Je porte du SEL de Lunebourg à Lübeck. De là, il voyage sur toutes les mers du nord.' }),
+      trainer({ id: 'r21_fritz', look: 'pastor', x: 14, y: 21, dir: 'down', range: 1, foe: 'pastor', level: 62, name: 'Fritz',
+        intro: { es: '¡Con mi honda espanto lobos! ¿Y a ti?', fr: 'Avec ma fronde, je fais fuir les loups ! Et toi ?' },
+        lose: { es: 'A ti no hay quien te espante.', fr: 'Toi, rien ne te fait peur.' },
+        after: { es: 'Las VÍBORAS se esconden entre el brezo. ¡Mira dónde pisas!', fr: 'Les VIPÈRES se cachent dans la bruyère. Regarde où tu marches !' } }),
+      trainer({ id: 'r21_otto', look: 'teuton', x: 24, y: 18, dir: 'left', range: 1, foe: 'teuton', level: 63, name: 'Otto',
+        intro: { es: 'Voy a Lübeck a embarcar hacia Prusia. ¡Un último combate en tierra!', fr: 'Je vais à Lübeck pour embarquer vers la Prusse. Un dernier combat sur la terre ferme !' },
+        lose: { es: 'Mejor me voy a Prusia.', fr: 'Je ferais mieux de partir en Prusse.' },
+        after: { es: 'En el puerto de Lübeck hay un barco de velas negras. Nadie sabe de quién es.', fr: 'Au port de Lübeck, il y a un navire aux voiles noires. Personne ne sait à qui il est.' } }),
+      trainer({ id: 'r21_cuervo', look: 'cuervo', x: 6, y: 13, dir: 'right', range: 2, foe: 'cuervo', level: 62,
+        intro: { es: '¡Vigilo el camino de la sal! ¡Nadie llega a Lübeck!', fr: 'Je surveille la route du sel ! Personne n\'arrive à Lübeck !' },
+        lose: { es: 'Bueno... alguien sí llega.', fr: 'Bon... quelqu\'un arrive quand même.' },
+        after: { es: '...', fr: '...' } }),
+      trainer({ id: 'r21_mechthild', look: 'dama_al', x: 20, y: 7, dir: 'down', range: 1, foe: 'caballero', title: { es: 'CABALLERA', fr: 'CHEVALIÈRE' }, level: 63, name: 'Mechthild',
+        intro: { es: 'Protejo a los viajeros de este brezal. ¡Demuéstrame que no eres un bandido!', fr: 'Je protège les voyageurs de cette lande. Prouve-moi que tu n\'es pas un bandit !' },
+        lose: { es: 'Está claro que no lo eres.', fr: 'C\'est clair, tu n\'en es pas un.' },
+        after: { es: 'Buen viaje hasta Lübeck.', fr: 'Bon voyage jusqu\'à Lübeck.' } }),
+      trainer({ id: 'r21_cuerva', look: 'cuerva', x: 38, y: 12, dir: 'left', range: 1, foe: 'cuervo', title: { es: 'MERCENARIA', fr: 'MERCENAIRE' }, level: 64,
+        intro: { es: '¡El barón zarpa mañana! ¡No llegarás a tiempo!', fr: 'Le baron lève l\'ancre demain ! Tu n\'arriveras pas à temps !' },
+        lose: { es: '¡Corre, si quieres alcanzarlo!', fr: 'Cours, si tu veux le rattraper !' },
+        after: { es: 'El barco del barón se llama LA CORNEJA.', fr: 'Le navire du baron s\'appelle LA CORNEILLE.' } }),
+      trainer({ id: 'r21_hanseata', look: 'hanseata', x: 32, y: 13, dir: 'left', range: 1, foe: 'mercader', title: { es: 'MERCADER', fr: 'MARCHAND' }, level: 62, name: 'Lambert',
+        intro: { es: 'Soy mercader de la HANSA. ¡Hasta los mercaderes sabemos defendernos!', fr: 'Je suis marchand de la HANSE. Même les marchands savent se défendre !' },
+        lose: { es: 'Mejor me dedico a vender.', fr: 'Je ferais mieux de vendre.' },
+        after: { es: 'La HANSA une más de cien ciudades: Lübeck, Hamburgo, Brujas, Londres...', fr: 'La HANSE unit plus de cent villes : Lübeck, Hambourg, Bruges, Londres...' } }),
+    ],
+    items: [
+      { id: 'r21a', x: 4, y: 4, item: 'elixir', n: 1 },
+      { id: 'r21b', x: 16, y: 25, item: 'triaca', n: 2 },
+      { id: 'r21c', x: 40, y: 16, item: 'unguento', n: 3 },
+    ],
+  },
+
+  // ── Lübeck: la reina de la Hansa ──
+  lubeck: {
+    name: { es: 'LÜBECK', fr: 'LÜBECK' }, bg: 'hansa', theme: 'hansa', edgeOk: true,
+    build: () => asciiMap([
+      '~~~WWWWWWWWWWWWWWWWWWWWWWWWWWW~~~~~~',
+      '~~~WWWWWWWWWWWWWWWWWWWWWWWWWWW~~~~~~',
+      '~~~W#######################DDD~~~~~~',
+      '~~~W#######################DDD~~~~~~',
+      '~~~W#######################DDD~~~~~~',
+      '~~~W#######################DDD~~~~~~',
+      '~~~W#######################DDD~~~~~~',
+      '~~~W#######################DDD~~~~~~',
+      '~~~W#######################DDD~~~~~~',
+      '~~~W#######################DDD~~~~~~',
+      '~~~W#######################DDD~~~~~~',
+      '~~~W#######################DDD~~~~~~',
+      '~~~W#######################DDD~~~~~~',
+      'BBB########################DDD~~~~~~',
+      'BBB########################DDD~~~~~~',
+      '~~~W#######################DDD~~~~~~',
+      '~~~W#######################DDD~~~~~~',
+      '~~~W#######################DDD~~~~~~',
+      '~~~W#######################DDD~~~~~~',
+      '~~~W#######################DDD~~~~~~',
+      '~~~W#######################DDD~~~~~~',
+      '~~~W#######################DDDDDD~~~',
+      '~~~W#######################DDDDDD~~~',
+      '~~~W#######################DDD~~~~~~',
+      '~~~W#######################DDD~~~~~~',
+      '~~~W#######################DDD~~~~~~',
+      '~~~W#######################DDD~~~~~~',
+      '~~~W#######################DDD~~~~~~',
+      '~~~WWWWWWWWWWWWWWWWWWWWWWWWWWW~~~~~~',
+      '~~~WWWWWWWWWWWWWWWWWWWWWWWWWWW~~~~~~',
+    ]),
+    objects: [
+      innHouse(5, 3, { wall: BRICK, brick: true, roof: ['#5a6a78', '#465664', '#33424e'] }),
+      { type: 'tower', x: 12, y: 2, w: 2, h: 6, o: { stone: STONE.rojo, spire: 36, roof: ['#7aa88a', '#5a8a6a', '#3a6a4a'] }, text: { es: 'La iglesia de SANTA MARÍA, toda de ladrillo. ¡Sus torres miden más de cien metros!', fr: 'L\'église SAINTE-MARIE, toute en brique. Ses tours mesurent plus de cent mètres !' } },
+      { type: 'tower', x: 16, y: 2, w: 2, h: 6, o: { stone: STONE.rojo, spire: 36, roof: ['#7aa88a', '#5a8a6a', '#3a6a4a'] }, text: { es: 'Las torres gemelas de Santa María. Los marineros las ven desde el mar.', fr: 'Les tours jumelles de Sainte-Marie. Les marins les voient depuis la mer.' } },
+      plainHouse(20, 3, { es: 'AYUNTAMIENTO DE LÜBECK. Aquí se reúnen las ciudades de la HANSA.', fr: 'HÔTEL DE VILLE DE LÜBECK. Les villes de la HANSE s\'y réunissent.' }, { wall: BRICK, brick: true, shield: true, roof: ['#5a6a78', '#465664', '#33424e'] }),
+      plainHouse(5, 9, null, { wall: TIMBER_WALL, timber: true, frame: '#3a70c0' }),
+      plainHouse(12, 10, { es: 'ALMACÉN DE SAL. Huele a mar.', fr: 'ENTREPÔT DE SEL. Ça sent la mer.' }, { wall: BRICK, brick: true }),
+      plainHouse(19, 10, null, { wall: BRICK, brick: true, frame: '#3d8c58', roof: ['#5a6a78', '#465664', '#33424e'] }),
+      shopHouse(5, 17, ['hogaza', 'unguento', 'triaca', 'lebkuchen', 'elixir'], { es: 'Arenque, pan y remedios para la travesía. ¡Todo lo que un marinero necesita!', fr: 'Hareng, pain et remèdes pour la traversée. Tout ce qu\'il faut à un marin !' }, { wall: BRICK, brick: true }),
+      armoryHouse(5, 22, ['espada_larga', 'arnes_nuremberg'], { es: 'Acero de Núremberg, traído por el camino de la sal.', fr: 'Acier de Nuremberg, apporté par la route du sel.' }, { wall: BRICK, brick: true }),
+      plainHouse(12, 22, null, { wall: BRICK, brick: true, frame: '#a0402e' }),
+      plainHouse(19, 22, null, { wall: TIMBER_WALL, timber: true, frame: '#3d8c58' }),
+      signAt(6, 15, { es: 'LÜBECK, reina de la HANSA\nPuerto del mar Báltico. Barcos a todo el norte.', fr: 'LÜBECK, reine de la HANSE\nPort de la mer Baltique. Navires vers tout le nord.' }),
+      { type: 'barrel', x: 29, y: 9 },
+      { type: 'barrel', x: 27, y: 15 },
+      { type: 'barrel', x: 29, y: 27 },
+      { type: 'ship', x: 30, y: 4, w: 4, h: 2, o: { color: '#f4ecd8', mark: '#c23a3a', flag: '#c23a3a' }, text: { es: 'La SANTA GERTRUDIS, una coca de la Hansa con rumbo a LONDRES.', fr: 'La SAINTE-GERTRUDE, une cogue de la Hanse en route pour LONDRES.' } },
+      { type: 'ship', x: 33, y: 20, w: 3, h: 2, o: { color: '#3a3440', mark: '#c23a3a', flag: '#1a161e' } },
+      { type: 'plank', x: 32, y: 22, side: 'right', door: 0, enter: { map: 'kogge', x: 2, y: 7, dir: 'right' },
+        locked: () => !(S0().flags.tr_lu_g1 && S0().flags.tr_lu_g2), lockedText: { es: 'Dos mercenarios del Cuervo vigilan la pasarela de LA CORNEJA.', fr: 'Deux mercenaires du Corbeau gardent la passerelle de LA CORNEILLE.' } },
+    ],
+    conn: { left: { map: 'ruta21', dy: -5 } },
+    npcs: [
+      { id: 'lu_burgo', look: 'burgomaestre', x: 24, y: 8, dir: 'down', talk: W => scriptBurgomaestre(W) },
+      { id: 'lu_capitan', look: 'hanseata', x: 29, y: 6, dir: 'right', talk: W => scriptCapitanLondres(W) },
+      talker('lu_hanseata', 'hanseata', 14, 15, 'down', { es: 'La HANSA une más de cien ciudades. Nuestras cocas llevan sal, arenque, paño y ámbar.', fr: 'La HANSE unit plus de cent villes. Nos cogues transportent du sel, du hareng, du drap et de l\'ambre.' }),
+      talker('lu_pescadera', 'hanseata_f', 20, 15, 'down', { es: '¡Arenque! ¡Arenque fresco! ¡Arenque salado! ¡Arenque ahumado!', fr: 'Hareng ! Hareng frais ! Hareng salé ! Hareng fumé !' }),
+      talker('lu_nina', 'nina', 10, 19, 'down', { es: 'He visto hombres de negro subir cajas muy pesadas a LA CORNEJA, el barco de velas negras.', fr: 'J\'ai vu des hommes en noir monter des caisses très lourdes sur LA CORNEILLE, le navire aux voiles noires.' }, { wander: 2 }),
+      talker('lu_teuton', 'teuton', 24, 26, 'left', { es: 'Espero un barco hacia Prusia. Mientras tanto, rezo en Santa María.', fr: 'J\'attends un navire pour la Prusse. En attendant, je prie à Sainte-Marie.' }),
+      trainer({ id: 'lu_g1', look: 'cuervo', x: 28, y: 18, dir: 'down', range: 3, foe: 'cuervo', level: 64,
+        intro: { es: '¡Nadie sube a LA CORNEJA sin permiso del barón!', fr: 'Personne ne monte sur LA CORNEILLE sans la permission du baron !' },
+        lose: { es: '¡Mi compañera te parará!', fr: 'Ma camarade va t\'arrêter !' }, after: { es: '...', fr: '...' } }),
+      trainer({ id: 'lu_g2', look: 'cuerva', x: 28, y: 25, dir: 'up', range: 3, foe: 'cuervo', title: { es: 'MERCENARIA', fr: 'MERCENAIRE' }, level: 65,
+        intro: { es: 'El barón zarpa al amanecer. ¡No lo estropearás!', fr: 'Le baron part à l\'aube. Tu ne gâcheras pas tout !' },
+        lose: { es: 'La pasarela... está libre...', fr: 'La passerelle... est libre...' }, after: { es: '...', fr: '...' } }),
+    ],
+    triggers: [
+      { x: 4, y: 13, cond: () => !S0().flags.rivalLubeck, run: W => scriptRivalLubeck(W) },
+      { x: 4, y: 14, cond: () => !S0().flags.rivalLubeck, run: W => scriptRivalLubeck(W) },
+    ],
+  },
+
+  // ── LA CORNEJA: la coca del Cuervo ──
+  kogge: {
+    name: { es: 'LA CORNEJA', fr: 'LA CORNEILLE' }, bg: 'barco', theme: 'madera', edgeOk: true,
+    build: () => asciiMap([
+      '~~~~~~~~~~~~~~~~~~~~~~~~',
+      '~~~~~~~~~~~~~~~~~~~~~~~~',
+      '~~KKKKKKKKKKKKKKKKKKKK~~',
+      '~~KDDXXDDDDDDDDDDDDXDK~~',
+      '~~KDDDDDDDDDDDDDDDDDDK~~',
+      '~~KDDDDDDDDDDDDDDDDDDK~~',
+      'DDDDDDDDDDDDDDDDDDDDDK~~',
+      'DDDDDDDDDDDDDDDDDDDDDK~~',
+      '~~KDDDDDDDDDDDDDDXXDDK~~',
+      '~~KKKKKKKKKKKKKKKKKKKK~~',
+      '~~~~~~~~~~~~~~~~~~~~~~~~',
+      '~~~~~~~~~~~~~~~~~~~~~~~~',
+    ]),
+    objects: [
+      { type: 'banner', x: 9, y: 3, h: 2, o: { color: '#3a3440', mark: '#c23a3a' } },
+      { type: 'banner', x: 14, y: 3, h: 2, o: { color: '#3a3440', mark: '#c23a3a' } },
+      { type: 'barrel', x: 4, y: 8 },
+      { type: 'barrel', x: 20, y: 6 },
+    ],
+    exits: [{ x: 0, y: 6, dir: 'left', to: { map: 'lubeck', x: 31, y: 22, dir: 'left' } }, { x: 0, y: 7, dir: 'left', to: { map: 'lubeck', x: 31, y: 22, dir: 'left' } }],
+    npcs: [
+      trainer({ id: 'ko_c1', look: 'cuerva', x: 7, y: 4, dir: 'down', range: 3, foe: 'cuervo', title: { es: 'MERCENARIA', fr: 'MERCENAIRE' }, level: 64,
+        intro: { es: '¡Abordaje! ¡A las armas!', fr: 'Abordage ! Aux armes !' }, lose: { es: '¡Al agua!', fr: 'À l\'eau !' }, after: { es: '...', fr: '...' } }),
+      trainer({ id: 'ko_c2', look: 'cuervo', x: 11, y: 8, dir: 'up', range: 3, foe: 'cuervo', level: 65,
+        intro: { es: '¡Las armaduras negras son del barón! ¡Fuera de aquí!', fr: 'Les armures noires sont au baron ! Hors d\'ici !' }, lose: { es: 'Corvino... ¡te toca!', fr: 'Corvino... à toi !' }, after: { es: '...', fr: '...' } }),
+      { id: 'corvino2', look: 'corvino', x: 16, y: 6, dir: 'left', cond: () => !S0().flags.corvino2Done, talk: W => scriptCorvinoLubeck(W) },
+      { id: 'baron', look: 'baron', x: 19, y: 6, dir: 'left', cond: () => !S0().flags.baronDone, talk: W => (S0().flags.corvino2Done ? scriptBaron(W) : scriptCorvinoLubeck(W)) },
+    ],
+  },
+});
+
+// ─── Guiones del capítulo II ──────────────────────────────────────────────
+async function scriptBarqueroVenecia(W) {
+  if (!W.flag('finCapitulo1')) {
+    await W.say({ es: 'BARQUERO: Llevo viajeros a tierra firme, al pie de los DOLOMITAS. Pero antes el DUX quiere hablar contigo. Su palacio está al este.', fr: 'PASSEUR : J\'emmène les voyageurs sur la terre ferme, au pied des DOLOMITES. Mais d\'abord, le DOGE veut te parler. Son palais est à l\'est.' });
+    return;
+  }
+  const r = await W.ask({ es: 'BARQUERO: ¿Cruzamos la laguna? Desde tierra firme sale el camino de los DOLOMITAS hacia ALEMANIA.', fr: 'PASSEUR : On traverse la lagune ? De la terre ferme part la route des DOLOMITES vers l\'ALLEMAGNE.' }, [t('yes'), t('no')]);
+  if (r === 0) await W.sail(DOLOMITAS_ARRIVAL, { es: 'Rumbo a TIERRA FIRME', fr: 'Cap sur la TERRE FERME' });
+}
+async function scriptBarqueroDolomitas(W) {
+  const r = await W.ask({ es: 'BARQUERO: ¿Volvemos a VENECIA?', fr: 'PASSEUR : On retourne à VENISE ?' }, [t('yes'), t('no')]);
+  if (r === 0) await W.sail({ map: 'venecia', x: 15, y: 2, dir: 'down' }, { es: 'Rumbo a VENECIA', fr: 'Cap sur VENISE' });
+}
+
+// ─── Misión especial: la batalla silenciosa de Ibrahim, el sabio de Fez ──
+async function scriptSabioFez(W) {
+  if (W.flag('ajedrezGanado')) {
+    await W.say({ es: 'IBRAHIM: La calma también es una armadura. Que la TORRE INEXPUGNABLE te proteja, {name}.', fr: 'IBRAHIM : Le calme aussi est une armure. Que la TOUR IMPRENABLE te protège, {name}.' });
+    return;
+  }
+  if (W.flag('ajedrezCerrado') || W.flag('ajedrezIntentado')) {
+    W.flag('ajedrezCerrado', true);
+    await W.say({ es: 'IBRAHIM: Una batalla silenciosa solo se juega una vez. Pero siempre puedes sentarte a mirar las montañas conmigo.', fr: 'IBRAHIM : Une bataille silencieuse ne se joue qu\'une fois. Mais tu peux toujours t\'asseoir avec moi pour regarder les montagnes.' });
+    return;
+  }
+  if (!W.flag('ajedrezVisto')) {
+    W.flag('ajedrezVisto', true);
+    await W.say({ es: 'IBRAHIM: As-salamu alaykum, viajer{o}. Soy Ibrahim al-Fasi, librero de FEZ. Llevo papel y manuscritos a los mercados de Alemania.', fr: 'IBRAHIM : As-salamu alaykum, mon ami{e}. Je suis Ibrahim al-Fasi, libraire de FÈS. J\'apporte du papier et des manuscrits aux marchés d\'Allemagne.' });
+    await W.say({ es: 'IBRAHIM: Tu camino está lleno de gritos y espadas. ¿Me concedes un momento de calma... y una batalla silenciosa?', fr: 'IBRAHIM : Ton chemin est plein de cris et d\'épées. M\'accordes-tu un moment de calme... et une bataille silencieuse ?' });
+  } else {
+    await W.say({ es: 'IBRAHIM: Has vuelto. ¿Te apetece ahora esa batalla silenciosa?', fr: 'IBRAHIM : Te revoilà. As-tu envie, maintenant, de cette bataille silencieuse ?' });
+  }
+  const r = await W.ask({ es: '¿Aceptas la batalla silenciosa de Ibrahim?', fr: 'Acceptes-tu la bataille silencieuse d\'Ibrahim ?' }, [t('yes'), t('no')]);
+  if (r !== 0) { await W.say({ es: 'IBRAHIM: Sin prisa. La paciencia es la reina de las virtudes. Aquí estaré.', fr: 'IBRAHIM : Rien ne presse. La patience est la reine des vertus. Je serai là.' }); return; }
+  await W.say({ es: 'IBRAHIM: Es un problema de AJEDREZ. Juegas con BLANCAS y tienes que dar JAQUE MATE en 4 JUGADAS.', fr: 'IBRAHIM : C\'est un problème d\'ÉCHECS. Tu joues les BLANCS et tu dois faire ÉCHEC ET MAT en 4 COUPS.' });
+  await W.say({ es: 'IBRAHIM: Tendrás 20 SEGUNDOS. El reloj de arena solo corre cuando te toca mover a ti.', fr: 'IBRAHIM : Tu auras 20 SECONDES. Le sablier ne s\'écoule que lorsque c\'est à toi de jouer.' });
+  await W.say({ es: 'IBRAHIM: Toca una pieza y después la casilla adonde va. También puedes usar la cruceta y el botón A.', fr: 'IBRAHIM : Touche une pièce, puis la case où elle va. Tu peux aussi utiliser la croix et le bouton A.' });
+  await W.say({ es: 'IBRAHIM: Un detalle: hoy, en 1415, nuestra alferza solo da un pasito en diagonal. Pero sueño con una DAMA que cruzará el tablero entero... Jugaremos así, con las reglas del futuro.', fr: 'IBRAHIM : Un détail : aujourd\'hui, en 1415, notre vizir ne fait qu\'un petit pas en diagonale. Mais je rêve d\'une DAME qui traversera tout l\'échiquier... Nous jouerons ainsi, avec les règles du futur.' });
+  await W.say({ es: 'IBRAHIM: Y escucha bien: SOLO TENDRÁS UNA OPORTUNIDAD. Si fallas, el tablero se guardará para siempre.', fr: 'IBRAHIM : Et écoute bien : TU N\'AURAS QU\'UNE SEULE CHANCE. Si tu échoues, l\'échiquier sera rangé pour toujours.' });
+  const go = await W.ask({ es: '¿Empezamos?', fr: 'On commence ?' }, [{ es: '¡EMPEZAMOS!', fr: 'ON COMMENCE !' }, { es: 'TODAVÍA NO', fr: 'PAS ENCORE' }].map(tr));
+  if (go !== 0) { await W.say({ es: 'IBRAHIM: Tómate tu tiempo. El tablero te esperará.', fr: 'IBRAHIM : Prends ton temps. L\'échiquier t\'attendra.' }); return; }
+  W.flag('ajedrezIntentado', true);
+  Game.save();
+  const res = await playChessPuzzle(W);
+  if (res === 'win') {
+    W.flag('ajedrezGanado', true);
+    await W.say({ es: 'IBRAHIM: ¡Jaque mate! El caballo ha ahogado al rey dentro de su propio castillo.', fr: 'IBRAHIM : Échec et mat ! Le cavalier a étouffé le roi dans son propre château.' });
+    await W.say({ es: 'IBRAHIM: Dicen que dentro de ochenta años un castellano llamado LUCENA escribirá este mismo mate en un libro... ¡y tú ya lo conoces!', fr: 'IBRAHIM : On dit que dans quatre-vingts ans, un Castillan nommé LUCENA écrira ce même mat dans un livre... et toi, tu le connais déjà !' });
+    W.heal();
+    Sfx.play('heal');
+    await W.say({ es: '¡Los PV de {name} se recuperan por completo!', fr: 'Les PV de {name} sont entièrement restaurés !' }, { color: 'blue' });
+    await W.say({ es: 'IBRAHIM: Toma la ARMADURA DE LA TORRE INEXPUGNABLE. La forjaron en Fez para un visir que jamás perdió una partida.', fr: 'IBRAHIM : Prends l\'ARMURE DE LA TOUR IMPRENABLE. On l\'a forgée à Fès pour un vizir qui n\'a jamais perdu une partie.' });
+    W.giveEquip('torre', true);
+    Sfx.play('item');
+    await W.say({ es: '¡{name} se pone la ARMADURA DE LA TORRE INEXPUGNABLE! DEFENSA +40', fr: '{name} revêt l\'ARMURE DE LA TOUR IMPRENABLE ! DÉFENSE +40' }, { color: 'blue' });
+    Game.save();
+    return;
+  }
+  if (res === 'time') await W.say({ es: 'IBRAHIM: El reloj de arena se ha vaciado...', fr: 'IBRAHIM : Le sablier s\'est vidé...' });
+  else await W.say({ es: 'IBRAHIM: Ah... Con esa jugada, mi rey encuentra una salida.', fr: 'IBRAHIM : Ah... Avec ce coup, mon roi trouve une issue.' });
+  await W.say({ es: 'IBRAHIM: No te apenes: perder con calma también enseña. Pero una batalla silenciosa solo se juega una vez.', fr: 'IBRAHIM : Ne sois pas triste : perdre avec calme, ça aussi, ça enseigne. Mais une bataille silencieuse ne se joue qu\'une fois.' });
+  await closeSpecialQuest(W, 'ajedrezCerrado');
+}
+
+async function scriptRivalNuremberg(W) {
+  W.flag('rivalNuremberg', true);
+  const p = W.player;
+  const r = W.spawn({ id: 'rival_nu', look: rivalLook(), x: p.x, y: 25, dir: 'down' });
+  W.bubble(r); Sfx.play('alert'); await W.wait(700); W.bubble(null);
+  await W.say({ es: '{rival}: ¡{name}! ¡Por fin! He cruzado los Alpes siguiendo a Corvino.', fr: '{rival} : {name} ! Enfin ! J\'ai traversé les Alpes en suivant Corvino.' });
+  await W.walkNextTo(r, p);
+  W.faceEachOther(r, p);
+  await W.say({ es: '{rival}: Pero antes... ¡quiero ver cuánto has crecido desde Venecia! ¡En guardia!', fr: '{rival} : Mais d\'abord... je veux voir combien tu as grandi depuis Venise ! En garde !' });
+  const res = await W.battle({ foe: 'rival', level: 58, name: rivalName().toUpperCase(), look: rivalLook(), trainer: rivalName(), canLose: true, canFlee: false,
+    defeatText: { es: '¡Otra vez! Eres imparable, {name}.', fr: 'Encore ! Tu es inarrêtable, {name}.' }, winText: { es: '¡Esta vez gano yo!', fr: 'Cette fois, c\'est moi qui gagne !' } });
+  if (res !== 'win') healPlayer();
+  await W.say({ es: '{rival}: Corvino pasó por aquí con carros llenos de ARMADURAS NEGRAS. Trabaja para un tal BARÓN DE RABENSTEIN.', fr: '{rival} : Corvino est passé par ici avec des chariots pleins d\'ARMURES NOIRES. Il travaille pour un certain BARON DE RABENSTEIN.' });
+  await W.say({ es: '{rival}: Iban hacia el norte, a LÜBECK, el gran puerto de la HANSA. Pero la puerta norte solo se abre a quien venza a Meister KONRAD.', fr: '{rival} : Ils allaient vers le nord, à LÜBECK, le grand port de la HANSE. Mais la porte nord ne s\'ouvre qu\'à qui bat Meister KONRAD.' });
+  await W.say({ es: '{rival}: Yo me adelanto a Lübeck. ¡Nos vemos en el puerto!', fr: '{rival} : Je pars devant à Lübeck. On se retrouve au port !' });
+  await W.walk(r, 'up', 2);
+  await W.fadeNpc(r);
+  Game.save();
+}
+
+async function scriptKonrad(W) {
+  if (W.flag('blason_nuremberg')) {
+    await W.say({ es: 'KONRAD: La puerta norte está abierta. Busca a ese barón en LÜBECK... y no bajes nunca la guardia.', fr: 'KONRAD : La porte nord est ouverte. Cherche ce baron à LÜBECK... et ne baisse jamais ta garde.' });
+    return;
+  }
+  await W.say({ es: 'KONRAD: Willkommen! Soy Konrad, maestro armero de Núremberg. En mi coliseo se lucha con ARMADURA y ESPADA LARGA.', fr: 'KONRAD : Willkommen ! Je suis Konrad, maître armurier de Nuremberg. Dans mon colisée, on se bat en ARMURE et à l\'ÉPÉE LONGUE.' });
+  await W.say({ es: 'KONRAD: Mi escuela sigue al gran maestro LIECHTENAUER: la MEDIA ESPADA y el GOLPE MAESTRO. ¡Veamos si tu acero aguanta el mío!', fr: 'KONRAD : Mon école suit le grand maître LIECHTENAUER : la DEMI-ÉPÉE et le COUP DE MAÎTRE. Voyons si ton acier résiste au mien !' });
+  const res = await W.battle({ foe: 'konrad', level: 60, look: 'konrad', trainer: { es: 'MEISTER KONRAD', fr: 'MEISTER KONRAD' }, canLose: false, canFlee: false,
+    defeatText: { es: 'Wunderbar! Hacía años que nadie atravesaba mi guardia.', fr: 'Wunderbar ! Ça faisait des années que personne ne perçait ma garde.' }, winText: { es: 'Tu armadura tiene grietas. Vuelve cuando la hayas templado.', fr: 'Ton armure a des fissures. Reviens quand tu l\'auras trempée.' } });
+  if (res !== 'win') return;
+  await W.say({ es: 'KONRAD: Has luchado como un maestro. El blasón del águila negra es tuyo.', fr: 'KONRAD : Tu t\'es battu{e} comme un maître. Le blason à l\'aigle noir est à toi.' });
+  await W.blason('nuremberg', CRESTS[4][3]);
+  await W.receive('elixir', 2);
+  W.flag('nurembergOpen', true);
+  await W.say({ es: 'KONRAD: Te contaré algo. Hace un mes un noble me encargó cincuenta ARMADURAS NEGRAS. Se hacía llamar BARÓN DE RABENSTEIN.', fr: 'KONRAD : Je vais te dire une chose. Il y a un mois, un noble m\'a commandé cinquante ARMURES NOIRES. Il se faisait appeler BARON DE RABENSTEIN.' });
+  await W.say({ es: 'KONRAD: Rabenstein... «la piedra del cuervo». Pagó con oro de Venecia y se lo llevó todo a LÜBECK. ¡Ve tras él!', fr: 'KONRAD : Rabenstein... « la pierre du corbeau ». Il a payé avec de l\'or de Venise et il a tout emporté à LÜBECK. Va le rattraper !' });
+  Game.save();
+}
+
+async function scriptRivalLubeck(W) {
+  W.flag('rivalLubeck', true);
+  const p = W.player;
+  const r = W.spawn({ id: 'rival_lu', look: rivalLook(), x: 8, y: p.y, dir: 'left' });
+  W.bubble(r); Sfx.play('alert'); await W.wait(700); W.bubble(null);
+  await W.walkNextTo(r, p);
+  W.faceEachOther(r, p);
+  await W.say({ es: '{rival}: ¡{name}! ¿Ves ese barco de velas negras en el puerto? Es LA CORNEJA, el barco del Cuervo.', fr: '{rival} : {name} ! Tu vois ce navire aux voiles noires dans le port ? C\'est LA CORNEILLE, le navire du Corbeau.' });
+  await W.say({ es: '{rival}: Corvino y el BARÓN están a bordo. Dos mercenarios vigilan la pasarela. Descansa en la POSADA antes de subir.', fr: '{rival} : Corvino et le BARON sont à bord. Deux mercenaires gardent la passerelle. Repose-toi à l\'AUBERGE avant de monter.' });
+  await W.say({ es: '{rival}: Yo voy a avisar al BURGOMAESTRE. ¡Suerte!', fr: '{rival} : Je vais prévenir le BOURGMESTRE. Bonne chance !' });
+  await W.walk(r, 'right', 2);
+  await W.fadeNpc(r);
+  Game.save();
+}
+
+async function scriptCorvinoLubeck(W) {
+  const c = W.npc('corvino2');
+  if (!c || W.flag('corvino2Done')) return;
+  W.faceEachOther(c, W.player);
+  await W.say({ es: 'CORVINO: ¡Otra vez tú! ¿Es que no vas a dejarme en paz nunca?', fr: 'CORVINO : Encore toi ! Tu ne vas jamais me laisser tranquille ?' });
+  await W.say({ es: 'CORVINO: Esta vez llevo una ARMADURA NEGRA de Núremberg. ¡Veremos quién ríe el último!', fr: 'CORVINO : Cette fois, je porte une ARMURE NOIRE de Nuremberg. On verra bien qui rira le dernier !' });
+  const res = await W.battle({ foe: 'corvino', level: 64, look: 'corvino', trainer: { es: 'CORVINO, CAPITÁN DEL CUERVO', fr: 'CORVINO, CAPITAINE DU CORBEAU' }, canLose: false, canFlee: false, bg: 'barco',
+    defeatText: { es: '¡Otra vez no! ¡Mi armadura nueva!', fr: 'Pas encore ! Mon armure toute neuve !' }, winText: { es: '¡Ja! ¡La venganza es dulce!', fr: 'Ha ! La vengeance est douce !' } });
+  if (res !== 'win') return;
+  await W.say({ es: 'CORVINO: ¡No puede ser! ¡Barón! ¡BARÓN, AYÚDAME!', fr: 'CORVINO : Ce n\'est pas possible ! Baron ! BARON, AIDE-MOI !' });
+  Sfx.play('door');
+  await W.fadeNpc(c);
+  W.flag('corvino2Done', true);
+  await W.say({ es: 'Corvino se esconde en la bodega del barco...', fr: 'Corvino se cache dans la cale du navire...' }, { color: 'blue' });
+  const b = W.npc('baron');
+  if (b) b.dir = W.dirTo(b, W.player);
+  await W.say({ es: 'BARÓN: ¡Corvino, inútil! ...Así que tú eres {el} {esc} de Villaolivo. Ve a curarte si quieres: te espero en la proa.', fr: 'BARON : Corvino, incapable ! ...C\'est donc toi, l\'{esc} de Villaolivo. Va te soigner si tu veux : je t\'attends à la proue.' });
+  Game.save();
+}
+
+async function scriptBaron(W) {
+  const b = W.npc('baron');
+  if (!b || W.flag('baronDone')) return;
+  W.faceEachOther(b, W.player);
+  await W.say({ es: 'BARÓN: Así que tú eres {el} {esc} que estropeó mis planes en Venecia. Soy el BARÓN DE RABENSTEIN: el verdadero jefe del CUERVO.', fr: 'BARON : C\'est donc toi, l\'{esc} qui a ruiné mes plans à Venise. Je suis le BARON DE RABENSTEIN : le vrai chef du CORBEAU.' });
+  await W.say({ es: 'BARÓN: Con la tregua, los señores de la guerra como yo nos morimos de hambre. ¡Sin los Seis Sellos, la guerra volverá... y con ella, mi oro!', fr: 'BARON : Avec la trêve, les seigneurs de guerre comme moi meurent de faim. Sans les Six Sceaux, la guerre reviendra... et avec elle, mon or !' });
+  const res = await W.battle({ foe: 'baron', level: 66, look: 'baron', trainer: { es: 'BARÓN DE RABENSTEIN', fr: 'BARON DE RABENSTEIN' }, canLose: false, canFlee: false, bg: 'barco',
+    defeatText: { es: 'Impresionante... Me has vencido... por ahora.', fr: 'Impressionnant... Tu m\'as vaincu... pour l\'instant.' }, winText: { es: 'Los cuervos siempre vuelven.', fr: 'Les corbeaux reviennent toujours.' } });
+  if (res !== 'win') return;
+  await W.say({ es: 'BARÓN: Quédate con los sellos de ITALIA y del IMPERIO. ¡Los de INGLATERRA y FRANCIA ya navegan hacia LONDRES!', fr: 'BARON : Garde les sceaux d\'ITALIE et de l\'EMPIRE. Ceux d\'ANGLETERRE et de FRANCE voguent déjà vers LONDRES !' });
+  await W.say({ es: 'BARÓN: Nos veremos al otro lado del mar. Lebewohl!', fr: 'BARON : Nous nous reverrons de l\'autre côté de la mer. Lebewohl !' });
+  Sfx.play('door');
+  await W.fadeNpc(b);
+  W.flag('baronDone', true);
+  await W.say({ es: 'El Barón salta a una barca y rema hacia un barco que zarpa hacia el oeste...', fr: 'Le baron saute dans une barque et rame vers un navire qui part vers l\'ouest...' }, { color: 'blue' });
+  Sfx.play('win');
+  W.flag('sellosLubeck', true);
+  await W.say({ es: '¡{name} recupera el SELLO DE ITALIA y el SELLO DEL IMPERIO!', fr: '{name} récupère le SCEAU D\'ITALIE et le SCEAU DE L\'EMPIRE !' }, { color: 'blue' });
+  const p = W.player;
+  const r = W.spawn({ id: 'rival_ko', look: rivalLook(), x: 2, y: 7, dir: 'right' });
+  await W.walkNextTo(r, p);
+  W.faceEachOther(r, p);
+  await W.say({ es: '{rival}: ¡{name}! ¡Lo has conseguido! Ya tenemos cuatro de los seis sellos.', fr: '{rival} : {name} ! Tu as réussi ! Nous avons déjà quatre des six sceaux.' });
+  await W.say({ es: '{rival}: El BURGOMAESTRE nos espera delante del AYUNTAMIENTO. ¡Vamos!', fr: '{rival} : Le BOURGMESTRE nous attend devant l\'HÔTEL DE VILLE. Allons-y !' });
+  await W.fadeNpc(r);
+  Game.save();
+}
+
+async function scriptBurgomaestre(W) {
+  if (!W.flag('baronDone')) {
+    await W.say({ es: 'BURGOMAESTRE: Bienvenid{o} a Lübeck, reina de la HANSA. Ese barco de velas negras me da muy mala espina...', fr: 'BOURGMESTRE : Bienvenue à Lübeck, reine de la HANSE. Ce navire aux voiles noires ne me dit rien qui vaille...' });
+    return;
+  }
+  if (W.flag('finCapitulo2')) {
+    await W.say({ es: 'BURGOMAESTRE: Lübeck te debe mucho, {name}. Cuando los vientos lo permitan, un barco de la Hansa te llevará a LONDRES.', fr: 'BOURGMESTRE : Lübeck te doit beaucoup, {name}. Quand les vents le permettront, un navire de la Hanse t\'emmènera à LONDRES.' });
+    return;
+  }
+  W.flag('finCapitulo2', true);
+  await W.say({ es: 'BURGOMAESTRE: ¡Has expulsado al Cuervo de nuestro puerto y has recuperado dos sellos! La HANSA nunca olvida a sus amigos.', fr: 'BOURGMESTRE : Tu as chassé le Corbeau de notre port et récupéré deux sceaux ! La HANSE n\'oublie jamais ses amis.' });
+  await W.gold(5000);
+  await W.receive('elixir', 3);
+  await W.say({ es: 'BURGOMAESTRE: Enviaré los sellos de Italia y del Imperio a sus señores. El Barón ha huido a INGLATERRA con los dos últimos...', fr: 'BOURGMESTRE : J\'enverrai les sceaux d\'Italie et de l\'Empire à leurs seigneurs. Le baron s\'est enfui en ANGLETERRE avec les deux derniers...' });
+  await W.say({ es: 'BURGOMAESTRE: Nuestros barcos comercian con LONDRES. Cuando estés list{o}, uno de ellos te llevará.', fr: 'BOURGMESTRE : Nos navires commercent avec LONDRES. Quand tu seras prêt{e}, l\'un d\'eux t\'emmènera.' });
+  Sfx.play('win');
+  await W.say({ es: '— FIN DEL CAPÍTULO II —', fr: '— FIN DU CHAPITRE II —' }, { color: 'blue' });
+  await W.say({ es: '¡Gracias por jugar al prototipo de LAS SEIS CORONAS! El viaje a INGLATERRA llegará en la próxima versión. Puedes seguir entrenando y explorando.', fr: 'Merci d\'avoir joué au prototype des SIX COURONNES ! Le voyage en ANGLETERRE arrivera dans la prochaine version. Tu peux continuer à t\'entraîner et à explorer.' });
+  Game.save();
+}
+
+async function scriptCapitanLondres(W) {
+  if (!W.flag('finCapitulo2')) {
+    await W.say({ es: 'CAPITÁN: La SANTA GERTRUDIS zarpa hacia LONDRES en cuanto cambie el viento. Llevamos paño, ámbar y arenque.', fr: 'CAPITAINE : La SAINTE-GERTRUDE part pour LONDRES dès que le vent tourne. Nous transportons du drap, de l\'ambre et du hareng.' });
+    return;
+  }
+  await W.say({ es: 'CAPITÁN: ¡Así que tú eres quien ha echado al Cuervo! Te llevaré a LONDRES encantado... en cuanto el viento lo permita. (Próximamente)', fr: 'CAPITAINE : C\'est donc toi qui as chassé le Corbeau ! Je t\'emmènerai à LONDRES avec plaisir... dès que le vent le permettra. (Prochainement)' });
 }
 
 // ── 10-world.js ──
@@ -5599,6 +6717,9 @@ function drawObj(x, o, ox, oy) {
   else if (o.type === 'throne') drawThrone(x, ox, oy, o.o || {});
   else if (o.type === 'chest') drawChest(x, ox, oy, o.o || {});
   else if (o.type === 'boat') drawBoat(x, ox, oy);
+  else if (o.type === 'brunnen') drawBrunnen(x, ox, oy);
+  else if (o.type === 'plank') drawPlank(x, ox, oy);
+  else if (o.type === 'chesstable') drawChessTable(x, ox, oy);
 }
 // Puerta de un edificio: columna(s) de la puerta en su fila de abajo
 function doorCols(o) {
@@ -5744,7 +6865,7 @@ class WorldScene {
     }
     if (this.blocked(nx, ny, p)) {
       const o = this.objAt(nx, ny);
-      if (d === 'up' && doorAt(o, nx, ny) && (o.enter || o.run)) { this.runScript(W => W.useDoor(o)); return; }
+      if ((d === 'up' || (o && o.side === d)) && doorAt(o, nx, ny) && (o.enter || o.run)) { this.runScript(W => W.useDoor(o)); return; }
       this.bump(); return;
     }
     this.move(p, d, Input.down('b') ? 2 : 1);
@@ -6271,7 +7392,7 @@ const CRESTS = [
   ['fez', '#2e8a5a', '#f2ca52', { es: 'FEZ', fr: 'FÈS' }],
   ['genova', '#f4ece0', '#c23a3a', { es: 'GÉNOVA', fr: 'GÊNES' }],
   ['florencia', '#8a2a3a', '#f4ece0', { es: 'FLORENCIA', fr: 'FLORENCE' }],
-  ['nuremberg', '#2a2a30', '#f2ca52', '?'],
+  ['nuremberg', '#f2ca52', '#2a2a30', { es: 'NÚREMBERG', fr: 'NUREMBERG' }],
   ['londres', '#2a4aa0', '#f2ca52', '?'],
   ['montsaintmichel', '#4a6a9a', '#f4ece0', '?'],
   ['paris', '#2a3a8a', '#f2ca52', '?'],
@@ -6288,10 +7409,10 @@ function drawGear(ctx) {
   const wpn = EQUIP[e.arma || 'espada_corta'], arm = e.armadura ? EQUIP[e.armadura] : null;
   Font.draw(ctx, t('s_weapon'), 12, 26, 'grey');
   Font.draw(ctx, tr(wpn.name), 12, 38, 'dark');
-  if (wpn.atk) Font.drawRight(ctx, t('shop_atk', { v: wpn.atk }), 228, 38, 'blue');
+  if (wpn.atk) Font.drawRight(ctx, t('shop_atk', { v: wpn.atk }), 228, 26, 'blue');
   Font.draw(ctx, t('s_armor'), 12, 52, 'grey');
   Font.draw(ctx, arm ? tr(arm.name) : t('s_none'), 12, 64, arm ? 'dark' : 'grey');
-  if (arm) Font.drawRight(ctx, t('shop_def', { v: arm.def }), 228, 64, 'blue');
+  if (arm) Font.drawRight(ctx, t('shop_def', { v: arm.def }), 228, 52, 'blue');
   rect(ctx, 10, 80, 220, 1, '#c99a46');
   Font.draw(ctx, t('s_crests', { v: s.blasones || 0 }), 12, 84, 'dark');
   CRESTS.forEach(([k, c1, c2], i) => {
@@ -6299,7 +7420,9 @@ function drawGear(ctx) {
     drawShield(ctx, x, 102, c1, c2, on);
   });
   const named = CRESTS.filter(([k]) => s.flags['blason_' + k]).map(c => tr(c[3]));
-  if (named.length) Font.draw(ctx, named.join(' · '), 12, 118, 'grey');
+  let line = named.join(' · ');
+  while (named.length > 1 && Font.width(line) > 216) { named.shift(); line = '… ' + named.join(' · '); }
+  if (named.length) Font.draw(ctx, line, 12, 118, 'grey');
   const titles = TITLES.filter(([f]) => s.flags[f]).map(([, n]) => fmt(n));
   if (titles.length) Font.draw(ctx, t('s_titles', { v: titles.join(' · ') }), 12, 130, 'blue');
   Font.drawRight(ctx, t('k_back'), 228, 140, 'dark');
@@ -6439,12 +7562,23 @@ class BattleScene {
   ref(side, cap = false) {
     if (side === 'me') return P().name;
     if (this.spec.trainer) return this.foe.name;
-    const art = Lang.cur === 'fr' ? (cap ? 'Le ' : 'le ') : (cap ? 'El ' : 'el ');
-    return art + this.foe.name + tr(this.fdef.wildTag);
+    const art = this.article(false);
+    return (cap ? art[0].toUpperCase() + art.slice(1) : art) + this.foe.name + tr(this.fdef.wildTag);
+  }
+  foeFem() { const f = this.fdef.fem; return !this.spec.trainer && !!(f && typeof f === 'object' ? f[Lang.cur] : f); }
+  // artículo del animal: el/la (el ÁGUILA), le/la/l' en francés; con «de» delante si de = true
+  article(de) {
+    const fem = this.foeFem(), nm = this.foe.name;
+    if (Lang.cur === 'fr') {
+      if (/^[AEIOUYÉÈÊÂÎH]/.test(nm)) return de ? 'de l\'' : 'l\'';
+      return de ? (fem ? 'de la ' : 'du ') : (fem ? 'la ' : 'le ');
+    }
+    const el = !fem || /^Á/.test(nm);
+    return de ? (el ? 'del ' : 'de la ') : (el ? 'el ' : 'la ');
   }
   deRef(side) {
     if (side === 'me' || this.spec.trainer) return deName(this.ref(side));
-    return (Lang.cur === 'fr' ? 'du ' : 'del ') + this.foe.name + tr(this.fdef.wildTag);
+    return this.article(true) + this.foe.name + tr(this.fdef.wildTag);
   }
   statMsg(k, whose, up, limit) {
     const stat = tr(STATNAME[k]);
@@ -6620,7 +7754,7 @@ class BattleScene {
       await this.msg(t('b_yield', { t: this.foe.name }), 0);
       if (this.spec.defeatText) await this.msg(`${this.foe.name}${Lang.cur === 'fr' ? ' :' : ':'} ${fmt(this.spec.defeatText)}`, 0);
     } else if (this.spec.foe === 'salteador') await this.msg(t('b_banditFlees'), 0);
-    else await this.msg(t('b_defeated', { f: this.ref('foe', true) }), 0);
+    else await this.msg(t(this.foeFem() ? 'b_defeatedF' : 'b_defeated', { f: this.ref('foe', true) }), 0);
     const xp = battleXp(this.foe, tr_);
     if (P().level < MAX_LV) {
       await this.msg(t('b_xp', { n: P().name, v: xp }), 0);
@@ -7169,6 +8303,307 @@ function claimWalkRewards() {
   return parts.join(' · ');
 }
 
+// ── 14a-ajedrez-reglas.js ──
+// ─── Ajedrez: reglas del tablero (sin enroque ni captura al paso: no hacen falta en el problema) ───
+// Casillas 0-63: índice = fila * 8 + columna (a1 = 0, h8 = 63). Piezas: PNBRQK blancas, pnbrqk negras.
+const Chess = {
+  parse(fen) {
+    const [placement, side] = fen.split(' ');
+    const b = new Array(64).fill(null);
+    placement.split('/').forEach((row, i) => {
+      let f = 0;
+      for (const ch of row) { if (ch >= '1' && ch <= '8') f += +ch; else { b[(7 - i) * 8 + f] = ch; f++; } }
+    });
+    return { b, w: side !== 'b' };
+  },
+  fen(pos) {
+    const rows = [];
+    for (let r = 7; r >= 0; r--) {
+      let s = '', e = 0;
+      for (let f = 0; f < 8; f++) { const p = pos.b[r * 8 + f]; if (!p) e++; else { if (e) s += e; e = 0; s += p; } }
+      rows.push(s + (e || ''));
+    }
+    return rows.join('/') + (pos.w ? ' w' : ' b');
+  },
+  isWhite: p => !!p && p === p.toUpperCase(),
+  sqName: i => 'abcdefgh'[i % 8] + (Math.floor(i / 8) + 1),
+  sqIndex: s => (s.charCodeAt(1) - 49) * 8 + (s.charCodeAt(0) - 97),
+  uci: m => Chess.sqName(m.from) + Chess.sqName(m.to),
+  KN: [[1, 2], [2, 1], [2, -1], [1, -2], [-1, -2], [-2, -1], [-2, 1], [-1, 2]],
+  KG: [[1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0], [-1, -1], [0, -1], [1, -1]],
+  // ¿está la casilla sq atacada por el bando byWhite?
+  attacked(b, sq, byWhite) {
+    const f = sq % 8, r = Math.floor(sq / 8);
+    const own = p => p && Chess.isWhite(p) === byWhite;
+    const at = (ff, rr) => (ff < 0 || ff > 7 || rr < 0 || rr > 7 ? undefined : b[rr * 8 + ff]);
+    const dir = byWhite ? -1 : 1;                       // los peones blancos atacan hacia arriba
+    for (const df of [-1, 1]) { const p = at(f + df, r + dir); if (own(p) && p.toLowerCase() === 'p') return true; }
+    for (const [df, dr] of Chess.KN) { const p = at(f + df, r + dr); if (own(p) && p.toLowerCase() === 'n') return true; }
+    for (const [df, dr] of Chess.KG) { const p = at(f + df, r + dr); if (own(p) && p.toLowerCase() === 'k') return true; }
+    for (const [df, dr] of Chess.KG) {
+      const diag = df !== 0 && dr !== 0;
+      for (let k = 1; k < 8; k++) {
+        const p = at(f + df * k, r + dr * k);
+        if (p === undefined) break;
+        if (!p) continue;
+        if (own(p)) { const t = p.toLowerCase(); if (t === 'q' || (diag ? t === 'b' : t === 'r')) return true; }
+        break;
+      }
+    }
+    return false;
+  },
+  kingSq(b, white) { const k = white ? 'K' : 'k'; return b.indexOf(k); },
+  inCheck(pos) { const k = Chess.kingSq(pos.b, pos.w); return k >= 0 && Chess.attacked(pos.b, k, !pos.w); },
+  pseudo(pos) {
+    const { b, w } = pos, out = [];
+    const mine = p => p && Chess.isWhite(p) === w, theirs = p => p && Chess.isWhite(p) !== w;
+    for (let sq = 0; sq < 64; sq++) {
+      const p = b[sq];
+      if (!mine(p)) continue;
+      const t = p.toLowerCase(), f = sq % 8, r = Math.floor(sq / 8);
+      const add = (ff, rr) => { const to = rr * 8 + ff; out.push({ from: sq, to }); };
+      const inside = (ff, rr) => ff >= 0 && ff < 8 && rr >= 0 && rr < 8;
+      if (t === 'p') {
+        const d = w ? 1 : -1, start = w ? 1 : 6;
+        if (inside(f, r + d) && !b[(r + d) * 8 + f]) {
+          add(f, r + d);
+          if (r === start && !b[(r + 2 * d) * 8 + f]) add(f, r + 2 * d);
+        }
+        for (const df of [-1, 1]) if (inside(f + df, r + d) && theirs(b[(r + d) * 8 + f + df])) add(f + df, r + d);
+      } else if (t === 'n' || t === 'k') {
+        for (const [df, dr] of t === 'n' ? Chess.KN : Chess.KG) if (inside(f + df, r + dr) && !mine(b[(r + dr) * 8 + f + df])) add(f + df, r + dr);
+      } else {
+        for (const [df, dr] of Chess.KG) {
+          const diag = df !== 0 && dr !== 0;
+          if (t === 'b' && !diag) continue;
+          if (t === 'r' && diag) continue;
+          for (let k = 1; k < 8; k++) {
+            const ff = f + df * k, rr = r + dr * k;
+            if (!inside(ff, rr)) break;
+            const q = b[rr * 8 + ff];
+            if (mine(q)) break;
+            add(ff, rr);
+            if (q) break;
+          }
+        }
+      }
+    }
+    return out;
+  },
+  play(pos, m) {
+    const b = pos.b.slice();
+    let p = b[m.from];
+    const r = Math.floor(m.to / 8);
+    if (p === 'P' && r === 7) p = 'Q';
+    if (p === 'p' && r === 0) p = 'q';
+    b[m.to] = p; b[m.from] = null;
+    return { b, w: !pos.w };
+  },
+  legal(pos) {
+    return Chess.pseudo(pos).filter(m => {
+      const q = Chess.play(pos, m);
+      const k = Chess.kingSq(q.b, pos.w);
+      return k >= 0 && !Chess.attacked(q.b, k, !pos.w);
+    });
+  },
+  isMate(pos) { return Chess.inCheck(pos) && Chess.legal(pos).length === 0; },
+};
+
+// ── 14b-ajedrez.js ──
+// ─── Misión especial: la batalla silenciosa (problema de ajedrez del sabio de Fez) ───
+// Blancas juegan y dan mate en 4. Árbol comprobado con tools/chess-solve.mjs:
+// cada jugada ganadora de las blancas lleva la mejor defensa de las negras ('#' = mate).
+const PUZZLE = {
+  fen: 'r3r2k/pp4pp/2p1Q3/2q3N1/8/8/PP4PP/7K w',
+  moves: 4,
+  seconds: 20,
+  tree: { g5f7: { r: 'h8g8', n: { f7h6: { r: 'g8h8', n: { e6g8: { r: 'e8g8', n: { h6f7: '#' } } } } } } },
+};
+
+const PIECE_ART = {
+  p: ['............', '............', '.....kk.....', '....kwwk....', '....kwsk....', '.....kk.....', '....kwwk....', '....kwsk....', '...kwwwsk...', '...kwwwsk...', '..kwwwwwsk..', '..kkkkkkkk..'],
+  r: ['............', '.kk.kkkk.kk.', '.kwkkwwkkwk.', '.kwwwwwwwsk.', '..kwwwwwsk..', '...kwwwsk...', '...kwwwsk...', '...kwwwsk...', '...kwwwsk...', '..kwwwwwsk..', '.kwwwwwwwsk.', '.kkkkkkkkkk.'],
+  n: ['............', '....kk.k....', '...kwwkwk...', '..kwwwwwwk..', '.kwkwwwwwsk.', 'kwwwwwwwwsk.', 'kwwkkkwwwsk.', '.kk..kwwwsk.', '....kwwwsk..', '...kwwwwsk..', '..kwwwwwwsk.', '..kkkkkkkkk.'],
+  b: ['............', '.....kk.....', '....kwwk....', '...kwwkwk...', '...kwkwwk...', '...kwwwsk...', '....kwsk....', '....kwsk....', '...kwwwsk...', '..kwwwwwsk..', '.kwwwwwwwsk.', '.kkkkkkkkkk.'],
+  q: ['............', '............', 'k..k.kk.k..k', 'kk.kkwwkk.kk', 'kwkwwwwwwkwk', '.kwwwwwwwwk.', '..kwwwwwsk..', '...kwwwsk...', '...kwwwsk...', '..kwwwwwsk..', '.kwwwwwwwsk.', '.kkkkkkkkkk.'],
+  k: ['.....kk.....', '....kwwk....', '.....kk.....', '..kk.kk.kk..', '.kwwkwwkwwk.', '.kwwwwwwwsk.', '..kwwwwwsk..', '...kwwwsk...', '...kwwwsk...', '..kwwwwwsk..', '.kwwwwwwwsk.', '.kkkkkkkkkk.'],
+};
+const PIECE_PAL = {
+  white: { k: '#2a2131', w: '#fbf6ea', s: '#c9bca2' },
+  black: { k: '#0e0a12', w: '#544c5e', s: '#2c2634' },
+};
+function drawPiece(ctx, p, x, y) {
+  paintRows(ctx, PIECE_ART[p.toLowerCase()], Chess.isWhite(p) ? PIECE_PAL.white : PIECE_PAL.black, Math.round(x) + 2, Math.round(y) + 2);
+}
+
+const CHESS_BX = 8, CHESS_BY = 19;
+class ChessPuzzle {
+  constructor(spec = PUZZLE) {
+    this.spec = spec;
+    this.pos = Chess.parse(spec.fen);
+    this.node = spec.tree;
+    this.moveNo = 1;
+    this.left = spec.seconds * 1000;
+    this.state = 'cover'; this.t = 0;
+    this.cur = { f: 3, r: 3 }; this.sel = null; this.targets = [];
+    this.anim = null; this.last = null; this.queue = [];
+    this.msg = null; this.result = null; this.lastSec = spec.seconds;
+  }
+  sqXY(sq) { return [CHESS_BX + (sq % 8) * 16, CHESS_BY + (7 - Math.floor(sq / 8)) * 16]; }
+  select(sq) {
+    const p = this.pos.b[sq];
+    if (this.sel !== null && this.targets.includes(sq)) { this.playerMove({ from: this.sel, to: sq }); return; }
+    if (p && Chess.isWhite(p)) {
+      const ms = Chess.legal(this.pos).filter(m => m.from === sq);
+      if (ms.length) { this.sel = sq; this.targets = ms.map(m => m.to); Sfx.play('blip'); return; }
+    }
+    if (this.sel !== null) Sfx.play('back');
+    this.sel = null; this.targets = [];
+  }
+  startAnim(m, then) {
+    const piece = this.pos.b[m.from];
+    this.pos = Chess.play(this.pos, m);
+    this.anim = { from: m.from, to: m.to, piece, t: 0, then };
+    this.last = m;
+    Sfx.play(Chess.inCheck(this.pos) ? 'alert' : 'select');
+  }
+  playerMove(m) {
+    const u = Chess.uci(m), next = this.node[u];
+    this.sel = null; this.targets = [];
+    this.state = 'anim';
+    this.startAnim(m, () => {
+      if (next === '#') { this.finish('win', { es: '¡JAQUE MATE!', fr: 'ÉCHEC ET MAT !' }); return; }
+      if (!next) { this.finish('wrong', { es: 'El rey negro se escapa...', fr: 'Le roi noir s\'échappe...' }); return; }
+      this.msg = Chess.inCheck(this.pos) ? { es: '¡JAQUE!', fr: 'ÉCHEC !' } : null;
+      this.state = 'reply'; this.t = 0;
+      this.pending = next;
+    });
+  }
+  finish(res, text) {
+    this.state = 'end'; this.t = 0; this.result = res; this.msg = text;
+    Sfx.play(res === 'win' ? 'win' : 'bump');
+  }
+  step(dt) {
+    this.t += dt;
+    if (this.anim) {
+      this.anim.t += dt;
+      if (this.anim.t >= 200) { const a = this.anim; this.anim = null; if (a.then) a.then(); }
+      return undefined;
+    }
+    if (this.state === 'cover') { if (this.t >= 2400) { this.state = 'play'; this.t = 0; Sfx.play('encounter'); } return undefined; }
+    if (this.state === 'reply') {
+      if (this.t < 520) return undefined;
+      const nx = this.pending, r = nx.r;
+      this.startAnim({ from: Chess.sqIndex(r.slice(0, 2)), to: Chess.sqIndex(r.slice(2, 4)) }, () => {
+        this.node = nx.n; this.moveNo++; this.msg = null; this.state = 'play'; this.t = 0;
+      });
+      return undefined;
+    }
+    if (this.state === 'end') return this.t >= 1900 ? this.result : undefined;
+    // turno del jugador: corre el reloj
+    this.left -= dt;
+    const sec = Math.ceil(this.left / 1000);
+    if (sec < this.lastSec) { this.lastSec = sec; if (sec <= 5 && sec > 0) Sfx.play('blip'); }
+    if (this.left <= 0) { this.left = 0; this.finish('time', { es: '¡Se acabó el tiempo!', fr: 'Le temps est écoulé !' }); return undefined; }
+    for (const d of DIRS) if (Input.repeat(d)) {
+      const [dx, dy] = DV[d];
+      this.cur.f = clamp(this.cur.f + dx, 0, 7); this.cur.r = clamp(this.cur.r - dy, 0, 7);
+    }
+    if (Input.hit('a')) this.select(this.cur.r * 8 + this.cur.f);
+    else if (Input.hit('b')) { if (this.sel !== null) Sfx.play('back'); this.sel = null; this.targets = []; }
+    const tp = Input.tap;
+    if (tp) {
+      const f = Math.floor((tp.x - CHESS_BX) / 16), r = 7 - Math.floor((tp.y - CHESS_BY) / 16);
+      if (f >= 0 && f < 8 && r >= 0 && r < 8) { this.cur = { f, r }; this.select(r * 8 + f); }
+    }
+    return undefined;
+  }
+  draw(ctx) {
+    const BX = CHESS_BX, BY = CHESS_BY;
+    rect(ctx, 0, 0, W, H, '#2a1e18');
+    for (let y = 0; y < H; y += 4) rect(ctx, 0, y, W, 1, '#32241c');
+    // título
+    drawBox(ctx, 0, 0, W, 17);
+    Font.draw(ctx, tr({ es: 'BATALLA SILENCIOSA', fr: 'BATAILLE SILENCIEUSE' }), 10, 3, 'dark');
+    Font.drawRight(ctx, 'IBRAHIM', 230, 3, 'grey');
+    // tablero
+    rect(ctx, BX - 3, BY - 3, 134, 134, '#5a3a22'); rect(ctx, BX - 2, BY - 2, 132, 132, '#8a5a32'); rect(ctx, BX - 1, BY - 1, 130, 130, '#3a2414');
+    const checkK = Chess.inCheck(this.pos) ? Chess.kingSq(this.pos.b, this.pos.w) : -1;
+    for (let sq = 0; sq < 64; sq++) {
+      const [x, y] = this.sqXY(sq), f = sq % 8, r = Math.floor(sq / 8);
+      rect(ctx, x, y, 16, 16, (f + r) % 2 ? '#f0dcb4' : '#b4865a');
+      if (this.last && (sq === this.last.from || sq === this.last.to)) rect(ctx, x, y, 16, 16, 'rgba(240,210,80,0.38)');
+      if (sq === this.sel) rect(ctx, x, y, 16, 16, 'rgba(80,170,90,0.55)');
+      if (sq === checkK) rect(ctx, x, y, 16, 16, 'rgba(220,50,40,0.55)');
+    }
+    for (let sq = 0; sq < 64; sq++) {
+      const p = this.pos.b[sq];
+      if (!p || (this.anim && sq === this.anim.to)) continue;
+      const [x, y] = this.sqXY(sq);
+      drawPiece(ctx, p, x, y);
+    }
+    for (const sq of this.targets) {
+      const [x, y] = this.sqXY(sq);
+      if (this.pos.b[sq]) { rect(ctx, x, y, 16, 2, '#3c8c48'); rect(ctx, x, y + 14, 16, 2, '#3c8c48'); rect(ctx, x, y, 2, 16, '#3c8c48'); rect(ctx, x + 14, y, 2, 16, '#3c8c48'); }
+      else { rect(ctx, x + 6, y + 6, 4, 4, '#3c8c48'); rect(ctx, x + 7, y + 5, 2, 6, '#3c8c48'); rect(ctx, x + 5, y + 7, 6, 2, '#3c8c48'); }
+    }
+    if (this.anim) {
+      const a = this.anim, k = Ease.out(Math.min(1, a.t / 200));
+      const [x0, y0] = this.sqXY(a.from), [x1, y1] = this.sqXY(a.to);
+      drawPiece(ctx, a.piece, x0 + (x1 - x0) * k, y0 + (y1 - y0) * k);
+    }
+    if (this.state === 'play' && Math.floor(Clock.t / 250) % 2 === 0) {
+      const x = BX + this.cur.f * 16, y = BY + (7 - this.cur.r) * 16;
+      rect(ctx, x, y, 16, 1, '#c23a3a'); rect(ctx, x, y + 15, 16, 1, '#c23a3a'); rect(ctx, x, y, 1, 16, '#c23a3a'); rect(ctx, x + 15, y, 1, 16, '#c23a3a');
+    }
+    for (let i = 0; i < 8; i++) {
+      Font.draw(ctx, String(8 - i), 1, BY + i * 16 + 4, 'grey');
+      Font.draw(ctx, 'abcdefgh'[i], BX + i * 16 + 5, BY + 129, 'grey');
+    }
+    // paño que tapa el tablero antes de empezar
+    if (this.state === 'cover') {
+      rect(ctx, BX, BY, 128, 128, '#7a2a30');
+      for (let y = BY; y < BY + 128; y += 8) for (let x = BX + ((y / 8) % 2) * 4; x < BX + 128; x += 8) rect(ctx, x, y, 2, 2, '#9a3a40');
+      rect(ctx, BX, BY + 60, 128, 8, '#d8a840');
+      const n = 3 - Math.floor(this.t / 800);
+      drawBox(ctx, BX + 44, BY + 44, 40, 40);
+      Font.drawCenter(ctx, String(Math.max(1, n)), BX + 64, BY + 54, 'dark', 2);
+    }
+    // panel lateral
+    const PX = 142, PY = 19, PW = 96;
+    drawBox(ctx, PX, PY, PW, 128);
+    Font.drawCenter(ctx, tr({ es: 'MATE EN 4', fr: 'MAT EN 4' }), PX + PW / 2, PY + 7, 'red');
+    Font.drawCenter(ctx, tr({ es: 'Juegan blancas', fr: 'Les blancs jouent' }), PX + PW / 2, PY + 21, 'grey');
+    Font.drawCenter(ctx, tr({ es: 'JUGADA', fr: 'COUP' }) + ' ' + Math.min(this.moveNo, this.spec.moves) + '/' + this.spec.moves, PX + PW / 2, PY + 37, 'dark');
+    const secs = Math.ceil(this.left / 1000), danger = secs <= 5;
+    Font.drawCenter(ctx, String(secs), PX + PW / 2, PY + 53, danger ? 'red' : 'dark', 2);
+    const bw = PW - 20, k = this.left / (this.spec.seconds * 1000);
+    rect(ctx, PX + 10, PY + 75, bw, 6, '#5a4a3a');
+    rect(ctx, PX + 11, PY + 76, Math.round((bw - 2) * k), 4, danger ? '#d83a32' : k < 0.5 ? '#e0a830' : '#4aa050');
+    if (this.msg) {
+      const lines = Font.wrap(tr(this.msg), PW - 14);
+      lines.slice(0, 3).forEach((ln, i) => Font.drawCenter(ctx, ln, PX + PW / 2, PY + 88 + i * 12, this.result === 'win' || !this.result ? 'blue' : 'red'));
+    } else if (this.state === 'play') {
+      const hint = this.sel === null ? { es: 'Toca una pieza', fr: 'Touche une pièce' } : { es: 'Toca su destino', fr: 'Touche sa case' };
+      Font.drawCenter(ctx, tr(hint), PX + PW / 2, PY + 92, 'grey');
+    } else if (this.state === 'reply') Font.drawCenter(ctx, tr({ es: 'Piensa...', fr: 'Il réfléchit...' }), PX + PW / 2, PY + 92, 'grey');
+    else if (this.state === 'cover') Font.drawCenter(ctx, tr({ es: '¡Prepárate!', fr: 'Prépare-toi !' }), PX + PW / 2, PY + 92, 'grey');
+  }
+}
+
+// Abre el tablero y espera el resultado: 'win', 'wrong' (jugada que no gana) o 'time'
+async function playChessPuzzle(W) {
+  const cp = new ChessPuzzle(PUZZLE);
+  Input.clear();
+  await Game.fadeOut(250);
+  const res = W.ui.panel(ctx => cp.draw(ctx), dt => cp.step(dt));
+  await Game.fadeIn(250);
+  const r = await res;
+  await Game.fadeOut(250);
+  await Game.fadeIn(250);
+  return r;
+}
+
 // ── 99-main.js ──
 // ─── Arranque y bucle principal (60 pasos por segundo) ────────────────────
 function boot(data) {
@@ -7224,7 +8659,7 @@ function boot(data) {
   requestAnimationFrame(frame);
   document.documentElement.classList.add('ready');
   if (/debug/.test(location.search)) {
-    window.__SC = { Game, Input, Art, Font, MAPS, P, S0, WorldScene, BattleScene, startWorld, newState, renderMap, drawChar, LOOKS, Clock, gainXp, calcStats, PLAYER_BASE, xpFor, Lang, Pasos, LangScene, TitleScene, FOES, MOVES, ITEMS, EQUIP, BLOCK, doorCols, makeFoe, calcDamage, battleXp, effStats, healPlayer, battleBg, migrateState, XP_MULT, LEARN, KNIGHT_MOVES };
+    window.__SC = { Game, Input, Art, Font, MAPS, P, S0, WorldScene, BattleScene, startWorld, newState, renderMap, drawChar, LOOKS, Clock, gainXp, calcStats, PLAYER_BASE, xpFor, Lang, Pasos, LangScene, TitleScene, FOES, MOVES, ITEMS, EQUIP, BLOCK, doorCols, makeFoe, calcDamage, battleXp, effStats, healPlayer, battleBg, migrateState, XP_MULT, LEARN, KNIGHT_MOVES, Chess, ChessPuzzle, PUZZLE, playChessPuzzle, SaveCode };
   }
 }
 

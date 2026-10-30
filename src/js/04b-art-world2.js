@@ -343,12 +343,22 @@ function drawFountain(ctx, ox, oy, o = {}) {
 
 function drawTower(ctx, ox, oy, wc, hc, o) {
   const Wd = wc * 16, Ht = hc * 16, S = o.stone || STONE.claro;
-  const top = o.roof ? 12 : 4;
+  const top = o.roof || o.spire ? 12 : 4;
   rect(ctx, ox + 2, oy + top, Wd - 4, Ht - top, S[1]);
   rect(ctx, ox + 2, oy + top, 3, Ht - top, S[0]); rect(ctx, ox + Wd - 6, oy + top, 4, Ht - top, S[2]);
   rect(ctx, ox + 2, oy + top, 1, Ht - top, OLB); rect(ctx, ox + Wd - 3, oy + top, 1, Ht - top, OLB);
   for (let y = top + 8; y < Ht - 2; y += 8) rect(ctx, ox + 3, oy + y, Wd - 6, 1, S[2]);
-  if (o.roof) {
+  if (o.spire) {
+    const sh = o.spire, R = o.roof || ['#7aa88a', '#5a8a6a', '#3a6a4a'];
+    for (let y = 0; y < sh; y++) {
+      const half = Math.max(1, Math.floor((y + 1) * (Wd / 2 - 3) / sh));
+      rect(ctx, ox + Wd / 2 - half, oy + 12 - sh + y, half * 2, 1, y % 4 === 3 ? R[2] : R[1]);
+      px(ctx, ox + Wd / 2 - half, oy + 12 - sh + y, OLB); px(ctx, ox + Wd / 2 + half - 1, oy + 12 - sh + y, OLB);
+      if (y % 4 === 1) px(ctx, ox + Wd / 2 - half + 1, oy + 12 - sh + y, R[0]);
+    }
+    rect(ctx, ox + 1, oy + 12, Wd - 2, 1, OLB);
+    rect(ctx, ox + Wd / 2 - 1, oy + 12 - sh - 4, 2, 4, '#e8c050');
+  } else if (o.roof) {
     for (let y = 0; y < 13; y++) { const half = Math.floor(y * (Wd / 2) / 13) + 1; rect(ctx, ox + Wd / 2 - half, oy + y, half * 2, 1, y % 3 ? o.roof[1] : o.roof[2]); }
     rect(ctx, ox + 1, oy + 12, Wd - 2, 1, OLB);
   } else {

@@ -112,7 +112,7 @@ const report = await p.evaluate(() => {
       if (o.x < 0 || o.y < 0 || o.x + (o.w || 1) > w || o.y + (o.h || 1) > h) out.push(`${id}: objeto ${o.type} fuera del mapa`);
       const dc = S.doorCols(o);
       if (dc.length && (o.run || o.enter || o.doorText)) {
-        const dx = o.x + dc[0], dy = o.y + (o.h || 1);
+        const dx = o.side === 'right' ? o.x - 1 : o.side === 'left' ? o.x + (o.w || 1) : o.x + dc[0], dy = o.side ? o.y + (o.h || 1) - 1 : o.y + (o.h || 1);
         if (!seen.has(dx + ',' + dy)) out.push(`${id}: puerta de ${o.type} en (${o.x},${o.y}) sin acceso por (${dx},${dy})`);
       } else if (o.text || o.run) {
         let ok = false;

@@ -1,7 +1,7 @@
 // ─── Datos de juego: técnicas, enemigos, objetos, equipo, niveles ─────────
 const MAX_LV = 150;
 const PLAYER_BASE = { hp: 60, atk: 56, def: 52, spd: 54 };
-const XP_MULT = 3.0;          // multiplicador de experiencia (ajustado para el prototipo)          // multiplicador de experiencia (ajustado para el prototipo)          // multiplicador de experiencia (ajustado para el prototipo)
+const XP_MULT = 3.0;          // multiplicador de experiencia (ajustado para el prototipo)
 
 // pow: daño · acc: precisión (0 = nunca falla) · pp: usos
 // self/foe: cambia atributos · heal: cura (fracción de la vida) · crit: más críticos
@@ -18,6 +18,9 @@ const MOVES = {
   guardia: { name: { es: 'GUARDIA DE HIERRO', fr: 'GARDE DE FER' }, pow: 0, acc: 0, pp: 15, self: { def: 2 } },
   tajo_cruzado: { name: { es: 'TAJO CRUZADO', fr: 'TAILLE CROISÉE' }, pow: 95, acc: 90, pp: 10, crit: true },
   carga: { name: { es: 'CARGA DEL CABALLERO', fr: 'CHARGE DU CHEVALIER' }, pow: 120, acc: 85, pp: 5 },
+  // técnicas de la escuela alemana de esgrima (Liechtenauer)
+  media_espada: { name: { es: 'MEDIA ESPADA', fr: 'DEMI-ÉPÉE' }, pow: 90, acc: 100, pp: 15, foe: { def: -1 } },
+  golpe_maestro: { name: { es: 'GOLPE MAESTRO', fr: 'COUP DE MAÎTRE' }, pow: 110, acc: 95, pp: 8, crit: true },
   // animales
   embestida: { name: { es: 'EMBESTIDA', fr: 'CHARGE' }, pow: 40, acc: 100, pp: 35 },
   colmillazo: { name: { es: 'COLMILLAZO', fr: 'COUP DE BOUTOIR' }, pow: 55, acc: 90, pp: 20 },
@@ -67,13 +70,20 @@ const MOVES = {
   parada: { name: { es: 'PARADA', fr: 'PARADE' }, pow: 0, acc: 0, pp: 15, self: { def: 1, spd: 1 } },
   mazazo: { name: { es: 'MAZAZO', fr: 'COUP DE MASSE' }, pow: 80, acc: 90, pp: 15 },
   remazo: { name: { es: 'REMAZO', fr: 'COUP DE RAME' }, pow: 65, acc: 95, pp: 20 },
+  hachazo: { name: { es: 'HACHAZO', fr: 'COUP DE HACHE' }, pow: 75, acc: 90, pp: 15 },
+  piolet: { name: { es: 'PICO DE MINERO', fr: 'PIC DE MINEUR' }, pow: 70, acc: 95, pp: 15 },
+  honda: { name: { es: 'HONDA', fr: 'FRONDE' }, pow: 55, acc: 0, pp: 20 },
+  garras: { name: { es: 'GARRAS', fr: 'SERRES' }, pow: 75, acc: 95, pp: 15 },
+  silbido: { name: { es: 'SILBIDO', fr: 'SIFFLEMENT' }, pow: 0, acc: 100, pp: 20, foe: { atk: -1 } },
+  cuernas: { name: { es: 'CORNAMENTA', fr: 'BOIS' }, pow: 80, acc: 90, pp: 15 },
+  bramido: { name: { es: 'BRAMIDO', fr: 'BRAME' }, pow: 0, acc: 0, pp: 15, self: { atk: 1 } },
   forcejeo: { name: { es: 'FORCEJEO', fr: 'LUTTE' }, pow: 30, acc: 100, pp: 1 },
   // técnicas secretas (misión de Dante en Florencia)
   matademonios: { name: { es: 'MATA DEMONIOS', fr: 'TUEUR DE DÉMONS' }, pow: 300, acc: 0, pp: 3, big: true },
   beso: { name: { es: 'BESO DE AMADA', fr: 'BAISER DE L\'AIMÉE' }, pow: 0, acc: 0, pp: 2, ohko: true, cost: 0.5 },
 };
 const moveName = id => tr(MOVES[id].name);
-const LEARN = { 1: ['tajo', 'grito'], 4: ['estocada'], 7: ['escudo'], 12: ['mandoble'], 17: ['aliento'], 22: ['finta'], 28: ['golpe_escudo'], 34: ['guardia'], 40: ['tajo_cruzado'], 46: ['carga'] };
+const LEARN = { 1: ['tajo', 'grito'], 4: ['estocada'], 7: ['escudo'], 12: ['mandoble'], 17: ['aliento'], 22: ['finta'], 28: ['golpe_escudo'], 34: ['guardia'], 40: ['tajo_cruzado'], 46: ['carga'], 52: ['media_espada'], 58: ['golpe_maestro'] };
 const STATNAME = {
   atk: { es: 'ATAQUE', fr: 'ATTAQUE' },
   def: { es: 'DEFENSA', fr: 'DÉFENSE' },
@@ -81,7 +91,7 @@ const STATNAME = {
 };
 
 // Técnicas por nivel (las 4 últimas aprendidas son las que usa)
-const KNIGHT_MOVES = [['tajo', 1], ['grito', 1], ['estocada', 4], ['escudo', 7], ['mandoble', 12], ['aliento', 17], ['finta', 22], ['golpe_escudo', 28], ['guardia', 34], ['tajo_cruzado', 40], ['carga', 46]];
+const KNIGHT_MOVES = [['tajo', 1], ['grito', 1], ['estocada', 4], ['escudo', 7], ['mandoble', 12], ['aliento', 17], ['finta', 22], ['golpe_escudo', 28], ['guardia', 34], ['tajo_cruzado', 40], ['carga', 46], ['media_espada', 52], ['golpe_maestro', 58]];
 const WILD = { es: ' salvaje', fr: ' sauvage' }, NOTAG = { es: '', fr: '' };
 const FOES = {
   // ── animales ──
@@ -106,11 +116,17 @@ const FOES = {
   cangrejo: { name: { es: 'CANGREJO', fr: 'CRABE' }, art: 'crab', base: { hp: 50, atk: 66, def: 74, spd: 36 }, exp: 66, moves: ['pinzas', 'caparazon', 'embestida'], wild: true,
     intro: { es: '¡Un CANGREJO enorme sale de la arena!', fr: 'Un énorme CRABE sort du sable !' }, wildTag: NOTAG },
   cabra: { name: { es: 'CABRA MONTÉS', fr: 'BOUQUETIN' }, art: 'goat', base: { hp: 58, atk: 62, def: 56, spd: 58 }, exp: 66, moves: ['embestida', 'balido', 'topetazo'], wild: true,
-    intro: { es: '¡Una CABRA MONTÉS baja de un salto!', fr: 'Un BOUQUETIN descend d\'un bond !' }, wildTag: NOTAG, fem: true },
+    intro: { es: '¡Una CABRA MONTÉS baja de un salto!', fr: 'Un BOUQUETIN descend d\'un bond !' }, wildTag: NOTAG, fem: { es: true, fr: false } },
   muflon: { name: { es: 'MUFLÓN', fr: 'MOUFLON' }, art: 'mouflon', base: { hp: 62, atk: 66, def: 58, spd: 56 }, exp: 70, moves: ['topetazo', 'balido', 'cornada'], wild: true,
     intro: { es: '¡Un MUFLÓN agacha los cuernos!', fr: 'Un MOUFLON baisse les cornes !' }, wildTag: NOTAG },
   oso: { name: { es: 'OSO', fr: 'OURS' }, art: 'bear', base: { hp: 80, atk: 76, def: 62, spd: 42 }, exp: 84, moves: ['zarpazo', 'rugido', 'abrazo', 'zarpazo_feroz'], wild: true,
     intro: { es: '¡Un OSO se alza sobre las patas traseras!', fr: 'Un OURS se dresse sur ses pattes arrière !' }, wildTag: NOTAG },
+  marmota: { name: { es: 'MARMOTA', fr: 'MARMOTTE' }, art: 'marmot', base: { hp: 60, atk: 60, def: 62, spd: 60 }, exp: 66, moves: ['mordisco', 'silbido', 'zarpazo'], wild: true,
+    intro: { es: '¡Una MARMOTA silba y se lanza a por ti!', fr: 'Une MARMOTTE siffle et se jette sur toi !' }, wildTag: NOTAG, fem: true },
+  aguila: { name: { es: 'ÁGUILA REAL', fr: 'AIGLE ROYAL' }, art: 'eagle', base: { hp: 56, atk: 72, def: 50, spd: 82 }, exp: 74, moves: ['picotazo', 'aletazo', 'acecho', ['garras', 30]], wild: true,
+    intro: { es: '¡Un ÁGUILA REAL cae en picado desde las cumbres!', fr: 'Un AIGLE ROYAL fond sur toi depuis les sommets !' }, wildTag: NOTAG, fem: { es: true, fr: false } },
+  ciervo: { name: { es: 'CIERVO', fr: 'CERF' }, art: 'deer', base: { hp: 72, atk: 72, def: 60, spd: 64 }, exp: 76, moves: ['embestida', 'bramido', 'topetazo', ['cuernas', 30]], wild: true,
+    intro: { es: '¡Un CIERVO baja la cornamenta y te embiste!', fr: 'Un CERF baisse ses bois et te charge !' }, wildTag: NOTAG },
   // ── gente del camino ──
   salteador: { name: { es: 'SALTEADOR', fr: 'BRIGAND' }, art: 'char:bandit', base: { hp: 50, atk: 52, def: 44, spd: 56 }, exp: 60, moves: ['punal', 'pedrada', 'empujon', ['golpe_bajo', 18]], gold: [2, 5], wild: true,
     intro: { es: '¡Un SALTEADOR te corta el paso!', fr: 'Un BRIGAND te barre la route !' }, wildTag: NOTAG },
@@ -132,12 +148,20 @@ const FOES = {
   fraile: { name: { es: 'FRAILE', fr: 'MOINE' }, art: 'char:fraile', base: { hp: 66, atk: 54, def: 62, spd: 48 }, exp: 66, moves: ['bastonazo', 'guardia', 'aliento'], gold: 6 },
   gondolero: { name: { es: 'GONDOLERO', fr: 'GONDOLIER' }, art: 'char:gondolero', base: { hp: 60, atk: 62, def: 56, spd: 56 }, exp: 66, moves: ['remazo', 'empujon', 'punetazo'], gold: 9 },
   guardia: { name: { es: 'GUARDIA', fr: 'GARDE' }, art: 'char:guard', base: { hp: 64, atk: 64, def: 66, spd: 48 }, exp: 70, moves: ['lanzada', 'paves', 'mazazo'], gold: 10 },
+  minero: { name: { es: 'MINERO', fr: 'MINEUR' }, art: 'char:minero', base: { hp: 64, atk: 68, def: 62, spd: 46 }, exp: 70, moves: ['piolet', 'pedrada', 'temple', ['mazazo', 40]], gold: 10 },
+  lenador: { name: { es: 'LEÑADOR', fr: 'BÛCHERON' }, art: 'char:lenador', base: { hp: 66, atk: 72, def: 56, spd: 48 }, exp: 70, moves: ['hachazo', 'grito', 'empujon', ['mandoble', 40]], gold: 9 },
+  pastor: { name: { es: 'PASTOR', fr: 'BERGER' }, art: 'char:pastor', base: { hp: 60, atk: 60, def: 58, spd: 62 }, exp: 66, moves: ['bastonazo', 'honda', 'empujon'], gold: 6 },
+  armero: { name: { es: 'ARMERO', fr: 'ARMURIER' }, art: 'char:armero', base: { hp: 66, atk: 68, def: 72, spd: 44 }, exp: 74, moves: ['martillazo', 'temple', 'golpe_escudo', ['mazazo', 40]], gold: 12 },
+  caballero: { name: { es: 'CABALLERO', fr: 'CHEVALIER' }, art: 'char:caballero_al', base: { hp: 66, atk: 70, def: 68, spd: 48 }, exp: 76, moves: ['mandoble', 'guardia', 'golpe_escudo', ['media_espada', 52]], gold: 13 },
+  teuton: { name: { es: 'CABALLERO TEUTÓN', fr: 'CHEVALIER TEUTONIQUE' }, art: 'char:teuton', base: { hp: 70, atk: 74, def: 70, spd: 50 }, exp: 78, moves: ['lanzada', 'mandoble', 'guardia', ['carga', 50]], gold: 14 },
   // ── maestros de coliseo y jefe ──
   rodrigo: { name: { es: 'DON RODRIGO', fr: 'DON RODRIGO' }, art: 'char:rodrigo', base: { hp: 74, atk: 70, def: 68, spd: 54 }, exp: 90, moves: ['martillazo', 'temple', 'estocada', 'mandoble'], gold: 30 },
   zaynab: { name: 'ZAYNAB', art: 'char:zaynab', base: { hp: 72, atk: 74, def: 62, spd: 80 }, exp: 95, moves: ['lanzada', 'galope', 'cimitarra', 'carga_jinete'], gold: 30 },
   bianca: { name: 'BIANCA', art: 'char:bianca', base: { hp: 72, atk: 78, def: 66, spd: 72 }, exp: 98, moves: ['virote', 'recargar', 'paves', 'tiro'], gold: 30 },
   guido: { name: 'GUIDO', art: 'char:guido', base: { hp: 76, atk: 82, def: 70, spd: 80 }, exp: 102, moves: ['finta', 'estocada', 'parada', 'tajo_cruzado'], gold: 30 },
   capitan: { name: { es: 'CAPITÁN', fr: 'CAPITAINE' }, art: 'char:capitan', base: { hp: 66, atk: 70, def: 58, spd: 64 }, exp: 80, moves: ['sablazo', 'arena', 'golpe_bajo', 'abordaje'], gold: 20 },
+  konrad: { name: 'KONRAD', art: 'char:konrad', base: { hp: 78, atk: 78, def: 74, spd: 56 }, exp: 112, moves: ['media_espada', 'temple', 'golpe_escudo', 'golpe_maestro'], gold: 32 },
+  baron: { name: { es: 'BARÓN', fr: 'BARON' }, art: 'char:baron', base: { hp: 84, atk: 84, def: 72, spd: 72 }, exp: 120, moves: ['golpe_maestro', 'sablazo', 'arena', 'aliento'], gold: 45 },
   corvino: { name: 'CORVINO', art: 'char:corvino', base: { hp: 82, atk: 84, def: 72, spd: 74 }, exp: 110, moves: ['sablazo', 'golpe_bajo', 'arena', 'aliento', ['abordaje', 50]], gold: 40 },
 };
 
@@ -150,6 +174,8 @@ const ITEMS = {
     txt: { es: 'Remedio de boticario. Recupera 120 PV.', fr: 'Remède d\'apothicaire. Rend 120 PV.' } },
   elixir: { name: { es: 'ELIXIR', fr: 'ÉLIXIR' }, plural: { es: 'ELIXIRES', fr: 'ÉLIXIRS' }, art: { es: 'un', fr: 'un' }, heal: 9999, price: 800,
     txt: { es: 'Licor de alquimista. Recupera todos los PV.', fr: 'Liqueur d\'alchimiste. Rend tous les PV.' } },
+  lebkuchen: { name: { es: 'LEBKUCHEN', fr: 'LEBKUCHEN' }, plural: { es: 'LEBKUCHEN', fr: 'LEBKUCHEN' }, art: { es: 'un', fr: 'un' }, heal: 80, price: 160,
+    txt: { es: 'Pan de especias de Núremberg, con miel. Recupera 80 PV.', fr: 'Pain d\'épices de Nuremberg, au miel. Rend 80 PV.' } },
 };
 const itemQty = (id, n) => (n === 1 ? tr(ITEMS[id].art) + ' ' + tr(ITEMS[id].name) : n + ' ' + tr(ITEMS[id].plural));
 
@@ -164,8 +190,11 @@ const EQUIP = {
   cota: { slot: 'armadura', def: 11, price: 1500, name: { es: 'COTA DE MALLA', fr: 'COTTE DE MAILLES' } },
   brigantina: { slot: 'armadura', def: 17, price: 3800, name: { es: 'BRIGANTINA', fr: 'BRIGANDINE' } },
   arnes: { slot: 'armadura', def: 24, price: 6800, name: { es: 'ARNÉS MILANÉS', fr: 'ARMURE MILANAISE' } },
-  // premio secreto de don Quijote (no se vende)
+  espada_larga: { slot: 'arma', atk: 32, price: 9800, name: { es: 'ESPADA LARGA', fr: 'ÉPÉE LONGUE' } },
+  arnes_nuremberg: { slot: 'armadura', def: 30, price: 9600, name: { es: 'ARNÉS DE NÚREMBERG', fr: 'ARMURE DE NUREMBERG' } },
+  // premios de las misiones especiales (no se venden)
   matagigantes: { slot: 'arma', atk: 25, name: { es: 'ESPADA MATAGIGANTES', fr: 'ÉPÉE TUE-GÉANTS' } },
+  torre: { slot: 'armadura', def: 40, name: { es: 'ARMADURA DE LA TORRE INEXPUGNABLE', fr: 'ARMURE DE LA TOUR IMPRENABLE' } },
 };
 const equipBonus = (id, k) => (id && EQUIP[id] ? EQUIP[id][k] || 0 : 0);
 function effStats() {

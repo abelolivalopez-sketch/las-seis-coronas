@@ -1,4 +1,4 @@
-# Las Seis Coronas · prototipo v0.4.1
+# Las Seis Coronas · prototipo v0.5
 
 RPG medieval por turnos en pixel art, ambientado en 1415. Se juega en español o en francés.
 
@@ -6,11 +6,11 @@ RPG medieval por turnos en pixel art, ambientado en 1415. Se juega en español o
 
 - Elección de idioma al empezar (español o francés), que se puede cambiar desde el menú.
 - Elección de personaje (escudero o escudera, piel clara u oscura) y nombre.
-- **El capítulo I completo, de Villaolivo a Venecia**: 8 ciudades, 15 rutas (por tierra, por mar y por islas), 4 coliseos y la guarida del Cuervo en el Arsenal.
-- Unos 70 entrenadores, 13 animales salvajes distintos y la historia de la Compañía del Cuervo, que roba los Sellos de la tregua.
+- **Los capítulos I y II, de Villaolivo a Lübeck**: 10 ciudades, 20 rutas (por tierra, por mar y por islas), 5 coliseos, la guarida del Cuervo en el Arsenal y su barco en Lübeck.
+- Más de 100 entrenadores, 16 animales salvajes distintos y la historia de la Compañía del Cuervo y del Barón de Rabenstein, que roban los Sellos de la tregua.
 - Posadas para curarse (si caes en combate, despiertas en la última), tiendas de objetos y armerías con armas y armaduras.
-- Viajes en barco entre puertos y técnicas nuevas hasta el nivel 46 (eliges cuál olvidar).
-- **Dos misiones secretas** con preguntas y premios especiales. Pista: un caballero despistado en La Mancha y un poeta muy antiguo en Florencia.
+- Viajes en barco entre puertos y técnicas nuevas hasta el nivel 58 (eliges cuál olvidar).
+- **Tres misiones especiales** con premios únicos. Pista: un caballero despistado en La Mancha, un poeta muy antiguo en Florencia y un sabio muy tranquilo escondido en el paso del Brennero. **Solo hay una oportunidad**: si fallas, la misión se cierra para siempre (puedes seguir jugando).
 - Combate por turnos con técnicas, objetos, huida, golpes críticos y mejoras de atributos. Experiencia y niveles hasta el 150.
 - **Contador de kilómetros real** en la app de Android: los pasos del móvil se convierten en ducados y objetos.
 - Guardado automático y controles táctiles.
@@ -23,7 +23,9 @@ RPG medieval por turnos en pixel art, ambientado en 1415. Se juega en español o
 | Marruecos | Ruta 5 (el Estrecho, en barco), Tánger, Ruta 6 (Rif), Ruta 7 (valle del Sebú), Fez | Fez · Zaynab (26) |
 | El mar | Ruta 9 (Alborán), Ruta 10 (Baleares), Ruta 11 (Cerdeña), Ruta 12 (mar de Liguria) | — |
 | Italia | Génova, Ruta 13 (Apeninos), Ruta 14 (Toscana), Florencia, Ruta 15 (Po), Ruta 16 (laguna), Venecia | Génova · Bianca (34) · Florencia · Guido (44) |
-| Final | El Arsenal de Venecia | Corvino, jefe del Cuervo (54) |
+| Fin del capítulo I | El Arsenal de Venecia | Corvino, capitán del Cuervo (54) |
+| Alemania | Ruta 17 (Dolomitas), Ruta 18 (Brennero), Ruta 19 (Baviera y el Danubio), Núremberg, Ruta 20 (Turingia), Ruta 21 (brezales de Luneburgo), Lübeck | Núremberg · Meister Konrad (60) |
+| Fin del capítulo II | LA CORNEJA, el barco del Cuervo en Lübeck | Corvino (64) y el Barón de Rabenstein (66) |
 
 ## Instalar en Android (para tus amigos)
 
@@ -97,6 +99,7 @@ Todo es JavaScript sin librerías y el arte se dibuja con código.
 | `src/js/04-art-world.js` | Suelo, olivos, casas, objetos e interfaz |
 | `src/js/04b-art-world2.js` | Terrenos por región, murallas, barcos, coliseos y edificios grandes |
 | `src/js/04c-art-beasts.js` | Animales de los combates |
+| `src/js/04d-art-alemania.js` | Colores de Alemania, casas de entramado y ladrillo, la Fuente Hermosa y los animales de los Alpes |
 | `src/js/05-data.js` | Técnicas, enemigos, objetos, niveles y recompensas por caminar |
 | `src/js/06-state.js` | Partida, guardado y subida de nivel |
 | `src/js/07-ui.js` | Cuadros de texto y menús |
@@ -106,10 +109,13 @@ Todo es JavaScript sin librerías y el arte se dibuja con código.
 | `src/js/09b-espana.js` | España: Ruta 2 a Tarifa y el coliseo de Toledo |
 | `src/js/09c-marruecos.js` | Marruecos y el mar: el Estrecho, Tánger, Fez y las islas |
 | `src/js/09d-italia.js` | Italia: Génova, Florencia, Venecia y el Arsenal |
+| `src/js/09e-alemania.js` | Alemania: Dolomitas, Brennero, Núremberg, Lübeck y el barco del Cuervo; el sabio de Fez |
 | `src/js/10-world.js` | Movimiento, puertas, posadas, tiendas, barcos y menú de pausa |
 | `src/js/11-battle.js` | Combate |
 | `src/js/12-scenes.js` | Idioma, título, elección de personaje e introducción |
 | `src/js/13-pasos.js` | Contador de pasos y recompensas por km |
+| `src/js/14a-ajedrez-reglas.js` | Reglas del ajedrez (jugadas legales, jaque y mate) |
+| `src/js/14b-ajedrez.js` | El problema de ajedrez del sabio de Fez: tablero táctil y reloj de 20 segundos |
 | `src/js/99-main.js` | Arranque y bucle principal |
 | `src/page.html` | La consola: pantalla, botones y estilos |
 | `app/` | App de Android (Capacitor): configuración, plugin de pasos en Java e icono |
@@ -118,7 +124,7 @@ Todo es JavaScript sin librerías y el arte se dibuja con código.
 
 Los textos bilingües se escriben así: `{ es: 'Hola', fr: 'Bonjour' }`.
 
-Los mapas se dibujan con letras (cada letra es una casilla): `.` hierba, `,` matorral, `=` camino, `#` empedrado, `s` arena, `~` agua, `B` puente, `T` olivo, `C` ciprés, `Y` abeto, `P` palmera, `V` viña, `M` roca, `W` muralla, `D` tablones, `K` borda de barco, `X` caja.
+Los mapas se dibujan con letras (cada letra es una casilla): `.` hierba, `,` matorral, `=` camino, `#` empedrado, `s` arena, `~` agua, `B` puente, `T` olivo, `C` ciprés, `Y` abeto, `P` palmera, `V` viña, `M` roca, `W` muralla, `D` tablones, `K` borda de barco, `X` caja. En los Alpes, la `s` es nieve.
 
 ## Pruebas
 
@@ -127,7 +133,9 @@ node tools/build.mjs
 node tools/validate.mjs          # revisa conexiones, puertas y que todo sea alcanzable
 node tools/balance.mjs 4         # simula la aventura: niveles, dinero y dificultad de cada maestro
 node tools/playthrough.mjs out es  # juega la historia entera con la interfaz real y guarda capturas
-node tools/quests.mjs out es       # prueba las misiones secretas (¡contiene las respuestas!)
+node tools/quests.mjs out es       # prueba las misiones especiales (¡contiene las respuestas!)
+node tools/chess-ui.mjs out es     # prueba el tablero con toques: solución, jugada mala y tiempo agotado
+node tools/chess-solve.mjs "<fen>" 4  # comprueba un problema de mate en 4 con las reglas del juego
 node tools/savecode.mjs out        # prueba exportar e importar el código de partida
 ```
 

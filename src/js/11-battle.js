@@ -64,12 +64,23 @@ class BattleScene {
   ref(side, cap = false) {
     if (side === 'me') return P().name;
     if (this.spec.trainer) return this.foe.name;
-    const art = Lang.cur === 'fr' ? (cap ? 'Le ' : 'le ') : (cap ? 'El ' : 'el ');
-    return art + this.foe.name + tr(this.fdef.wildTag);
+    const art = this.article(false);
+    return (cap ? art[0].toUpperCase() + art.slice(1) : art) + this.foe.name + tr(this.fdef.wildTag);
+  }
+  foeFem() { const f = this.fdef.fem; return !this.spec.trainer && !!(f && typeof f === 'object' ? f[Lang.cur] : f); }
+  // artículo del animal: el/la (el ÁGUILA), le/la/l' en francés; con «de» delante si de = true
+  article(de) {
+    const fem = this.foeFem(), nm = this.foe.name;
+    if (Lang.cur === 'fr') {
+      if (/^[AEIOUYÉÈÊÂÎH]/.test(nm)) return de ? 'de l\'' : 'l\'';
+      return de ? (fem ? 'de la ' : 'du ') : (fem ? 'la ' : 'le ');
+    }
+    const el = !fem || /^Á/.test(nm);
+    return de ? (el ? 'del ' : 'de la ') : (el ? 'el ' : 'la ');
   }
   deRef(side) {
     if (side === 'me' || this.spec.trainer) return deName(this.ref(side));
-    return (Lang.cur === 'fr' ? 'du ' : 'del ') + this.foe.name + tr(this.fdef.wildTag);
+    return this.article(true) + this.foe.name + tr(this.fdef.wildTag);
   }
   statMsg(k, whose, up, limit) {
     const stat = tr(STATNAME[k]);
@@ -245,7 +256,7 @@ class BattleScene {
       await this.msg(t('b_yield', { t: this.foe.name }), 0);
       if (this.spec.defeatText) await this.msg(`${this.foe.name}${Lang.cur === 'fr' ? ' :' : ':'} ${fmt(this.spec.defeatText)}`, 0);
     } else if (this.spec.foe === 'salteador') await this.msg(t('b_banditFlees'), 0);
-    else await this.msg(t('b_defeated', { f: this.ref('foe', true) }), 0);
+    else await this.msg(t(this.foeFem() ? 'b_defeatedF' : 'b_defeated', { f: this.ref('foe', true) }), 0);
     const xp = battleXp(this.foe, tr_);
     if (P().level < MAX_LV) {
       await this.msg(t('b_xp', { n: P().name, v: xp }), 0);

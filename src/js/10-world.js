@@ -78,6 +78,9 @@ function drawObj(x, o, ox, oy) {
   else if (o.type === 'throne') drawThrone(x, ox, oy, o.o || {});
   else if (o.type === 'chest') drawChest(x, ox, oy, o.o || {});
   else if (o.type === 'boat') drawBoat(x, ox, oy);
+  else if (o.type === 'brunnen') drawBrunnen(x, ox, oy);
+  else if (o.type === 'plank') drawPlank(x, ox, oy);
+  else if (o.type === 'chesstable') drawChessTable(x, ox, oy);
 }
 // Puerta de un edificio: columna(s) de la puerta en su fila de abajo
 function doorCols(o) {
@@ -223,7 +226,7 @@ class WorldScene {
     }
     if (this.blocked(nx, ny, p)) {
       const o = this.objAt(nx, ny);
-      if (d === 'up' && doorAt(o, nx, ny) && (o.enter || o.run)) { this.runScript(W => W.useDoor(o)); return; }
+      if ((d === 'up' || (o && o.side === d)) && doorAt(o, nx, ny) && (o.enter || o.run)) { this.runScript(W => W.useDoor(o)); return; }
       this.bump(); return;
     }
     this.move(p, d, Input.down('b') ? 2 : 1);
@@ -750,7 +753,7 @@ const CRESTS = [
   ['fez', '#2e8a5a', '#f2ca52', { es: 'FEZ', fr: 'FÈS' }],
   ['genova', '#f4ece0', '#c23a3a', { es: 'GÉNOVA', fr: 'GÊNES' }],
   ['florencia', '#8a2a3a', '#f4ece0', { es: 'FLORENCIA', fr: 'FLORENCE' }],
-  ['nuremberg', '#2a2a30', '#f2ca52', '?'],
+  ['nuremberg', '#f2ca52', '#2a2a30', { es: 'NÚREMBERG', fr: 'NUREMBERG' }],
   ['londres', '#2a4aa0', '#f2ca52', '?'],
   ['montsaintmichel', '#4a6a9a', '#f4ece0', '?'],
   ['paris', '#2a3a8a', '#f2ca52', '?'],
@@ -767,10 +770,10 @@ function drawGear(ctx) {
   const wpn = EQUIP[e.arma || 'espada_corta'], arm = e.armadura ? EQUIP[e.armadura] : null;
   Font.draw(ctx, t('s_weapon'), 12, 26, 'grey');
   Font.draw(ctx, tr(wpn.name), 12, 38, 'dark');
-  if (wpn.atk) Font.drawRight(ctx, t('shop_atk', { v: wpn.atk }), 228, 38, 'blue');
+  if (wpn.atk) Font.drawRight(ctx, t('shop_atk', { v: wpn.atk }), 228, 26, 'blue');
   Font.draw(ctx, t('s_armor'), 12, 52, 'grey');
   Font.draw(ctx, arm ? tr(arm.name) : t('s_none'), 12, 64, arm ? 'dark' : 'grey');
-  if (arm) Font.drawRight(ctx, t('shop_def', { v: arm.def }), 228, 64, 'blue');
+  if (arm) Font.drawRight(ctx, t('shop_def', { v: arm.def }), 228, 52, 'blue');
   rect(ctx, 10, 80, 220, 1, '#c99a46');
   Font.draw(ctx, t('s_crests', { v: s.blasones || 0 }), 12, 84, 'dark');
   CRESTS.forEach(([k, c1, c2], i) => {
@@ -778,7 +781,9 @@ function drawGear(ctx) {
     drawShield(ctx, x, 102, c1, c2, on);
   });
   const named = CRESTS.filter(([k]) => s.flags['blason_' + k]).map(c => tr(c[3]));
-  if (named.length) Font.draw(ctx, named.join(' · '), 12, 118, 'grey');
+  let line = named.join(' · ');
+  while (named.length > 1 && Font.width(line) > 216) { named.shift(); line = '… ' + named.join(' · '); }
+  if (named.length) Font.draw(ctx, line, 12, 118, 'grey');
   const titles = TITLES.filter(([f]) => s.flags[f]).map(([, n]) => fmt(n));
   if (titles.length) Font.draw(ctx, t('s_titles', { v: titles.join(' · ') }), 12, 130, 'blue');
   Font.drawRight(ctx, t('k_back'), 228, 140, 'dark');

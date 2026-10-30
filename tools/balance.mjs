@@ -23,8 +23,10 @@ const out = await p.evaluate((WILD) => {
     ['ruta9'], ['ruta10'], ['ruta11'], ['ruta12'], ['genova'], ['coliseo_genova'], ['boss', 'bianca', 34],
     ['ruta13'], ['ruta14'], ['story', 'rival', 41], ['florencia'], ['coliseo_florencia'], ['boss', 'guido', 44],
     ['ruta15'], ['ruta16'], ['venecia'], ['arsenal'], ['boss', 'corvino', 54],
+    ['ruta17'], ['ruta18'], ['ruta19'], ['story', 'rival', 58], ['nuremberg'], ['coliseo_nuremberg'], ['boss', 'konrad', 60],
+    ['ruta20'], ['ruta21'], ['lubeck'], ['kogge'], ['boss', 'corvino', 64], ['boss', 'baron', 66],
   ];
-  const SHOPS = { toledo: ['espada_toledana', 'gambeson'], tanger: ['cota'], fez: ['cimitarra', 'cota'], genova: ['estoque', 'brigantina'], florencia: ['florentina', 'brigantina'], venecia: ['florentina', 'arnes'] };
+  const SHOPS = { toledo: ['espada_toledana', 'gambeson'], tanger: ['cota'], fez: ['cimitarra', 'cota'], genova: ['estoque', 'brigantina'], florencia: ['florentina', 'brigantina'], venecia: ['florentina', 'arnes'], nuremberg: ['espada_larga', 'arnes_nuremberg'], lubeck: ['espada_larga', 'arnes_nuremberg'] };
   const healItem = () => (P().level >= 40 ? 'triaca' : P().level >= 18 ? 'triaca' : 'unguento');
   let spentItems = 0, goldEarned = 0;
   function moveVal(id) { const m = MOVES[id]; return m.pow > 0 ? m.pow * ((m.acc || 100) / 100) * (m.crit ? 1.15 : 1) : m.heal ? 35 : 30; }

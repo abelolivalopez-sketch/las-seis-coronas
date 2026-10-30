@@ -1,4 +1,5 @@
-// Prueba las misiones secretas de don Quijote (La Mancha) y Dante (Florencia).
+// Prueba las misiones especiales: don Quijote (La Mancha), Dante (Florencia) e Ibrahim (ajedrez, Brennero).
+// Todas son de una sola oportunidad: si fallas, se cierran para siempre.
 // Uso: node tools/build.mjs && node tools/quests.mjs <carpeta> [es|fr]
 import { chromium } from 'playwright';
 const dir = process.argv[2] || '.';
@@ -11,7 +12,7 @@ await p.addInitScript(l => { localStorage.setItem('seis-coronas.idioma', l); }, 
 await p.goto('file://' + process.cwd() + '/dist/index.html?debug');
 await p.waitForFunction(() => window.__SC);
 const sleep = ms => p.waitForTimeout(ms);
-const state = () => p.evaluate(() => { const s = window.__SC.S0(); return { lv: s.player.level, d: s.ducados, ung: s.items.unguento || 0, arma: s.equip.arma, moves: s.player.moves.map(m => m.id), f: Object.keys(s.flags).filter(k => /quijote|emblema|caballero/.test(k)) }; });
+const state = () => p.evaluate(() => { const s = window.__SC.S0(); return { lv: s.player.level, d: s.ducados, ung: s.items.unguento || 0, arma: s.equip.arma, moves: s.player.moves.map(m => m.id), f: Object.keys(s.flags).filter(k => /quijote|emblema|caballero|dante|ajedrez/.test(k)), armor: s.equip.armadura, hp: s.player.hp, max: s.player.maxHp }; });
 const top = () => p.evaluate(() => { const s = window.__SC.Game.scene; const t = s.ui && s.ui.stack[s.ui.stack.length - 1]; return t ? { kind: t.constructor.name, opts: t.opts || null, text: t.lines ? t.lines.join(' ') : '' } : null; });
 const free = () => p.evaluate(() => { const s = window.__SC.Game.scene; return s instanceof window.__SC.WorldScene && !s.busy && !s.ui.busy; });
 let n = 0;
@@ -51,28 +52,64 @@ const check = (ok, msg) => { log.push((ok ? '✓ ' : '✗ ') + msg); if (!ok) pr
 await p.evaluate(() => { const S = window.__SC; const st = S.newState('Abel', 'f', 'dark'); st.flags = { introDone: true, rivalDone: true, canLeave: true }; S.Game.state = st; S.startWorld(st, false); S.gainXp(S.xpFor(13) - st.player.xp); st.player.moves = ['tajo', 'grito', 'estocada', 'escudo'].map(id => ({ id, pp: S.MOVES[id].pp })); });
 await sleep(600);
 const s0 = await state();
-// 1) don Quijote: primero falla la amada
+const unflag = ks => p.evaluate(ks => { const f = window.__SC.S0().flags; for (const k of ks) delete f[k]; }, ks);
+// ¿vuelve a preguntar? (sale un menú de opciones antes de terminar el guion)
+async function asksAgain() { await talk(); const t = await toChoice(); if (t) { await p.keyboard.press('KeyX'); await sleep(200); } await finish(); return !!t; }
+// 1) don Quijote: si falla la amada, la misión se cierra
 await tp('ruta3', 32, 3, 'right'); await talk();
 await pick(0, 'amada_mal'); await finish();
-let s = await state(); check(s.d === s0.d && !s.f.includes('quijote1'), 'respuesta mala: sin premio');
-// ahora acierta amada y caballo
+let s = await state(); check(s.d === s0.d && !s.f.includes('quijote1') && s.f.includes('quijoteCerrado'), 'Quijote, respuesta mala: sin premio y misión cerrada');
+check(!(await asksAgain()), 'Quijote cerrado: ya no vuelve a preguntar');
+// otra partida: acierta amada y caballo, falla la sorpresa → se queda el premio, pero se cierra
+await unflag(['quijoteCerrado']);
 await talk(); const o1 = await pick(1, 'amada'); const o2 = await pick(2, 'caballo');
-// falla la pregunta sorpresa
 await pick(0, 'paginas_mal'); await finish();
-s = await state(); check(s.d === s0.d + 100 && s.ung === s0.ung + 5 && s.f.includes('quijote1') && s.lv === 13, `amada y caballo: +100 ducados y +5 ungüentos (${o1.join('/')} · ${o2.join('/')})`);
-// vuelve y acierta la sorpresa
-await talk(); const o3 = await pick(1, 'paginas'); await finish(); await shot('quijote_fin');
-s = await state(); check(s.lv === 35 && s.arma === 'matagigantes' && s.f.includes('emblemaMatagigantes'), `sorpresa: nivel ${s.lv}, arma ${s.arma} (${o3.join('/')})`);
+s = await state(); check(s.d === s0.d + 100 && s.ung === s0.ung + 5 && s.f.includes('quijote1') && s.f.includes('quijoteCerrado') && s.lv === 13, `amada y caballo: +100 ducados y +5 ungüentos; sorpresa fallada: cerrada (${o1.join('/')} · ${o2.join('/')})`);
+check(!(await asksAgain()), 'sorpresa fallada: ya no hay segunda oportunidad');
+// otra partida: lo acierta todo
+await unflag(['quijoteCerrado', 'quijote1']);
+await talk(); await pick(1); await pick(2); const o3 = await pick(1, 'paginas'); await finish(); await shot('quijote_fin');
+s = await state(); check(s.lv === 35 && s.arma === 'matagigantes' && s.f.includes('emblemaMatagigantes'), `todo bien: nivel ${s.lv}, arma ${s.arma} (${o3.join('/')})`);
 log.push('  técnicas tras subir: ' + s.moves.join(', '));
 await talk(); await finish();
-// 2) Dante
+// 2) Dante: un fallo cierra la misión
 await tp('florencia', 24, 9, 'up'); await talk();
 await pick(0, 'dante_mal'); await finish();
-s = await state(); check(!s.f.includes('caballeroInfierno'), 'Dante, respuesta mala: sin título');
+s = await state(); check(!s.f.includes('caballeroInfierno') && s.f.includes('danteCerrado'), 'Dante, respuesta mala: sin título y misión cerrada');
+check(!(await asksAgain()), 'Dante cerrado: ya no vuelve a preguntar');
+await unflag(['danteCerrado']);
 await talk(); const d1 = await pick(1, 'dante_guia'); const d2 = await pick(2, 'dante_circulos'); await finish();
 s = await state(); check(s.f.includes('caballeroInfierno') && s.moves.includes('matademonios') && s.moves.includes('beso'), `Dante: título y técnicas (${d1.join('/')} · ${d2.join('/')}) → ${s.moves.join(', ')}`);
 await p.keyboard.press('KeyM'); await sleep(400); await talk(); await sleep(400); await talk(); await sleep(300); await shot('titulos');
 await p.keyboard.press('KeyX'); await sleep(300); await p.keyboard.press('KeyX'); await sleep(300); await finish();
+// 4) Ibrahim, el sabio de Fez: la batalla silenciosa
+const box = await p.locator('#screen').boundingBox();
+async function tapSq(sq) {
+  const f = sq.charCodeAt(0) - 97, r = +sq[1] - 1, gx = 8 + f * 16 + 8, gy = 19 + (7 - r) * 16 + 8;
+  await p.mouse.click(box.x + gx / 240 * box.width, box.y + gy / 160 * box.height); await sleep(150);
+}
+async function chess(moves) {
+  for (let i = 0; i < 40; i++) { if (await p.evaluate(() => { const t = window.__SC.Game.scene.ui.stack.slice(-1)[0]; return !!(t && t.constructor.name === 'PanelWidget'); })) break; await sleep(150); }
+  await sleep(3000);
+  for (const m of moves) { await tapSq(m.slice(0, 2)); await tapSq(m.slice(2, 4)); await sleep(1100); }
+}
+await p.evaluate(() => { const S = window.__SC; S.P().hp = 20; S.S0().equip.armadura = 'arnes'; });
+await tp('ruta18', 27, 9, 'up'); await talk();
+await pick(1, 'sabio_no'); await finish();
+s = await state(); check(!s.f.includes('ajedrezIntentado') && !s.f.includes('ajedrezCerrado'), 'decir que no: la misión sigue abierta');
+await talk(); await pick(0, 'sabio_si'); await pick(0, 'sabio_empezamos');
+await chess(['g5f7', 'f7h6', 'e6g8', 'h6f7']); await shot('ajedrez_mate'); await finish();
+s = await state(); check(s.f.includes('ajedrezGanado') && s.armor === 'torre' && s.hp === s.max, `ajedrez ganado: PV ${s.hp}/${s.max}, armadura ${s.armor}`);
+const def = await p.evaluate(() => window.__SC.effStats().def); log.push('  defensa con la Torre: ' + def);
+await p.keyboard.press('KeyM'); await sleep(400); await talk(); await sleep(400); await talk(); await sleep(300); await shot('equipo_torre');
+await p.keyboard.press('KeyX'); await sleep(300); await p.keyboard.press('KeyX'); await sleep(300); await finish();
+// otra partida: jugada mala → cerrada para siempre
+await unflag(['ajedrezGanado', 'ajedrezIntentado', 'ajedrezVisto']);
+await p.evaluate(() => { window.__SC.S0().equip.armadura = 'arnes'; });
+await talk(); await pick(0); await pick(0);
+await chess(['e6e8']); await finish();
+s = await state(); check(s.f.includes('ajedrezCerrado') && s.armor === 'arnes', 'ajedrez fallado: sin armadura y misión cerrada');
+check(!(await asksAgain()), 'ajedrez cerrado: Ibrahim ya no vuelve a proponerlo');
 // 3) combate con las técnicas nuevas
 async function fightWith(moveId, foe, lv, label) {
   await p.evaluate(([foe, lv]) => { const S = window.__SC; S.healPlayer(); S.Game.scene.runScript(W => W.battle({ foe, level: lv, canFlee: false, trainer: 'PRUEBA' })); }, [foe, lv]);

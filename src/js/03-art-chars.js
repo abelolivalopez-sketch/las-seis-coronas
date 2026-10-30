@@ -303,6 +303,26 @@ const LOOKS = {
   anciana: { base: 'f', skin: 'mid', hair: 'grey', cloth: 'brown' },
   quijote: { base: 'm', skin: 'light', hair: 'grey', cloth: 'grey', over: ['helm', 'beard'], hose: 'dark' },
   dante: { base: 'm', skin: 'light', hair: 'brown', cloth: 'crimson', over: 'cap', capc: 'crimson' },
+  // Alemania
+  sabio_fez: { base: 'm', skin: 'mid', hair: 'grey', cloth: 'white', over: ['turban', 'beard'], wrap: 'navy' },
+  tiroles: { base: 'm', skin: 'light', hair: 'blond', cloth: 'green', over: 'cap', capc: 'green', hose: 'dark' },
+  tirolesa: { base: 'f', skin: 'light', hair: 'blond', cloth: 'red' },
+  minero: { base: 'm', skin: 'mid', hair: 'black', cloth: 'grey', over: ['cap', 'beard'], capc: 'white', hose: 'dark' },
+  lenador: { base: 'm', skin: 'light', hair: 'auburn', cloth: 'brown', over: 'beard', hose: 'dark' },
+  pastor: { base: 'm', skin: 'light', hair: 'straw', cloth: 'sand', over: 'hat' },
+  pastora: { base: 'f', skin: 'light', hair: 'blond', cloth: 'olive' },
+  armero: { base: 'm', skin: 'light', hair: 'brown', cloth: 'grey', over: ['helm', 'beard'], hose: 'dark' },
+  caballero_al: { base: 'm', skin: 'light', hair: 'blond', cloth: 'gold', over: 'helm', hose: 'dark' },
+  dama_al: { base: 'f', skin: 'light', hair: 'auburn', cloth: 'navy', over: 'helm' },
+  teuton: { base: 'm', skin: 'light', hair: 'blond', cloth: 'white', over: ['helm', 'beard'], hose: 'dark' },
+  konrad: { base: 'm', skin: 'light', hair: 'grey', cloth: 'black', over: ['helm', 'beard'], hose: 'dark' },
+  baron: { base: 'm', skin: 'light', hair: 'raven', cloth: 'raven', over: ['helm', 'beard'], hose: 'dark' },
+  aleman: { base: 'm', skin: 'light', hair: 'brown', cloth: 'navy', over: 'hat' },
+  alemana: { base: 'f', skin: 'light', hair: 'blond', cloth: 'teal' },
+  guardia_al: { base: 'm', skin: 'light', hair: 'blond', cloth: 'red', over: 'helm', hose: 'dark' },
+  hanseata: { base: 'm', skin: 'light', hair: 'auburn', cloth: 'crimson', over: 'hat' },
+  hanseata_f: { base: 'f', skin: 'light', hair: 'blond', cloth: 'navy' },
+  burgomaestre: { base: 'm', skin: 'light', hair: 'grey', cloth: 'crimson', over: ['cap', 'beard'], capc: 'black' },
 };
 
 function lookPalette(L) {

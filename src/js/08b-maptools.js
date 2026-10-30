@@ -66,3 +66,11 @@ const GREET = {
 
 // Mensaje genérico para mapas de interior: salida por la puerta de abajo
 function exitDown(x, y, to) { return { x, y, dir: 'down', to }; }
+
+// Misiones especiales: una sola oportunidad. Si fallas, se cierran para siempre (pero puedes seguir jugando).
+async function closeSpecialQuest(W, flag) {
+  W.flag(flag, true);
+  Sfx.play('bump');
+  await W.say({ es: 'La misión especial se ha cerrado para siempre.', fr: 'La mission spéciale est fermée pour toujours.' }, { color: 'blue' });
+  Game.save();
+}

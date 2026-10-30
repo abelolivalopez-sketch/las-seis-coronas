@@ -39,6 +39,15 @@ const Input = {
       el.addEventListener('contextmenu', e => e.preventDefault());
     });
 
+    // toques directos en la pantalla del juego (los usa el tablero de ajedrez)
+    const scr = document.getElementById('screen');
+    if (scr) scr.addEventListener('pointerdown', e => {
+      const r = scr.getBoundingClientRect();
+      if (!r.width || !r.height) return;
+      this.tapPending = { x: (e.clientX - r.left) / r.width * 240, y: (e.clientY - r.top) / r.height * 160 };
+      Sfx.unlock();
+    });
+
     const pad = document.getElementById('dpad');
     if (pad) {
       let active = null;
@@ -78,6 +87,8 @@ const Input = {
   poll(dt) {
     this.pressed = this.pending;
     this.pending = new Set();
+    this.tap = this.locked ? null : this.tapPending || null;
+    this.tapPending = null;
     this.rep = new Set(this.pressed);
     for (const k of DIRS) {
       if (!this.held[k]) continue;
@@ -91,7 +102,7 @@ const Input = {
   hit(k) { return this.pressed.has(k); },
   repeat(k) { return this.rep.has(k); },
   down(k) { return !this.locked && !!this.held[k]; },
-  clear() { this.pressed = new Set(); this.rep = new Set(); this.pending = new Set(); },
+  clear() { this.pressed = new Set(); this.rep = new Set(); this.pending = new Set(); this.tap = null; this.tapPending = null; },
   dir() {
     if (this.locked) return null;
     if (this.lastDir && this.held[this.lastDir]) return this.lastDir;

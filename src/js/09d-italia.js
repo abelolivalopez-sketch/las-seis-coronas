@@ -560,7 +560,8 @@ Object.assign(MAPS, {
       plainHouse(9, 3, null, { wall: ['#f0b4a8', '#d48c80', '#f6ccc0'], frame: '#3d8c58' }),
       plainHouse(20, 3, null, { wall: ['#f6e0a0', '#d8bc78', '#fbecc0'], frame: '#3a70c0' }),
       plainHouse(28, 3, null, { wall: ['#e8e4dc', '#c0b8ac', '#f6f4ee'], frame: '#a0402e' }),
-      signAt(14, 7, { es: 'Al norte, tras la laguna: los DOLOMITAS y ALEMANIA. (Próximamente)', fr: 'Au nord, après la lagune : les DOLOMITES et l\'ALLEMAGNE. (Prochainement)' }),
+      signAt(14, 7, { es: 'MUELLE NORTE: el barquero cruza a tierra firme. Desde allí, los DOLOMITAS y ALEMANIA.', fr: 'QUAI NORD : le passeur traverse vers la terre ferme. De là, les DOLOMITES et l\'ALLEMAGNE.' }),
+      { type: 'boat', x: 13, y: 1, w: 2, h: 1, text: { es: 'La barca del barquero.', fr: 'La barque du passeur.' } },
       innHouse(2, 11, { wall: ['#f6e0a0', '#d8bc78', '#fbecc0'] }),
       shopHouse(8, 11, ['hogaza', 'unguento', 'triaca', 'elixir'], GREET.shop, { wall: ['#f0b4a8', '#d48c80', '#f6ccc0'] }),
       { type: 'fountain', x: 11, y: 17, w: 2, h: 2, o: { stone: STONE.claro }, text: { es: 'Un pozo de agua de lluvia. En Venecia, el agua dulce vale oro.', fr: 'Un puits d\'eau de pluie. À Venise, l\'eau douce vaut de l\'or.' } },
@@ -580,6 +581,7 @@ Object.assign(MAPS, {
     conn: { left: { map: 'ruta16', dy: 0 } },
     npcs: [
       { id: 've_dux', look: 'dux', x: 31, y: 15, dir: 'down', talk: W => scriptDux(W) },
+      { id: 've_barquero', look: 'gondolero', x: 14, y: 2, dir: 'up', talk: W => scriptBarqueroVenecia(W) },
       talker('ve_gondolero', 'gondolero', 15, 16, 'left', { es: '¡Bienvenid{o} a Venecia! Aquí no hay calles: hay canales y puentes.', fr: 'Bienvenue à Venise ! Ici, pas de rues : des canaux et des ponts.' }),
       talker('ve_veneciana', 'veneciana', 6, 17, 'down', { es: 'Desde que llegó el Cuervo, el Arsenal está cerrado. ¡Ya no se construyen barcos!', fr: 'Depuis l\'arrivée du Corbeau, l\'Arsenal est fermé. On ne construit plus de navires !' }),
       talker('ve_mercader', 'veneciano', 24, 17, 'down', { es: 'Las especias de Oriente llegan a Venecia y de aquí van a toda Europa.', fr: 'Les épices d\'Orient arrivent à Venise et partent d\'ici vers toute l\'Europe.' }),
@@ -593,7 +595,7 @@ Object.assign(MAPS, {
         lose: { es: 'La puerta... ¡está abierta!', fr: 'La porte... est ouverte !' },
         after: { es: '...', fr: '...' } }),
     ],
-    entry: [[0, 14]],
+    entry: [[0, 14], [15, 2]],
     onEnter: async W => { if (!W.flag('rivalVenecia') && W.player.x <= 1) await scriptRivalVenecia(W); },
   },
 
@@ -770,7 +772,7 @@ async function scriptDux(W) {
     return;
   }
   if (W.flag('finCapitulo1')) {
-    await W.say({ es: 'DUX: Venecia nunca olvidará lo que hiciste, {name}. Cuando estés list{o}, el camino de los Dolomitas te llevará a Alemania.', fr: 'DOGE : Venise n\'oubliera jamais ce que tu as fait, {name}. Quand tu seras prêt{e}, la route des Dolomites te mènera en Allemagne.' });
+    await W.say({ es: 'DUX: Venecia nunca olvidará lo que hiciste, {name}. El barquero del MUELLE NORTE te llevará a tierra firme, camino de los Dolomitas.', fr: 'DOGE : Venise n\'oubliera jamais ce que tu as fait, {name}. Le passeur du QUAI NORD t\'emmènera sur la terre ferme, vers les Dolomites.' });
     return;
   }
   W.flag('finCapitulo1', true);
@@ -781,7 +783,7 @@ async function scriptDux(W) {
   await W.say({ es: 'DUX: Corvino ha huido hacia el norte, a ALEMANIA. Allí está el coliseo de NÚREMBERG... y quizá el jefe del Cuervo.', fr: 'DOGE : Corvino a fui vers le nord, en ALLEMAGNE. Là-bas se trouve le colisée de NUREMBERG... et peut-être le chef du Corbeau.' });
   Sfx.play('win');
   await W.say({ es: '— FIN DEL CAPÍTULO I —', fr: '— FIN DU CHAPITRE I —' }, { color: 'blue' });
-  await W.say({ es: '¡Gracias por jugar al prototipo de LAS SEIS CORONAS! El viaje a Alemania llegará en la próxima versión. Puedes seguir entrenando y explorando.', fr: 'Merci d\'avoir joué au prototype des SIX COURONNES ! Le voyage en Allemagne arrivera dans la prochaine version. Tu peux continuer à t\'entraîner et à explorer.' });
+  await W.say({ es: 'DUX: El barquero del MUELLE NORTE te cruzará la laguna. ¡Empieza el CAPÍTULO II: ALEMANIA!', fr: 'DOGE : Le passeur du QUAI NORD te fera traverser la lagune. Le CHAPITRE II commence : l\'ALLEMAGNE !' });
   Game.save();
 }
 
@@ -794,6 +796,10 @@ async function scriptDante(W) {
     if (r === 0) for (const m of miss) await W.learnMove(m);
     return;
   }
+  if (W.flag('danteCerrado')) {
+    await W.say({ es: 'DANTE: «Abandonad toda esperanza...» Bueno, tanto no. Pero mis preguntas ya no son para ti. Ve en paz.', fr: 'DANTE : « Abandonnez toute espérance... » Bon, pas à ce point. Mais mes questions ne sont plus pour toi. Va en paix.' });
+    return;
+  }
   await W.say({ es: 'DANTE: ¿Me reconoces? Soy Dante Alighieri, poeta de Florencia. ¿Que llevo un siglo muerto? Digamos que he vuelto de un viaje muy largo...', fr: 'DANTE : Tu me reconnais ? Je suis Dante Alighieri, poète de Florence. Mort depuis un siècle, dis-tu ? Disons que je reviens d\'un très long voyage...' });
   await W.say({ es: 'DANTE: En mi DIVINA COMEDIA cuento cómo, perdido en una selva oscura, viajé por el INFIERNO, el PURGATORIO y el PARAÍSO.', fr: 'DANTE : Dans ma DIVINE COMÉDIE, je raconte comment, perdu dans une forêt obscure, j\'ai voyagé à travers l\'ENFER, le PURGATOIRE et le PARADIS.' });
   await W.say({ es: 'DANTE: Un gran poeta de la antigua Roma me guió por el Infierno, círculo a círculo, hasta el fondo, donde Lucifer está atrapado en el hielo.', fr: 'DANTE : Un grand poète de la Rome antique m\'a guidé à travers l\'Enfer, cercle après cercle, jusqu\'au fond, où Lucifer est pris dans la glace.' });
@@ -801,11 +807,11 @@ async function scriptDante(W) {
   await W.say({ es: 'DANTE: ¿Has escuchado bien? Si respondes a mis dos preguntas, te concederé un honor que nadie tiene.', fr: 'DANTE : As-tu bien écouté ? Si tu réponds à mes deux questions, je t\'accorderai un honneur que personne n\'a.' });
   const r1 = await W.ask({ es: '¿Quién guía a Dante por el Infierno y el Purgatorio?', fr: 'Qui guide Dante à travers l\'Enfer et le Purgatoire ?' },
     [{ es: 'HOMERO', fr: 'HOMÈRE' }, { es: 'VIRGILIO', fr: 'VIRGILE' }, { es: 'OVIDIO', fr: 'OVIDE' }, { es: 'ARISTÓTELES', fr: 'ARISTOTE' }].map(tr));
-  if (r1 !== 1) { await W.say({ es: 'DANTE: No... Lee mi obra con calma y vuelve a verme.', fr: 'DANTE : Non... Lis mon œuvre tranquillement et reviens me voir.' }); return; }
+  if (r1 !== 1) { await W.say({ es: 'DANTE: No... Mi maestro fue VIRGILIO. Lee mi obra con calma, aunque mis preguntas ya no volverán.', fr: 'DANTE : Non... Mon maître était VIRGILE. Lis mon œuvre tranquillement, même si mes questions ne reviendront pas.' }); await closeSpecialQuest(W, 'danteCerrado'); return; }
   await W.say({ es: 'DANTE: ¡VIRGILIO, mi maestro! Bien. Segunda pregunta...', fr: 'DANTE : VIRGILE, mon maître ! Bien. Deuxième question...' });
   const r2 = await W.ask({ es: '¿Cuántos círculos tiene el Infierno de Dante?', fr: 'Combien de cercles compte l\'Enfer de Dante ?' },
     [{ es: 'SIETE', fr: 'SEPT' }, { es: 'TRES', fr: 'TROIS' }, { es: 'NUEVE', fr: 'NEUF' }, { es: 'DOCE', fr: 'DOUZE' }].map(tr));
-  if (r2 !== 2) { await W.say({ es: 'DANTE: No... Ese no es el número. Lee mi obra con calma y vuelve a verme.', fr: 'DANTE : Non... Ce n\'est pas le bon nombre. Lis mon œuvre tranquillement et reviens me voir.' }); return; }
+  if (r2 !== 2) { await W.say({ es: 'DANTE: No... Ese no es el número. El Infierno tiene NUEVE círculos. Ve en paz, viajer{o}.', fr: 'DANTE : Non... Ce n\'est pas le bon nombre. L\'Enfer compte NEUF cercles. Va en paix.' }); await closeSpecialQuest(W, 'danteCerrado'); return; }
   await W.say({ es: 'DANTE: ¡NUEVE círculos! Has bajado conmigo hasta el fondo del Infierno... y has vuelto. Te nombro {CAB} DEL INFIERNO.', fr: 'DANTE : NEUF cercles ! Tu es descendu{e} avec moi jusqu\'au fond de l\'Enfer... et tu en es revenu{e}. Je te nomme {CAB} DE L\'ENFER.' });
   Sfx.play('win');
   W.flag('caballeroInfierno', true);

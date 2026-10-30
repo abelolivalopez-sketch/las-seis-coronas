@@ -1,4 +1,4 @@
-// Recorre la historia completa (hasta Venecia) con la interfaz real y guarda capturas.
+// Recorre la historia completa (hasta Lübeck) con la interfaz real y guarda capturas.
 // Uso: node tools/build.mjs && node tools/playthrough.mjs <carpeta> [es|fr] [nivel]
 import { chromium } from 'playwright';
 const dir = process.argv[2] || '.';
@@ -71,8 +71,9 @@ const step = async (name, fn) => {
   if (skipping && !name.startsWith(FROM)) return;
   if (skipping) {
     skipping = false;
-    await p.evaluate(() => { const f = window.__SC.S0().flags; for (const k of ['rivalToledo', 'selloRobado', 'toledoOpen', 'blason_toledo', 'visitTanger', 'rivalTanger', 'blason_fez', 'selloFez', 'salvoconducto', 'abordaje', 'abordajeHecho', 'visitGenova', 'blason_genova', 'genovaOpen', 'rivalFlorencia', 'blason_florencia', 'florenciaOpen', 'rivalVenecia']) f[k] = true; window.__SC.S0().blasones = 4; });
+    await p.evaluate(() => { const f = window.__SC.S0().flags; for (const k of ['rivalToledo', 'selloRobado', 'toledoOpen', 'blason_toledo', 'visitTanger', 'rivalTanger', 'blason_fez', 'selloFez', 'salvoconducto', 'abordaje', 'abordajeHecho', 'visitGenova', 'blason_genova', 'genovaOpen', 'rivalFlorencia', 'blason_florencia', 'florenciaOpen', 'rivalVenecia', 'corvinoDone', 'sellosRecuperados', 'finCapitulo1']) f[k] = true; window.__SC.S0().blasones = 4; });
   }
+  await p.evaluate(() => window.__SC.healPlayer());   // es una prueba del recorrido, no de la dificultad
   try { await fn(); } catch (e) {
     const info = await p.evaluate(() => ({ flags: Object.keys(window.__SC.S0().flags).join(','), scene: window.__SC.Game.scene.constructor.name }));
     console.log(log.join('\n')); console.log('FALLO en', name, String(e), JSON.stringify(info)); console.log('errores:', errs); await b.close(); process.exit(1);
@@ -179,9 +180,63 @@ await step('Corvino, los sellos y el Dux', async () => {
   if (!(await flag('corvinoDone'))) throw new Error('Corvino no huye');
   await tp('arsenal', 15, 3, 'up'); await talk(); await settle(600);
   if (!(await flag('sellosRecuperados'))) throw new Error('sin sellos');
-  await tp('arsenal', 13, 20, 'down'); await go('down'); await settle(); await expectMap('venecia');
+  await tp('arsenal', 13, 21, 'down'); await go('down'); await settle(); await expectMap('venecia');
   await tp('venecia', 31, 16, 'up'); await talk(); await settle(600);
   if (!(await flag('finCapitulo1'))) throw new Error('sin final');
+});
+await step('Barquero de Venecia → Dolomitas', async () => {
+  await tp('venecia', 14, 3, 'up'); await talk(); await settle(); await expectMap('ruta17'); await shot('dolomitas');
+});
+await step('Dolomitas → Brennero (hospicio)', async () => {
+  await tp('ruta17', 14, 0, 'up'); await go('up'); await settle(); await expectMap('ruta18'); await shot('brennero');
+  await tp('ruta18', 14, 19, 'up'); await talk(); await settle();
+  const r = await p.evaluate(() => window.__SC.S0().respawn); if (!r || r.map !== 'ruta18') throw new Error('sin punto de reaparición en el hospicio');
+});
+await step('Brennero → Baviera → Núremberg (rival)', async () => {
+  await tp('ruta18', 18, 0, 'up'); await go('up'); await settle(); await expectMap('ruta19'); await shot('baviera');
+  await tp('ruta19', 20, 0, 'up'); await go('up'); await settle(); await expectMap('nuremberg');
+  await go('up', 2); await settle(800, 'rival_nuremberg');
+  if (!(await flag('rivalNuremberg'))) throw new Error('sin rival en Núremberg');
+  await shot('nuremberg');
+});
+await step('Puerta norte de Núremberg cerrada', async () => {
+  await tp('nuremberg', 17, 3, 'up'); await go('up'); await settle(); await expectMap('nuremberg');
+  const y = await p.evaluate(() => window.__SC.Game.scene.player.y); if (y < 3) throw new Error('la puerta norte no detiene');
+});
+await step('Coliseo de Núremberg y Meister Konrad', async () => {
+  await tp('nuremberg', 6, 23, 'up'); await go('up'); await settle(); await expectMap('coliseo_nuremberg'); await shot('coliseo_nuremberg');
+  await tp('coliseo_nuremberg', 7, 4, 'up'); await talk(); await settle(800, 'konrad');
+  if (!(await flag('blason_nuremberg'))) throw new Error('sin blasón de Núremberg');
+  await tp('coliseo_nuremberg', 7, 14, 'down'); await go('down'); await settle(); await expectMap('nuremberg');
+});
+await step('Turingia → Luneburgo → Lübeck (rival)', async () => {
+  await tp('nuremberg', 17, 0, 'up'); await go('up'); await settle(); await expectMap('ruta20'); await shot('turingia');
+  await tp('ruta20', 12, 0, 'up'); await go('up'); await settle(); await expectMap('ruta21'); await shot('luneburgo');
+  await tp('ruta21', 43, 8, 'right'); await go('right'); await settle(); await expectMap('lubeck');
+  await go('right', 4); await settle(800);
+  if (!(await flag('rivalLubeck'))) throw new Error('sin rival en Lübeck');
+  await shot('lubeck');
+});
+await step('Guardias de LA CORNEJA', async () => {
+  await tp('lubeck', 31, 22, 'right'); await go('right'); await settle(); await expectMap('lubeck');
+  await tp('lubeck', 28, 17, 'down'); await talk(); await settle(600);
+  await tp('lubeck', 28, 24, 'down'); await talk(); await settle(600);
+  await tp('lubeck', 31, 22, 'right'); await go('right'); await settle(); await expectMap('kogge'); await shot('corneja');
+});
+await step('Corvino y el Barón de Rabenstein', async () => {
+  await tp('kogge', 15, 6, 'right'); await talk(); await settle(800, 'corvino2');
+  await p.evaluate(() => window.__SC.healPlayer());
+  await tp('kogge', 18, 6, 'right'); await talk(); await settle(1000, 'baron');
+  for (const f of ['corvino2Done', 'baronDone', 'sellosLubeck']) if (!(await flag(f))) throw new Error('falta ' + f);
+});
+await step('Burgomaestre y fin del capítulo II', async () => {
+  await tp('kogge', 1, 6, 'left'); await go('left', 2); await settle(); await expectMap('lubeck');
+  await tp('lubeck', 24, 9, 'up'); await talk(); await settle(800);
+  if (!(await flag('finCapitulo2'))) throw new Error('sin final del capítulo II');
+  await shot('fin_capitulo2');
+});
+await step('Barquero de vuelta a Venecia', async () => {
+  await tp('ruta17', 15, 39, 'right'); await talk(); await settle(); await expectMap('venecia');
 });
 await step('Estado: página de equipo y blasones', async () => {
   await p.keyboard.press('KeyM'); await sleep(400); await talk(); await sleep(400); await talk(); await sleep(300);
